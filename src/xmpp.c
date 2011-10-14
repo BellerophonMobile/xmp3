@@ -84,16 +84,20 @@ bool xmpp_init(struct event_loop *loop, struct in_addr addr, uint16_t port) {
 
     if (bind(fd, (struct sockaddr*)&saddr, sizeof(saddr))) {
         perror("XMPP server socket bind error");
-        return false;
+        goto error;
     }
 
     if (listen(fd, SERVER_BACKLOG)) {
         perror("XMPP server socket listen error");
-        return false;
+        goto error;
     }
 
     printf("Listening for XMPP connections on %s:%d\n", inet_ntoa(addr), port);
 
     event_register_callback(loop, fd, xmpp_new_connection, NULL);
     return true;
+
+error:
+    close(fd);
+    return false;
 }
