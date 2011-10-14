@@ -6,12 +6,16 @@
 
 #include "event.h"
 
+#include <errno.h>
+#include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include <sys/queue.h>
 #include <sys/select.h>
+#include <sys/socket.h>
 
 /* Contains data for one callback function */
 struct event_item {
@@ -30,6 +34,9 @@ struct event_item {
 
 /* Contains data about the whole event loop */
 struct event_loop {
+    /* Flag to stop the event loop. */
+    volatile sig_atomic_t stop_loop;
+
     /* File descriptors for select */
     fd_set readfds;
 
@@ -48,6 +55,7 @@ struct event_loop* event_new_loop(void) {
     }
 
     loop->nfds = 0;
+    loop->stop_loop = 0;
     LIST_INIT(&loop->list_head);
 
     return loop;
@@ -115,13 +123,35 @@ void event_init_readfds(struct event_loop *loop) {
 }
 
 void event_loop_start(struct event_loop *loop) {
+    // Set up a sigset to block SIGINT later
+    sigset_t emptyset, blockset;
+    sigemptyset(&emptyset);
+    sigemptyset(&blockset);
+    sigaddset(&blockset, SIGINT);
+
+    struct event_item *item;
+
     while (true) {
+        /* Block SIGINT.  We do this so that we can avoid a race condition
+         * between when we check the stop_loop flag, and enter pselect.
+         * See: http://lwn.net/Articles/176911/ */
+        sigprocmask(SIG_BLOCK, &blockset, NULL);
+
+        if (loop->stop_loop) {
+            break;
+        }
+
         event_init_readfds(loop);
-        int num_ready = select(loop->nfds, &loop->readfds, NULL, NULL, NULL);
+        int num_ready = pselect(loop->nfds, &loop->readfds, NULL, NULL, NULL,
+                                &emptyset);
 
         if (num_ready == -1) {
-            perror("Event loop select error");
-            return;
+            if (errno == EINTR) {
+                break;
+            } else {
+                perror("Event loop select error");
+                return;
+            }
         }
 
         if (num_ready == 0) {
@@ -129,11 +159,24 @@ void event_loop_start(struct event_loop *loop) {
             continue;
         }
 
-        struct event_item *item;
         LIST_FOREACH(item, &loop->list_head, list_entry) {
             if (FD_ISSET(item->fd, &loop->readfds)) {
                 item->func(loop, item->fd, item->data);
             }
         }
     }
+
+    /* Close all of the sockets before exiting the event loop.  Next, there
+     * should be a callback before shutdown, so you could send a close message
+     * or something. */
+    LIST_FOREACH(item, &loop->list_head, list_entry) {
+        int rv = close(item->fd);
+        if (rv == -1) {
+            perror("Error closing socket");
+        }
+    }
+}
+
+void event_loop_stop(struct event_loop *loop) {
+    loop->stop_loop = 1;
 }

@@ -49,3 +49,12 @@ void event_deregister_callback(struct event_loop *loop, int fd);
  * struct event_loop *loop - Existing event loop to start
  */
 void event_loop_start(struct event_loop *loop);
+
+/**
+ * Stop the event loop.
+ *
+ * This function can be called from a callback or a signal handler.
+ *
+ * struct event_loop *loop - Existing event loop to start.
+ */
+void event_loop_stop(struct event_loop *loop);
