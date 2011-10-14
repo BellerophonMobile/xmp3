@@ -48,14 +48,12 @@ struct event_loop {
 };
 
 struct event_loop* event_new_loop(void) {
-    struct event_loop *loop = malloc(sizeof(struct event_loop));
+    struct event_loop *loop = calloc(1, sizeof(struct event_loop));
     if (loop == NULL) {
         fprintf(stderr, "Error allocating event loop\n");
         abort();
     }
 
-    loop->nfds = 0;
-    loop->stop_loop = 0;
     LIST_INIT(&loop->list_head);
 
     return loop;
@@ -72,7 +70,7 @@ void event_del_loop(struct event_loop *loop) {
 
 void event_register_callback(struct event_loop *loop, int fd,
                              event_callback func, void *data) {
-    struct event_item *item = malloc(sizeof(struct event_item));
+    struct event_item *item = calloc(1, sizeof(struct event_item));
     if (item == NULL) {
         fprintf(stderr, "Error allocating callback structure\n");
         abort();

@@ -55,7 +55,7 @@ static void xmpp_read_client(struct event_loop *loop, int fd, void *data) {
 }
 
 static void xmpp_new_connection(struct event_loop *loop, int fd, void *data) {
-    struct client_info *info = malloc(sizeof(struct client_info));
+    struct client_info *info = calloc(1, sizeof(struct client_info));
     if (info == NULL) {
         fprintf(stderr, "Error allocating connection structure.\n");
         abort();
