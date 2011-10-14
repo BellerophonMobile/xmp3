@@ -76,7 +76,11 @@ bool xmpp_init(struct event_loop *loop, struct in_addr addr, uint16_t port) {
     }
 
     // Convert to network byte order
-    struct sockaddr_in saddr = { AF_INET, htons(port), addr };
+    struct sockaddr_in saddr = {
+        .sin_family = AF_INET,
+        .sin_port = htons(port),
+        .sin_addr = addr,
+    };
 
     if (bind(fd, (struct sockaddr*)&saddr, sizeof(saddr))) {
         perror("XMPP server socket bind error");
