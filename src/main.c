@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <signal.h>
 
 #include <errno.h>
 #include <getopt.h>
@@ -45,6 +46,25 @@ static bool read_port(const char *arg, uint16_t *output) {
     char *endptr;
     *output = strtol(optarg, &endptr, 10);
     return (errno != ERANGE) && (*endptr == '\0');
+}
+
+// File-global event loop handle, so we can stop it from the signal handler.
+static struct event_loop *loop = NULL;
+
+static void signal_handler(int signal) {
+    event_loop_stop(loop);
+}
+
+static void init_signal_handler() {
+    struct sigaction sa = {
+        .sa_handler = signal_handler,
+        .sa_flags = 0,
+    };
+
+    if (sigaction(SIGINT, &sa, NULL) == -1) {
+        perror("Cannot set signal handler");
+        abort();
+    }
 }
 
 int main(int argc, char *argv[]) {
@@ -87,7 +107,9 @@ int main(int argc, char *argv[]) {
 
     printf("Starting xmp3...\n");
 
-    struct event_loop *loop = event_new_loop();
+    init_signal_handler();
+
+    loop = event_new_loop();
 
     if (!xmpp_init(loop, client_addr, client_port)) {
         fprintf(stderr, "XMPP server initialization failed\n");
