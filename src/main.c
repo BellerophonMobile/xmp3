@@ -11,7 +11,6 @@
 
 #include <errno.h>
 #include <getopt.h>
-#include <string.h>
 #include <arpa/inet.h>
 
 #include "event.h"
@@ -40,12 +39,12 @@ static void print_usage() {
 }
 
 static bool read_port(const char *arg, uint16_t *output) {
-    char *endptr;
-    size_t len = strnlen(arg, 5);
-
+    // Clear errno so we can check if strtol fails.
     errno = 0;
+
+    char *endptr;
     *output = strtol(optarg, &endptr, 10);
-    return (errno != ERANGE) && (endptr == optarg + len);
+    return (errno != ERANGE) && (*endptr == '\0');
 }
 
 int main(int argc, char *argv[]) {
