@@ -75,6 +75,13 @@ bool xmpp_init(struct event_loop *loop, struct in_addr addr, uint16_t port) {
         return false;
     }
 
+    // Allow address reuse when in the TIME_WAIT state.
+    static const int on = 1;
+    if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) == -1) {
+        perror("Error setting SO_REUSEADDR on server socket");
+        goto error;
+    }
+
     // Convert to network byte order
     struct sockaddr_in saddr = {
         .sin_family = AF_INET,
