@@ -4,6 +4,8 @@
  * Copyright (c) 2011 Drexel University
  */
 
+#pragma once
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <netinet/in.h>

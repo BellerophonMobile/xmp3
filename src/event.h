@@ -4,6 +4,8 @@
  * Copyright (c) 2011 Drexel University
  */
 
+#pragma once
+
 /** Opaque type representing an event loop */
 struct event_loop;
 
