@@ -18,6 +18,7 @@
 
 #include <expat.h>
 
+#include "log.h"
 #include "event.h"
 
 #define BUFFER_SIZE 2000
@@ -40,11 +41,11 @@ static void xmpp_read_client(struct event_loop *loop, int fd, void *data) {
     if (numrecv == 0 || numrecv == -1) {
         switch (numrecv) {
             case 0:
-                printf("%s:%d disconnected\n", inet_ntoa(info->caddr.sin_addr),
-                       info->caddr.sin_port);
+                log_info("%s:%d disconnected", inet_ntoa(info->caddr.sin_addr),
+                         info->caddr.sin_port);
                 break;
             case -1:
-                fprintf(stderr, "Error reading from %s:%d: %s",
+                log_err("Error reading from %s:%d: %s",
                         inet_ntoa(info->caddr.sin_addr), info->caddr.sin_port,
                         strerror(errno));
                 break;
@@ -54,68 +55,59 @@ static void xmpp_read_client(struct event_loop *loop, int fd, void *data) {
         return;
     }
 
-    printf("%s:%d - Read %ld bytes\n", inet_ntoa(info->caddr.sin_addr),
-           info->caddr.sin_port, numrecv);
+    log_info("%s:%d - Read %ld bytes", inet_ntoa(info->caddr.sin_addr),
+             info->caddr.sin_port, numrecv);
     enum XML_Status status = XML_Parse(info->parser, MSG_BUFFER, numrecv,
                                        false);
     switch (status) {
         case XML_STATUS_ERROR:
-            printf("XML Status Error: %s\n", XML_ErrorString(XML_GetErrorCode(
-                                                             info->parser)));
+            log_err("XML Status Error: %s",
+                    XML_ErrorString(XML_GetErrorCode(info->parser)));
             break;
         case XML_STATUS_OK:
-            printf("XML Status OK!\n");
+            log_info("XML Status OK!");
             break;
         case XML_STATUS_SUSPENDED:
-            printf("XML Status Suspended!\n");
+            log_info("XML Status Suspended!");
             break;
         default:
-            printf("Unknown XML Status!\n");
+            log_info("Unknown XML Status!");
             break;
     }
 }
 
 static void xmpp_client_xml_start(void *data, const char *name,
                                   const char **attrs) {
-    printf("Element start!\n");
+    log_info("Element start!");
 }
 
 static void xmpp_client_xml_end(void *data, const char *name) {
-    printf("Element end!\n");
+    log_info("Element end!");
 }
 
 static void xmpp_client_xml_data(void *data, const char *s, int len) {
-    printf("Element data!\n");
+    log_info("Element data!");
 }
 
 static void xmpp_new_connection(struct event_loop *loop, int fd, void *data) {
     struct client_info *info = calloc(1, sizeof(struct client_info));
-    if (info == NULL) {
-        fprintf(stderr, "Error allocating connection structure.\n");
-        abort();
-    }
+    check_mem(info);
 
     socklen_t addrlen = sizeof(info->caddr);
     info->fd = accept(fd, (struct sockaddr*)&info->caddr, &addrlen);
-    if (info->fd == -1) {
-        perror("Error accepting client connection");
-        goto error;
-    }
+    check(info->fd != -1, "Error accepting client connection");
 
     // Create the XML parser we'll use to parse messages from the client.
     info->parser = XML_ParserCreateNS(NULL, ' ');
-    if (info->parser == NULL) {
-        fprintf(stderr, "Error creating XML parser\n");
-        goto error;
-    }
+    check(info->parser != NULL,"Error creating XML parser");
 
     XML_SetElementHandler(info->parser, xmpp_client_xml_start,
                           xmpp_client_xml_end);
     XML_SetCharacterDataHandler(info->parser, xmpp_client_xml_data);
     XML_SetUserData(info->parser, info);
 
-    printf("New connection from %s:%d\n", inet_ntoa(info->caddr.sin_addr),
-           info->caddr.sin_port);
+    log_info("New connection from %s:%d", inet_ntoa(info->caddr.sin_addr),
+             info->caddr.sin_port);
     event_register_callback(loop, info->fd, xmpp_read_client, info);
     return;
 
@@ -133,17 +125,12 @@ error:
 
 bool xmpp_init(struct event_loop *loop, struct in_addr addr, uint16_t port) {
     int fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (fd == -1) {
-        perror("Error creating XMPP server socket");
-        return false;
-    }
+    check(fd != -1, "Error creating XMPP server socket");
 
     // Allow address reuse when in the TIME_WAIT state.
     static const int on = 1;
-    if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) == -1) {
-        perror("Error setting SO_REUSEADDR on server socket");
-        goto error;
-    }
+    check(setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) != -1,
+          "Error setting SO_REUSEADDR on server socket");
 
     // Convert to network byte order
     struct sockaddr_in saddr = {
@@ -152,17 +139,11 @@ bool xmpp_init(struct event_loop *loop, struct in_addr addr, uint16_t port) {
         .sin_addr = addr,
     };
 
-    if (bind(fd, (struct sockaddr*)&saddr, sizeof(saddr))) {
-        perror("XMPP server socket bind error");
-        goto error;
-    }
+    check(bind(fd, (struct sockaddr*)&saddr, sizeof(saddr)) != -1,
+          "XMPP server socket bind error");
+    check(listen(fd, SERVER_BACKLOG) != -1, "XMPP server socket listen error");
 
-    if (listen(fd, SERVER_BACKLOG)) {
-        perror("XMPP server socket listen error");
-        goto error;
-    }
-
-    printf("Listening for XMPP connections on %s:%d\n", inet_ntoa(addr), port);
+    log_info("Listening for XMPP connections on %s:%d", inet_ntoa(addr), port);
 
     event_register_callback(loop, fd, xmpp_new_connection, NULL);
     return true;

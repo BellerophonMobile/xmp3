@@ -14,6 +14,8 @@
 #include <getopt.h>
 #include <arpa/inet.h>
 
+#include "log.h"
+
 #include "event.h"
 #include "xmpp.h"
 
@@ -55,18 +57,6 @@ static void signal_handler(int signal) {
     event_loop_stop(loop);
 }
 
-static void init_signal_handler() {
-    struct sigaction sa = {
-        .sa_handler = signal_handler,
-        .sa_flags = 0,
-    };
-
-    if (sigaction(SIGINT, &sa, NULL) == -1) {
-        perror("Cannot set signal handler");
-        abort();
-    }
-}
-
 int main(int argc, char *argv[]) {
     struct in_addr client_addr = DEFAULT_CLIENT_ADDR;
     uint16_t client_port = DEFAULT_CLIENT_PORT;
@@ -81,17 +71,13 @@ int main(int argc, char *argv[]) {
 
         switch (c) {
             case 'a':
-                if (!inet_aton(optarg, &client_addr)) {
-                    fprintf(stderr, "Invalid client address \"%s\"\n", optarg);
-                    return EXIT_FAILURE;
-                }
+                check(inet_aton(optarg, &client_addr) != 0,
+                      "Invalid client address \"%s\"", optarg);
                 break;
 
             case 'p':
-                if (!read_port(optarg, &client_port)) {
-                    fprintf(stderr, "Invalid client port \"%s\"\n", optarg);
-                    return EXIT_FAILURE;
-                }
+                check(read_port(optarg, &client_port),
+                      "Invalid client port \"%s\"", optarg);
                 break;
 
             case 'h':
@@ -99,7 +85,7 @@ int main(int argc, char *argv[]) {
                 return EXIT_SUCCESS;
 
             default:
-                fprintf(stderr, "Invaid option\n");
+                log_err("Invaid option");
                 print_usage();
                 return EXIT_FAILURE;
         }
@@ -107,19 +93,28 @@ int main(int argc, char *argv[]) {
 
     printf("Starting xmp3...\n");
 
-    init_signal_handler();
+    struct sigaction sa = {
+        .sa_handler = signal_handler,
+        .sa_flags = 0,
+    };
+
+    check(sigaction(SIGINT, &sa, NULL) != -1, "Cannot set signal handler.");
 
     loop = event_new_loop();
 
-    if (!xmpp_init(loop, client_addr, client_port)) {
-        fprintf(stderr, "XMPP server initialization failed\n");
-        return EXIT_FAILURE;
-    }
+    check(xmpp_init(loop, client_addr, client_port),
+            "XMPP server initialization failed");
 
-    printf("Starting event loop...\n");
+    log_info("Starting event loop...");
     event_loop_start(loop);
 
     event_del_loop(loop);
 
     return EXIT_SUCCESS;
+
+error:
+    if (loop) {
+        event_del_loop(loop);
+    }
+    return EXIT_FAILURE;
 }

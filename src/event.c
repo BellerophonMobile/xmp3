@@ -17,6 +17,8 @@
 #include <sys/select.h>
 #include <sys/socket.h>
 
+#include "log.h"
+
 /* Contains data for one callback function */
 struct event_item {
     /* The file descriptor to monitor */
@@ -49,14 +51,14 @@ struct event_loop {
 
 struct event_loop* event_new_loop(void) {
     struct event_loop *loop = calloc(1, sizeof(struct event_loop));
-    if (loop == NULL) {
-        fprintf(stderr, "Error allocating event loop\n");
-        abort();
-    }
+    check_mem(loop);
 
     LIST_INIT(&loop->list_head);
 
     return loop;
+
+error:
+    return NULL;
 }
 
 void event_del_loop(struct event_loop *loop) {
@@ -71,10 +73,7 @@ void event_del_loop(struct event_loop *loop) {
 void event_register_callback(struct event_loop *loop, int fd,
                              event_callback func, void *data) {
     struct event_item *item = calloc(1, sizeof(struct event_item));
-    if (item == NULL) {
-        fprintf(stderr, "Error allocating callback structure\n");
-        abort();
-    }
+    check_mem(item);
 
     // Add the item to the list
     item->fd = fd;
@@ -87,6 +86,10 @@ void event_register_callback(struct event_loop *loop, int fd,
     if (fd + 1 > loop->nfds) {
         loop->nfds = fd + 1;
     }
+
+error:
+    // TODO: Make this return a bool or something.
+    return;
 }
 
 void event_deregister_callback(struct event_loop *loop, int fd) {
@@ -133,7 +136,8 @@ void event_loop_start(struct event_loop *loop) {
         /* Block SIGINT.  We do this so that we can avoid a race condition
          * between when we check the stop_loop flag, and enter pselect.
          * See: http://lwn.net/Articles/176911/ */
-        sigprocmask(SIG_BLOCK, &blockset, NULL);
+        check(sigprocmask(SIG_BLOCK, &blockset, NULL) != -1,
+                "Can't block signals");
 
         if (loop->stop_loop) {
             break;
@@ -147,7 +151,7 @@ void event_loop_start(struct event_loop *loop) {
             if (errno == EINTR) {
                 break;
             } else {
-                perror("Event loop select error");
+                log_err("Event loop select error");
                 return;
             }
         }
@@ -170,9 +174,17 @@ void event_loop_start(struct event_loop *loop) {
     LIST_FOREACH(item, &loop->list_head, list_entry) {
         int rv = close(item->fd);
         if (rv == -1) {
-            perror("Error closing socket");
+            log_err("Error closing socket");
         }
     }
+
+    // Unblock signals if we still have them blocked.
+    check(sigprocmask(SIG_UNBLOCK, &blockset, NULL) != -1,
+          "Can't block signals");
+
+error:
+    // TODO: Make this return a bool or something.
+    return;
 }
 
 void event_loop_stop(struct event_loop *loop) {
