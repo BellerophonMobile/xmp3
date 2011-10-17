@@ -54,7 +54,7 @@ static void xmpp_read_client(struct event_loop *loop, int fd, void *data) {
         return;
     }
 
-    printf("%s:%d - Read %d bytes\n", inet_ntoa(info->caddr.sin_addr),
+    printf("%s:%d - Read %ld bytes\n", inet_ntoa(info->caddr.sin_addr),
            info->caddr.sin_port, numrecv);
     enum XML_Status status = XML_Parse(info->parser, MSG_BUFFER, numrecv,
                                        false);
