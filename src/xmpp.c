@@ -52,30 +52,20 @@ static void xmpp_read_client(struct event_loop *loop, int fd, void *data) {
                         strerror(errno));
                 break;
         }
-        event_deregister_callback(loop, fd);
-        close(fd);
-        return;
+        goto error;
     }
 
     log_info("%s:%d - Read %ld bytes", inet_ntoa(info->caddr.sin_addr),
              info->caddr.sin_port, numrecv);
     enum XML_Status status = XML_Parse(info->parser, MSG_BUFFER, numrecv,
                                        false);
-    switch (status) {
-        case XML_STATUS_ERROR:
-            log_err("XML Status Error: %s",
-                    XML_ErrorString(XML_GetErrorCode(info->parser)));
-            break;
-        case XML_STATUS_OK:
-            log_info("XML Status OK!");
-            break;
-        case XML_STATUS_SUSPENDED:
-            log_info("XML Status Suspended!");
-            break;
-        default:
-            log_info("Unknown XML Status!");
-            break;
-    }
+    check(status != XML_STATUS_ERROR, "Error parsing XML: %s",
+          XML_ErrorString(XML_GetErrorCode(info->parser)));
+    return;
+
+error:
+    event_deregister_callback(loop, fd);
+    close(fd);
 }
 
 static void xmpp_new_connection(struct event_loop *loop, int fd, void *data) {
