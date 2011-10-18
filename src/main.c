@@ -26,7 +26,7 @@ static struct option long_options[] = {
     {"client-addr", required_argument, NULL, 'a'},
     {"client-port", required_argument, NULL, 'p'},
     {"help",        no_argument,       NULL, 'h'},
-    NULL,
+    { NULL },
 };
 
 static void print_usage() {
