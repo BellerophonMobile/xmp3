@@ -17,7 +17,7 @@ def configure(conf):
     conf.load('compiler_c')
     conf.check_cc(lib='expat')
 
-    conf.env.CFLAGS += ['-std=gnu99']
+    conf.env.CFLAGS += ['-std=gnu99', '-Wall']
     conf.env.CFLAGS += ['-O0', '-ggdb']
 
 def build(bld):
