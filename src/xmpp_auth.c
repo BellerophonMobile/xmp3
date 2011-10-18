@@ -74,7 +74,13 @@ static void print_end_tag(const char *name) {
 }
 
 static void print_data(const char *s, int len) {
-    printf("%d bytes: '%.*1$s'\n", len, s);
+    /* The %1$d means take the first argument (len) and format it as a decimal.
+     * The %2$.*1$s:
+     *   %2$ - Take the second argument (s)
+     *   .*1$ - Use the first argument for the length (len)
+     *   s    - Format it as a string (using len as length)
+     */
+    printf("%1$d bytes: '%2$.*1$s'\n", len, s);
 }
 
 static void stream_start(void *data, const char *name, const char **attrs) {
