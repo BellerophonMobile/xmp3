@@ -10,11 +10,9 @@
 #include <stdint.h>
 #include <netinet/in.h>
 
-/* Forward declarations to cut down on includes. */
-struct XML_ParserStruct;
-typedef struct XML_ParserStruct *XML_Parser;
+#include <expat.h>
 
-struct event_loop;
+#include "event.h"
 
 struct client_info {
     int fd;
