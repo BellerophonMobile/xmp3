@@ -88,7 +88,7 @@ static void xmpp_new_connection(struct event_loop *loop, int fd, void *data) {
 
     // Create the XML parser we'll use to parse messages from the client.
     info->parser = XML_ParserCreateNS(NULL, ' ');
-    check(info->parser != NULL,"Error creating XML parser");
+    check(info->parser != NULL, "Error creating XML parser");
 
     XML_SetElementHandler(info->parser, xmpp_auth_init_start,
                           xmpp_auth_init_end);
