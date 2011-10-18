@@ -74,9 +74,7 @@ static void xmpp_new_connection(struct event_loop *loop, int fd, void *data) {
     info->parser = XML_ParserCreateNS(NULL, ' ');
     check(info->parser != NULL, "Error creating XML parser");
 
-    XML_SetElementHandler(info->parser, xmpp_auth_init_start,
-                          xmpp_auth_init_end);
-    XML_SetCharacterDataHandler(info->parser, xmpp_auth_init_data);
+    xmpp_auth_set_handlers(info->parser);
     XML_SetUserData(info->parser, info);
 
     log_info("New connection from %s:%d", inet_ntoa(info->caddr.sin_addr),
