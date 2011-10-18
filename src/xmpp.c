@@ -29,12 +29,6 @@ static const int SERVER_BACKLOG = 3;
 
 static char MSG_BUFFER[BUFFER_SIZE];
 
-struct client_info {
-    int fd;
-    struct sockaddr_in caddr;
-    XML_Parser parser;
-};
-
 static void xmpp_read_client(struct event_loop *loop, int fd, void *data) {
     struct client_info *info = (struct client_info *)data;
 
