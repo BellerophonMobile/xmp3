@@ -18,6 +18,8 @@
 
 #include <expat.h>
 
+#include "xmpp_auth.h"
+
 #include "log.h"
 #include "event.h"
 
@@ -76,27 +78,6 @@ static void xmpp_read_client(struct event_loop *loop, int fd, void *data) {
     }
 }
 
-static void xmpp_client_xml_start(void *data, const char *name,
-                                  const char **attrs) {
-    log_info("Element start!");
-    printf("<%s", name);
-
-    for (int i = 0; attrs[i] != NULL; i += 2) {
-        printf(" %s=\"%s\"", attrs[i], attrs[i + 1]);
-    }
-    printf(">\n");
-}
-
-static void xmpp_client_xml_end(void *data, const char *name) {
-    log_info("Element end!");
-    printf("</%s>\n", name);
-}
-
-static void xmpp_client_xml_data(void *data, const char *s, int len) {
-    log_info("Element data!");
-    printf("%.*s\n", len, s);
-}
-
 static void xmpp_new_connection(struct event_loop *loop, int fd, void *data) {
     struct client_info *info = calloc(1, sizeof(struct client_info));
     check_mem(info);
@@ -109,9 +90,9 @@ static void xmpp_new_connection(struct event_loop *loop, int fd, void *data) {
     info->parser = XML_ParserCreateNS(NULL, ' ');
     check(info->parser != NULL,"Error creating XML parser");
 
-    XML_SetElementHandler(info->parser, xmpp_client_xml_start,
-                          xmpp_client_xml_end);
-    XML_SetCharacterDataHandler(info->parser, xmpp_client_xml_data);
+    XML_SetElementHandler(info->parser, xmpp_auth_init_start,
+                          xmpp_auth_init_end);
+    XML_SetCharacterDataHandler(info->parser, xmpp_auth_init_data);
     XML_SetUserData(info->parser, info);
 
     log_info("New connection from %s:%d", inet_ntoa(info->caddr.sin_addr),

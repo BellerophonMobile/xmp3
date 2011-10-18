@@ -27,6 +27,7 @@ def build(bld):
             'src/event.c',
             'src/main.c',
             'src/xmpp.c',
+            'src/xmpp_auth.c',
         ],
         use = ['EXPAT'],
     )
