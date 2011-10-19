@@ -16,7 +16,8 @@
 
 #include "log.h"
 #include "utils.h"
-#include "xmpp.h"
+
+#include "xmpp_common.h"
 
 #define XMLNS_STREAM "http://etherx.jabber.org/streams"
 
@@ -52,36 +53,12 @@ static void auth_plain_start(void *data, const char *name, const char **attrs);
 static void auth_plain_end(void *data, const char *name);
 static void auth_plain_data(void *data, const char *s, int len);
 
-static void error_start(void *data, const char *name, const char **attrs);
-static void error_end(void *data, const char *name);
-static void error_data(void *data, const char *s, int len);
+
+
 
 void xmpp_auth_set_handlers(XML_Parser parser) {
-    XML_SetElementHandler(parser, stream_start, error_end);
-    XML_SetCharacterDataHandler(parser, error_data);
-}
-
-static void print_start_tag(const char *name, const char **attrs) {
-    printf("<%s", name);
-
-    for (int i = 0; attrs[i] != NULL; i += 2) {
-        printf(" %s=\"%s\"", attrs[i], attrs[i + 1]);
-    }
-    printf(">\n");
-}
-
-static void print_end_tag(const char *name) {
-    printf("</%s>\n", name);
-}
-
-static void print_data(const char *s, int len) {
-    /* The %1$d means take the first argument (len) and format it as a decimal.
-     * The %2$.*1$s:
-     *   %2$ - Take the second argument (s)
-     *   .*1$ - Use the first argument for the length (len)
-     *   s    - Format it as a string (using len as length)
-     */
-    printf("%1$d bytes: '%2$.*1$s'\n", len, s);
+    XML_SetElementHandler(parser, stream_start, xmpp_error_end);
+    XML_SetCharacterDataHandler(parser, xmpp_error_data);
 }
 
 static void stream_start(void *data, const char *name, const char **attrs) {
@@ -132,23 +109,12 @@ static void auth_plain_data(void *data, const char *s, int len) {
     print_data(s, len);
 }
 
-static void error_start(void *data, const char *name, const char **attrs) {
-    struct client_info *info = (struct client_info*)data;
-    log_err("Unexpected start tag %s", name);
-    print_start_tag(name, attrs);
     XML_StopParser(info->parser, false);
 }
 
-static void error_end(void *data, const char *name) {
     struct client_info *info = (struct client_info*)data;
-    log_err("Unexpected end tag %s", name);
-    print_end_tag(name);
     XML_StopParser(info->parser, false);
 }
 
-static void error_data(void *data, const char *s, int len) {
-    struct client_info *info = (struct client_info*)data;
-    log_err("Unexpected data");
-    print_data(s, len);
     XML_StopParser(info->parser, false);
 }

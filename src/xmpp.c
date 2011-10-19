@@ -23,6 +23,7 @@
 #include "log.h"
 #include "event.h"
 
+#include "xmpp_common.h"
 #define BUFFER_SIZE 2000
 
 static const int SERVER_BACKLOG = 3;

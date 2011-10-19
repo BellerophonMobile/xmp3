@@ -14,11 +14,5 @@
 
 #include "event.h"
 
-struct client_info {
-    int fd;
-    struct sockaddr_in caddr;
-    XML_Parser parser;
-};
-
 /** Initializes the XMPP server and listens for new connections */
 bool xmpp_init(struct event_loop *loop, struct in_addr addr, uint16_t port);
