@@ -18,6 +18,7 @@
 #include "utils.h"
 
 #include "xmpp_common.h"
+#include "xmpp_im.h"
 
 #define XMLNS_STREAM "http://etherx.jabber.org/streams"
 #define XMLNS_SASL "urn:ietf:params:xml:ns:xmpp-sasl"
@@ -327,6 +328,7 @@ static void bind_iq_end(void *data, const char *name) {
 
     /* Resource binding, and thus authentication, is complete!  Continue to
      * process general messages. */
+    xmpp_im_set_handlers(info->parser);
 
     return;
 
