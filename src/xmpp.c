@@ -29,7 +29,7 @@ static const int SERVER_BACKLOG = 3;
 
 static char MSG_BUFFER[BUFFER_SIZE];
 
-static void xmpp_read_client(struct event_loop *loop, int fd, void *data) {
+static void read_client(struct event_loop *loop, int fd, void *data) {
     struct client_info *info = (struct client_info *)data;
 
     ssize_t numrecv = recv(fd, MSG_BUFFER, sizeof(MSG_BUFFER), 0);
@@ -62,7 +62,7 @@ error:
     close(fd);
 }
 
-static void xmpp_new_connection(struct event_loop *loop, int fd, void *data) {
+static void new_connection(struct event_loop *loop, int fd, void *data) {
     struct client_info *info = calloc(1, sizeof(struct client_info));
     check_mem(info);
 
@@ -79,7 +79,7 @@ static void xmpp_new_connection(struct event_loop *loop, int fd, void *data) {
 
     log_info("New connection from %s:%d", inet_ntoa(info->caddr.sin_addr),
              info->caddr.sin_port);
-    event_register_callback(loop, info->fd, xmpp_read_client, info);
+    event_register_callback(loop, info->fd, read_client, info);
     return;
 
 error:
@@ -116,7 +116,7 @@ bool xmpp_init(struct event_loop *loop, struct in_addr addr, uint16_t port) {
 
     log_info("Listening for XMPP connections on %s:%d", inet_ntoa(addr), port);
 
-    event_register_callback(loop, fd, xmpp_new_connection, NULL);
+    event_register_callback(loop, fd, new_connection, NULL);
     return true;
 
 error:
