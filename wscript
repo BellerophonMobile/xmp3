@@ -26,6 +26,7 @@ def build(bld):
         source = [
             'src/event.c',
             'src/main.c',
+            'src/utils.c',
             'src/xmpp.c',
             'src/xmpp_auth.c',
         ],
