@@ -18,12 +18,12 @@
 
 #include <expat.h>
 
-#include "xmpp_auth.h"
-
 #include "log.h"
 #include "event.h"
 
 #include "xmpp_common.h"
+#include "xmpp_auth.h"
+
 #define BUFFER_SIZE 2000
 
 static const int SERVER_BACKLOG = 3;
