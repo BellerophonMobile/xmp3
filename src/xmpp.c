@@ -30,6 +30,38 @@ static const int SERVER_BACKLOG = 3;
 
 static char MSG_BUFFER[BUFFER_SIZE];
 
+static void del_client_info(struct client_info *info) {
+    if (info == NULL) {
+        return;
+    }
+    if (info->fd != -1) {
+        if (close(info->fd) != 0) {
+            log_err("Error closing file descriptor");
+        }
+    }
+    XML_ParserFree(info->parser);
+    free(info->jid.local);
+    free(info->jid.resource);
+    free(info);
+}
+
+static struct client_info* new_client_info() {
+    struct client_info *info = calloc(1, sizeof(struct client_info));
+    check_mem(info);
+
+    info->authenticated = false;
+
+    // Create the XML parser we'll use to parse messages from the client.
+    info->parser = XML_ParserCreateNS(NULL, ' ');
+    check(info->parser != NULL, "Error creating XML parser");
+
+    return info;
+
+error:
+    del_client_info(info);
+    return NULL;
+}
+
 static void read_client(struct event_loop *loop, int fd, void *data) {
     struct client_info *info = (struct client_info *)data;
 
@@ -59,21 +91,16 @@ static void read_client(struct event_loop *loop, int fd, void *data) {
     return;
 
 error:
+    del_client_info(info);
     event_deregister_callback(loop, fd);
-    close(fd);
 }
 
 static void new_connection(struct event_loop *loop, int fd, void *data) {
-    struct client_info *info = calloc(1, sizeof(struct client_info));
-    check_mem(info);
+    struct client_info *info = new_client_info();
 
     socklen_t addrlen = sizeof(info->caddr);
     info->fd = accept(fd, (struct sockaddr*)&info->caddr, &addrlen);
     check(info->fd != -1, "Error accepting client connection");
-
-    // Create the XML parser we'll use to parse messages from the client.
-    info->parser = XML_ParserCreateNS(NULL, ' ');
-    check(info->parser != NULL, "Error creating XML parser");
 
     xmpp_auth_set_handlers(info->parser);
     XML_SetUserData(info->parser, info);
@@ -84,15 +111,7 @@ static void new_connection(struct event_loop *loop, int fd, void *data) {
     return;
 
 error:
-    if (info != NULL) {
-        free(info);
-    }
-    if (info->fd != -1) {
-        close(info->fd);
-    }
-    if (info->parser != NULL) {
-        XML_ParserFree(info->parser);
-    }
+    del_client_info(info);
 }
 
 bool xmpp_init(struct event_loop *loop, struct in_addr addr, uint16_t port) {
