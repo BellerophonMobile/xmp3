@@ -15,6 +15,7 @@
 #include <expat.h>
 
 #include "log.h"
+#include "utils.h"
 #include "xmpp.h"
 
 #define XMLNS_STREAM "http://etherx.jabber.org/streams"
@@ -93,23 +94,15 @@ static void stream_start(void *data, const char *name, const char **attrs) {
     check(strcmp(name, XML_STREAM) == 0, "Unexpected message");
 
     // Send the stream header
-    ssize_t numsent = 0;
-    do {
-        ssize_t newsent = send(info->fd, MSG_STREAM_HEADER + numsent,
-                               strlen(MSG_STREAM_HEADER) - numsent, 0);
-        check(newsent != -1, "Error sending stream header to client");
-        numsent += newsent;
-    } while (numsent < strlen(MSG_STREAM_HEADER));
+    check(sendall(info->fd, MSG_STREAM_HEADER, strlen(MSG_STREAM_HEADER)) > 0,
+          "Error sending stream header to client");
 
-    // Send the (plain) stream features
-    numsent = 0;
-    do {
-        ssize_t newsent = send(info->fd,
-                               MSG_STREAM_FEATURES_PLAIN + numsent,
-                               strlen(MSG_STREAM_FEATURES_PLAIN) - numsent, 0);
-        check(newsent != -1, "Error sending stream features to client");
-        numsent += newsent;
-    } while (numsent < strlen(MSG_STREAM_FEATURES_PLAIN));
+        // Send the (plain) stream features
+        check(sendall(info->fd, MSG_STREAM_FEATURES_PLAIN,
+                      strlen(MSG_STREAM_FEATURES_PLAIN)) > 0,
+              "Error sending plain stream features to client");
+        XML_SetElementHandler(info->parser, auth_plain_start, auth_plain_end);
+        XML_SetCharacterDataHandler(info->parser, auth_plain_data);
 
     log_info("Sent stream features to client");
 
