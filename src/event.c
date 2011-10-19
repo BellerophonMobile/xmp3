@@ -56,9 +56,6 @@ struct event_loop* event_new_loop(void) {
     LIST_INIT(&loop->list_head);
 
     return loop;
-
-error:
-    return NULL;
 }
 
 void event_del_loop(struct event_loop *loop) {
@@ -86,10 +83,6 @@ void event_register_callback(struct event_loop *loop, int fd,
     if (fd + 1 > loop->nfds) {
         loop->nfds = fd + 1;
     }
-
-error:
-    // TODO: Make this return a bool or something.
-    return;
 }
 
 void event_deregister_callback(struct event_loop *loop, int fd) {
