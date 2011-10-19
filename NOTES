@@ -1,0 +1,8 @@
+* Maybe use SASL library?
+    * http://www.cyrusimap.org/docs/cyrus-sasl
+
+* Make sure to send proper error codes that the spec says.
+* Make sure to work with unicode strings.
+* Normalize all Unicode strings received.
+* Possibly try to recover from out of memory?
+* Clean up header includes
