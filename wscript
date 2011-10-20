@@ -8,8 +8,8 @@
 import waflib
 
 # So you don't need to do ./waf configure if you are just using the defaults
-
 waflib.Configure.autoconfig = True
+
 def options(opt):
     opt.load('compiler_c')
 
@@ -19,6 +19,11 @@ def configure(conf):
 
     conf.env.CFLAGS += ['-std=gnu99', '-Wall']
     conf.env.CFLAGS += ['-O0', '-ggdb']
+
+    # Check out https://github.com/android/platform_external_expat
+    # And grab libexpat.so from an android phone.
+    #conf.env.INCLUDES += ['extern/expat_android/lib']
+    #conf.env.LIBPATH += ['../extern/expat_android/lib']
 
 def build(bld):
     bld.program(
