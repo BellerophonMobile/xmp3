@@ -22,7 +22,7 @@
 #include "event.h"
 
 #include "xmpp_common.h"
-#include "xmpp_auth.h"
+#include "xmpp_core.h"
 
 #define BUFFER_SIZE 2000
 
@@ -102,7 +102,7 @@ static void new_connection(struct event_loop *loop, int fd, void *data) {
     info->fd = accept(fd, (struct sockaddr*)&info->caddr, &addrlen);
     check(info->fd != -1, "Error accepting client connection");
 
-    xmpp_auth_set_handlers(info->parser);
+    xmpp_core_set_handlers(info->parser);
     XML_SetUserData(info->parser, info);
 
     log_info("New connection from %s:%d", inet_ntoa(info->caddr.sin_addr),

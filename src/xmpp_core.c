@@ -1,10 +1,10 @@
 /**
  * xmp3 - XMPP Proxy
- * xmpp_auth.{c,h} - Implements the initial client authentication.
+ * xmpp_core.{c,h} - Implement RFC6121 XMPP-CORE functions.
  * Copyright (c) 2011 Drexel University
  */
 
-#include "xmpp_auth.h"
+#include "xmpp_core.h"
 
 #include <string.h>
 #include <unistd.h>
@@ -121,7 +121,7 @@ static void bind_resource_start(void *data, const char *name,
 static void bind_resource_data(void *data, const char *s, int len);
 static void bind_resource_end(void *data, const char *name);
 
-void xmpp_auth_set_handlers(XML_Parser parser) {
+void xmpp_core_set_handlers(XML_Parser parser) {
     XML_SetElementHandler(parser, stream_start, xmpp_error_end);
     XML_SetCharacterDataHandler(parser, xmpp_error_data);
 }
