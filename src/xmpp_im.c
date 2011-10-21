@@ -15,6 +15,11 @@
 // Forward declarations
 static void msg_start(void *data, const char *name, const char **attrs);
 
+// Presence messages
+static void handle_presence(struct client_info *info, const char **attrs);
+
+// Messages
+static void handle_message(struct client_info *info, const char **attrs);
 
 void xmpp_im_set_handlers(XML_Parser parser) {
     XML_SetElementHandler(parser, msg_start, xmpp_error_end);
@@ -29,6 +34,10 @@ static void msg_start(void *data, const char *name, const char **attrs) {
 
     if (strcmp(name, XMPP_IQ) == 0) {
         xmpp_im_iq_handle(info, attrs);
+    } else if (strcmp(name, XMPP_PRESENCE) == 0) {
+        handle_presence(info, attrs);
+    } else if (strcmp(name, XMPP_MESSAGE) == 0) {
+        handle_message(info, attrs);
     } else {
         sentinel("Unexpected XMPP message type.");
     }
@@ -38,5 +47,10 @@ error:
     XML_StopParser(info->parser, false);
 }
 
+static void handle_presence(struct client_info *info, const char **attrs) {
+    log_info("Got Presence msg");
+}
 
+static void handle_message(struct client_info *info, const char **attrs) {
+    log_info("Got Message");
 }
