@@ -8,6 +8,12 @@
 
 #include <stdio.h>
 
+/* This should probably go in the utils module, if I use it outside of here,
+ * I will. */
+#define ALLOC_COPY_STRING(a, b) a = calloc(strlen(b) + 1, sizeof(char)); \
+                                check_mem(a); \
+                                strcpy(a, b)
+
 #define NS_STREAM "http://etherx.jabber.org/streams"
 #define NS_SASL "urn:ietf:params:xml:ns:xmpp-sasl"
 #define NS_BIND "urn:ietf:params:xml:ns:xmpp-bind"
@@ -87,4 +93,26 @@ void xmpp_error_data(void *data, const char *s, int len) {
     log_err("Unexpected data");
     xmpp_print_data(s, len);
     XML_StopParser(info->parser, false);
+}
+
+void xmpp_handle_common_attrs(struct common_attrs *common_attrs,
+                                 const char **attrs) {
+    for (int i = 0; attrs[i] != NULL; i += 2) {
+        if (strcmp(attrs[i], XMPP_ATTR_ID) == 0) {
+            ALLOC_COPY_STRING(common_attrs->id, attrs[i + 1]);
+        } else if (strcmp(attrs[i], XMPP_ATTR_TO) == 0) {
+            ALLOC_COPY_STRING(common_attrs->to, attrs[i + 1]);
+        } else if (strcmp(attrs[i], XMPP_ATTR_FROM) == 0) {
+            ALLOC_COPY_STRING(common_attrs->from, attrs[i + 1]);
+        } else if (strcmp(attrs[i], XMPP_ATTR_TYPE) == 0) {
+            ALLOC_COPY_STRING(common_attrs->type, attrs[i + 1]);
+        }
+    }
+}
+
+void xmpp_del_common_attrs(struct common_attrs *common_attrs) {
+    free(common_attrs->id);
+    free(common_attrs->to);
+    free(common_attrs->from);
+    free(common_attrs->type);
 }

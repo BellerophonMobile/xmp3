@@ -59,6 +59,13 @@ struct client_info {
     struct jid jid;
 };
 
+struct common_attrs {
+    char *id;
+    char *to;
+    char *from;
+    char *type;
+};
+
 /** Print out an XML start element and its attributes */
 void xmpp_print_start_tag(const char *name, const char **attrs);
 
@@ -76,3 +83,8 @@ void xmpp_error_end(void *data, const char *name);
 
 /** Expat callback for when you do not expect XML data. */
 void xmpp_error_data(void *data, const char *s, int len);
+
+void xmpp_handle_common_attrs(struct common_attrs *common_attrs,
+                              const char **attrs);
+
+void xmpp_del_common_attrs(struct common_attrs *common_attrs);
