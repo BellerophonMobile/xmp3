@@ -10,6 +10,7 @@
 
 #include "log.h"
 #include "xmpp_common.h"
+#include "xmpp_im_iq.h"
 
 // Forward declarations
 static void msg_start(void *data, const char *name, const char **attrs);
@@ -26,7 +27,15 @@ static void msg_start(void *data, const char *name, const char **attrs) {
     log_info("Message start");
     xmpp_print_start_tag(name, attrs);
 
+    if (strcmp(name, XMPP_IQ) == 0) {
+        xmpp_im_iq_handle(info, attrs);
+    } else {
+        sentinel("Unexpected XMPP message type.");
+    }
+    return;
 
+error:
+    XML_StopParser(info->parser, false);
 }
 
 
