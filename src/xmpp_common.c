@@ -12,11 +12,17 @@
 #define NS_SASL "urn:ietf:params:xml:ns:xmpp-sasl"
 #define NS_BIND "urn:ietf:params:xml:ns:xmpp-bind"
 #define NS_CLIENT "jabber:client"
+#define NS_SESSION "urn:ietf:params:xml:ns:xmpp-session"
+#define NS_DISCO_INFO "http://jabber.org/protocol/disco#info"
+#define NS_DISCO_ITEMS "http://jabber.org/protocol/disco#items"
 
 const char *XMPP_NS_STREAM = NS_STREAM;
 const char *XMPP_NS_SASL = NS_SASL;
 const char *XMPP_NS_BIND = NS_BIND;
 const char *XMPP_NS_CLIENT = NS_CLIENT;
+const char *XMPP_NS_SESSION = NS_SESSION;
+const char *XMPP_NS_DISCO_INFO = NS_DISCO_INFO;
+const char *XMPP_NS_DISCO_ITEMS = NS_DISCO_ITEMS;
 
 const char *XMPP_STREAM = NS_STREAM " stream";
 const char *XMPP_AUTH = NS_SASL " auth";
@@ -26,6 +32,9 @@ const char *XMPP_BIND_RESOURCE = NS_BIND " resource";
 const char *XMPP_MESSAGE = NS_CLIENT " message";
 const char *XMPP_PRESENCE = NS_CLIENT " presence";
 const char *XMPP_IQ = NS_CLIENT " iq";
+const char *XMPP_IQ_SESSION = NS_SESSION " session";
+const char *XMPP_IQ_QUERY_INFO = NS_DISCO_INFO " query";
+const char *XMPP_IQ_QUERY_ITEMS = NS_DISCO_ITEMS " query";
 
 const char *XMPP_ATTR_TO = "to";
 const char *XMPP_ATTR_FROM = "from";

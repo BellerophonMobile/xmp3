@@ -19,6 +19,9 @@ const char *XMPP_NS_STREAM;
 const char *XMPP_NS_SASL;
 const char *XMPP_NS_BIND;
 const char *XMPP_NS_CLIENT;
+const char *XMPP_NS_SESSION;
+const char *XMPP_NS_DISCO_INFO;
+const char *XMPP_NS_DISCO_ITEMS;
 
 const char *XMPP_STREAM;
 const char *XMPP_AUTH;
@@ -28,6 +31,9 @@ const char *XMPP_BIND_RESOURCE;
 const char *XMPP_MESSAGE;
 const char *XMPP_PRESENCE;
 const char *XMPP_IQ;
+const char *XMPP_IQ_SESSION;
+const char *XMPP_IQ_QUERY_INFO;
+const char *XMPP_IQ_QUERY_ITEMS;
 
 const char *XMPP_ATTR_TO;
 const char *XMPP_ATTR_FROM;
