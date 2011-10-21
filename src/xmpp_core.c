@@ -20,11 +20,6 @@
 #include "xmpp_common.h"
 #include "xmpp_im.h"
 
-#define XMLNS_STREAM "http://etherx.jabber.org/streams"
-#define XMLNS_SASL "urn:ietf:params:xml:ns:xmpp-sasl"
-#define XMLNS_BIND "urn:ietf:params:xml:ns:xmpp-bind"
-#define XMLNS_CLIENT "jabber:client"
-
 // authzid, authcid, passed can be 255 octets, plus 2 NULLs inbetween
 #define PLAIN_AUTH_BUFFER_SIZE 3 * 255 + 2
 
@@ -34,18 +29,9 @@
 // Maximum size of the "resourcepart" in resource binding
 #define RESOURCEPART_BUFFER_SIZE 1024
 
-static const char *XML_STREAM = XMLNS_STREAM " stream";
-static const char *XML_AUTH = XMLNS_SASL " auth";
-static const char *XML_IQ = XMLNS_CLIENT " iq";
-static const char *XML_BIND = XMLNS_BIND " bind";
-static const char *XML_BIND_RESOURCE = XMLNS_BIND " resource";
-
-static const char *XML_AUTH_MECHANISM = "mechanism";
-static const char *XML_AUTH_MECHANISM_PLAIN = "PLAIN";
-
-static const char *XML_IQ_ID = "id";
-static const char *XML_IQ_TYPE = "type";
-static const char *XML_IQ_TYPE_SET = "set";
+// XML string constants
+static const char *XMPP_AUTH_MECHANISM = "mechanism";
+static const char *XMPP_AUTH_MECHANISM_PLAIN = "PLAIN";
 
 /* TODO: Technically, the id field should be unique per stream on the server,
  * but it doesn't seem to reall matter. */
@@ -77,6 +63,7 @@ static const char *MSG_STREAM_FEATURES_PLAIN =
 static const char *MSG_STREAM_FEATURES_BIND =
     "<stream:features>"
         "<bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'/>"
+        "<session xmlns='urn:ietf:params:xml:ns:xmpp-session'/>"
     "</stream:features>";
 
 static const char *MSG_SASL_SUCCESS =
@@ -89,6 +76,7 @@ static const char *MSG_BIND_SUCCESS =
         "</bind>"
     "</iq>";
 
+// Temporary structures
 struct auth_plain_data {
     struct client_info *info;
     struct base64_decodestate state;
@@ -133,7 +121,7 @@ static void stream_start(void *data, const char *name, const char **attrs) {
     xmpp_print_start_tag(name, attrs);
 
     // name and attrs are guaranteed to be null terminated, so strcmp is OK.
-    check(strcmp(name, XML_STREAM) == 0, "Unexpected message");
+    check(strcmp(name, XMPP_STREAM) == 0, "Unexpected message");
 
     // Send the stream header
     check(sendall(info->fd, MSG_STREAM_HEADER, strlen(MSG_STREAM_HEADER)) > 0,
@@ -168,12 +156,12 @@ static void auth_plain_start(void *data, const char *name, const char **attrs)
     log_info("Starting SASL plain...");
     xmpp_print_start_tag(name, attrs);
 
-    check(strcmp(name, XML_AUTH) == 0, "Unexpected message");
+    check(strcmp(name, XMPP_AUTH) == 0, "Unexpected message");
 
     int i;
     for (i = 0; attrs[i] != NULL; i += 2) {
-        if (strcmp(attrs[i], XML_AUTH_MECHANISM) == 0) {
-            check(strcmp(attrs[i + 1], XML_AUTH_MECHANISM_PLAIN) == 0,
+        if (strcmp(attrs[i], XMPP_AUTH_MECHANISM) == 0) {
+            check(strcmp(attrs[i + 1], XMPP_AUTH_MECHANISM_PLAIN) == 0,
                   "Unexpected authentication mechanism");
             break;
         }
@@ -224,7 +212,7 @@ static void auth_plain_end(void *data, const char *name) {
     log_info("SASL end tag");
     xmpp_print_end_tag(name);
 
-    check(strcmp(name, XML_AUTH) == 0, "Unexpected message");
+    check(strcmp(name, XMPP_AUTH) == 0, "Unexpected message");
 
     char *authzid = auth_data->plaintext;
     char *authcid = memchr(authzid, '\0', PLAIN_AUTH_BUFFER_SIZE) + 1;
@@ -271,12 +259,12 @@ static void bind_iq_start(void *data, const char *name, const char **attrs) {
     log_info("Start resource binding IQ");
     xmpp_print_start_tag(name, attrs);
 
-    check(strcmp(name, XML_IQ) == 0, "Unexpected message");
+    check(strcmp(name, XMPP_IQ) == 0, "Unexpected message");
 
     int i;
     for (i = 0; attrs[i] != NULL; i += 2) {
-        if (strcmp(attrs[i], XML_IQ_TYPE) == 0) {
-            check(strcmp(attrs[i + 1], XML_IQ_TYPE_SET) == 0,
+        if (strcmp(attrs[i], XMPP_ATTR_TYPE) == 0) {
+            check(strcmp(attrs[i + 1], XMPP_ATTR_TYPE_SET) == 0,
                     "IQ type must be \"set\"");
             break;
         }
@@ -289,7 +277,7 @@ static void bind_iq_start(void *data, const char *name, const char **attrs) {
     bind_data->info = info;
 
     for (i = 0; attrs[i] != NULL; i += 2) {
-        if (strcmp(attrs[i], XML_IQ_ID) == 0) {
+        if (strcmp(attrs[i], XMPP_ATTR_ID) == 0) {
             strcpy(bind_data->id, attrs[i+1]);
             break;
         }
@@ -316,7 +304,7 @@ static void bind_iq_end(void *data, const char *name) {
 
     log_info("Bind IQ end");
     xmpp_print_end_tag(name);
-    check(strcmp(name, XML_IQ) == 0, "Unexpected message");
+    check(strcmp(name, XMPP_IQ) == 0, "Unexpected message");
 
     snprintf(success_msg, sizeof(success_msg), MSG_BIND_SUCCESS,
              bind_data->id, info->jid.local, info->jid.resource);
@@ -345,7 +333,7 @@ static void bind_start(void *data, const char *name, const char **attrs) {
     log_info("Start bind");
     xmpp_print_start_tag(name, attrs);
 
-    check(strcmp(name, XML_BIND) == 0, "Unexpected message");
+    check(strcmp(name, XMPP_BIND) == 0, "Unexpected message");
     XML_SetElementHandler(info->parser, bind_resource_start,
                           bind_resource_end);
     XML_SetCharacterDataHandler(info->parser, bind_resource_data);
@@ -361,7 +349,7 @@ static void bind_end(void *data, const char *name) {
     struct resource_bind_data *bind_data = (struct resource_bind_data*)data;
     struct client_info *info = bind_data->info;
 
-    check(strcmp(name, XML_BIND) == 0, "Unexpected message");
+    check(strcmp(name, XMPP_BIND) == 0, "Unexpected message");
     XML_SetElementHandler(info->parser, xmpp_error_start, bind_iq_end);
     return;
 
@@ -379,7 +367,7 @@ static void bind_resource_start(void *data, const char *name,
     log_info("Start bind resource");
     xmpp_print_start_tag(name, attrs);
 
-    check(strcmp(name, XML_BIND_RESOURCE) == 0, "Unexpected message");
+    check(strcmp(name, XMPP_BIND_RESOURCE) == 0, "Unexpected message");
     return;
 
 error:
@@ -409,7 +397,7 @@ static void bind_resource_end(void *data, const char *name) {
     struct resource_bind_data *bind_data = (struct resource_bind_data*)data;
     struct client_info *info = bind_data->info;
 
-    check(strcmp(name, XML_BIND_RESOURCE) == 0, "Unexpected message");
+    check(strcmp(name, XMPP_BIND_RESOURCE) == 0, "Unexpected message");
 
     // Copy the resource into the client information structure
     info->jid.resource = calloc(strlen(bind_data->resource) + 1,

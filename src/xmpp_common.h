@@ -14,6 +14,31 @@
 
 #include "log.h"
 
+// XML string constants
+const char *XMPP_NS_STREAM;
+const char *XMPP_NS_SASL;
+const char *XMPP_NS_BIND;
+const char *XMPP_NS_CLIENT;
+
+const char *XMPP_STREAM;
+const char *XMPP_AUTH;
+const char *XMPP_BIND;
+const char *XMPP_BIND_RESOURCE;
+
+const char *XMPP_MESSAGE;
+const char *XMPP_PRESENCE;
+const char *XMPP_IQ;
+
+const char *XMPP_ATTR_TO;
+const char *XMPP_ATTR_FROM;
+const char *XMPP_ATTR_ID;
+const char *XMPP_ATTR_TYPE;
+const char *XMPP_ATTR_TYPE_GET;
+const char *XMPP_ATTR_TYPE_SET;
+const char *XMPP_ATTR_TYPE_RESULT;
+const char *XMPP_ATTR_TYPE_ERROR;
+
+// Client data structures
 struct jid {
     char *local;
     // domainpart is just "localhost"
