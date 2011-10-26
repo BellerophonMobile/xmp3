@@ -121,7 +121,7 @@ static void stream_start(void *data, const char *name, const char **attrs) {
     xmpp_print_start_tag(name, attrs);
 
     // name and attrs are guaranteed to be null terminated, so strcmp is OK.
-    check(strcmp(name, XMPP_STREAM) == 0, "Unexpected message");
+    check(strcmp(name, XMPP_STREAM) == 0, "Unexpected stanza");
 
     // Send the stream header
     check(sendall(info->fd, MSG_STREAM_HEADER, strlen(MSG_STREAM_HEADER)) > 0,
@@ -156,7 +156,7 @@ static void auth_plain_start(void *data, const char *name, const char **attrs)
     log_info("Starting SASL plain...");
     xmpp_print_start_tag(name, attrs);
 
-    check(strcmp(name, XMPP_AUTH) == 0, "Unexpected message");
+    check(strcmp(name, XMPP_AUTH) == 0, "Unexpected stanza");
 
     int i;
     for (i = 0; attrs[i] != NULL; i += 2) {
@@ -212,7 +212,7 @@ static void auth_plain_end(void *data, const char *name) {
     log_info("SASL end tag");
     xmpp_print_end_tag(name);
 
-    check(strcmp(name, XMPP_AUTH) == 0, "Unexpected message");
+    check(strcmp(name, XMPP_AUTH) == 0, "Unexpected stanza");
 
     char *authzid = auth_data->plaintext;
     char *authcid = memchr(authzid, '\0', PLAIN_AUTH_BUFFER_SIZE) + 1;
@@ -259,7 +259,7 @@ static void bind_iq_start(void *data, const char *name, const char **attrs) {
     log_info("Start resource binding IQ");
     xmpp_print_start_tag(name, attrs);
 
-    check(strcmp(name, XMPP_IQ) == 0, "Unexpected message");
+    check(strcmp(name, XMPP_IQ) == 0, "Unexpected stanza");
 
     int i;
     for (i = 0; attrs[i] != NULL; i += 2) {
@@ -304,7 +304,7 @@ static void bind_iq_end(void *data, const char *name) {
 
     log_info("Bind IQ end");
     xmpp_print_end_tag(name);
-    check(strcmp(name, XMPP_IQ) == 0, "Unexpected message");
+    check(strcmp(name, XMPP_IQ) == 0, "Unexpected stanza");
 
     snprintf(success_msg, sizeof(success_msg), MSG_BIND_SUCCESS,
              bind_data->id, info->jid.local, info->jid.resource);
@@ -333,7 +333,7 @@ static void bind_start(void *data, const char *name, const char **attrs) {
     log_info("Start bind");
     xmpp_print_start_tag(name, attrs);
 
-    check(strcmp(name, XMPP_BIND) == 0, "Unexpected message");
+    check(strcmp(name, XMPP_BIND) == 0, "Unexpected stanza");
     XML_SetElementHandler(info->parser, bind_resource_start,
                           bind_resource_end);
     XML_SetCharacterDataHandler(info->parser, bind_resource_data);
@@ -349,7 +349,7 @@ static void bind_end(void *data, const char *name) {
     struct resource_bind_data *bind_data = (struct resource_bind_data*)data;
     struct client_info *info = bind_data->info;
 
-    check(strcmp(name, XMPP_BIND) == 0, "Unexpected message");
+    check(strcmp(name, XMPP_BIND) == 0, "Unexpected stanza");
     XML_SetElementHandler(info->parser, xmpp_error_start, bind_iq_end);
     return;
 
@@ -367,7 +367,7 @@ static void bind_resource_start(void *data, const char *name,
     log_info("Start bind resource");
     xmpp_print_start_tag(name, attrs);
 
-    check(strcmp(name, XMPP_BIND_RESOURCE) == 0, "Unexpected message");
+    check(strcmp(name, XMPP_BIND_RESOURCE) == 0, "Unexpected stanza");
     return;
 
 error:
@@ -397,7 +397,7 @@ static void bind_resource_end(void *data, const char *name) {
     struct resource_bind_data *bind_data = (struct resource_bind_data*)data;
     struct client_info *info = bind_data->info;
 
-    check(strcmp(name, XMPP_BIND_RESOURCE) == 0, "Unexpected message");
+    check(strcmp(name, XMPP_BIND_RESOURCE) == 0, "Unexpected stanza");
 
     // Copy the resource into the client information structure
     info->jid.resource = calloc(strlen(bind_data->resource) + 1,
