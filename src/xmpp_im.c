@@ -11,7 +11,6 @@
 #include "log.h"
 #include "utils.h"
 #include "xmpp_common.h"
-#include "xep_disco.h"
 
 struct xep_namespaces {
     const char *namespace;
@@ -47,8 +46,6 @@ static void iq_error(struct iq_data *iq_data, const char **attrs);
 
 static struct xep_namespaces NAMESPACES[] = {
     {XMPP_NS_SESSION, message_error, presence_error, iq_session},
-    {XMPP_NS_DISCO_INFO, message_error, presence_error, disco_query_info},
-    {XMPP_NS_DISCO_ITEMS, message_error, presence_error, disco_query_items},
 };
 
 void xmpp_im_set_handlers(XML_Parser parser) {

@@ -32,7 +32,6 @@ def build(bld):
             'src/event.c',
             'src/main.c',
             'src/utils.c',
-            'src/xep_disco.c',
             'src/xmpp.c',
             'src/xmpp_common.c',
             'src/xmpp_core.c',
