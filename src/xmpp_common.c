@@ -19,6 +19,7 @@ const char *XMPP_IQ = XMPP_NS_CLIENT " iq";
 const char *XMPP_IQ_SESSION = XMPP_NS_SESSION " session";
 const char *XMPP_IQ_QUERY_INFO = XMPP_NS_DISCO_INFO " query";
 const char *XMPP_IQ_QUERY_ITEMS = XMPP_NS_DISCO_ITEMS " query";
+const char *XMPP_IQ_QUERY_ROSTER = XMPP_NS_ROSTER " query";
 
 const char *XMPP_ATTR_TO = "to";
 const char *XMPP_ATTR_FROM = "from";

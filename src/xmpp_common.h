@@ -22,6 +22,7 @@
 #define XMPP_NS_SESSION "urn:ietf:params:xml:ns:xmpp-session"
 #define XMPP_NS_DISCO_INFO "http://jabber.org/protocol/disco#info"
 #define XMPP_NS_DISCO_ITEMS "http://jabber.org/protocol/disco#items"
+#define XMPP_NS_ROSTER "jabber:iq:roster"
 
 const char *XMPP_STREAM;
 const char *XMPP_AUTH;
@@ -34,6 +35,7 @@ const char *XMPP_IQ;
 const char *XMPP_IQ_SESSION;
 const char *XMPP_IQ_QUERY_INFO;
 const char *XMPP_IQ_QUERY_ITEMS;
+const char *XMPP_IQ_QUERY_ROSTER;
 
 const char *XMPP_ATTR_TO;
 const char *XMPP_ATTR_FROM;

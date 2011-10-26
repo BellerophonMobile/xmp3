@@ -31,6 +31,12 @@ static const char *MSG_NOT_IMPLEMENTED =
 static const char *MSG_STREAM_SUCCESS =
     "<iq from='localhost' type='result' id='%s'/>";
 
+static const char *MSG_ROSTER =
+    "<iq id='%s' type='result'>"
+        "<query xmlns='jabber:iq:roster'>"
+        "</query>"
+    "</iq>";
+
 // Forward declarations
 static void stanza_start(void *data, const char *name, const char **attrs);
 static void stanza_end(void *data, const char *name);
@@ -51,12 +57,16 @@ static bool iq_session(struct stanza_info *stanza_info, const char *name,
                        const char **attrs);
 static void iq_session_end(void *data, const char *name);
 
+static bool iq_roster_query(struct stanza_info *stanza_info, const char *name,
+                            const char **attrs);
+static void iq_roster_query_end(void *data, const char *name);
 
 static struct xep_namespaces {
     const char *namespace;
     xmpp_stanza_handler handler;
 } NAMESPACES[] = {
     {XMPP_NS_SESSION, iq_session},
+    {XMPP_NS_ROSTER, iq_roster_query},
 };
 
 void xmpp_im_set_handlers(XML_Parser parser) {
@@ -238,6 +248,54 @@ static void iq_session_end(void *data, const char *name) {
     check(sendall(info->fd, msg, strlen(msg)) > 0,
           "Error sending stream success message");
 
+    XML_SetEndElementHandler(info->parser, stanza_end);
+    return;
+
+error:
+    /* TODO: Get rid of this error label.  We shouldn't stop the whole client
+     * connection unless there is something really really wrong.  This also
+     * will leak memory. */
+    XML_StopParser(info->parser, false);
+}
+
+static bool iq_roster_query(struct stanza_info *stanza_info, const char *name,
+                            const char **attrs) {
+    struct client_info *info = stanza_info->info;
+
+    if (strcmp(stanza_info->name, XMPP_IQ) != 0) {
+        return false;
+    }
+
+    log_info("Roster Query IQ Start");
+
+    check(strcmp(name, XMPP_IQ_QUERY_ROSTER) == 0, "Unexpected stanza");
+    check(strcmp(stanza_info->type, XMPP_ATTR_TYPE_GET) == 0,
+          "Session IQ type must be \"set\"");
+
+    XML_SetEndElementHandler(info->parser, iq_roster_query_end);
+    return true;
+
+error:
+    /* TODO: Get rid of this error label.  We shouldn't stop the whole client
+     * connection unless there is something really really wrong.  This also
+     * will leak memory. */
+    XML_StopParser(info->parser, false);
+    return false;
+}
+
+static void iq_roster_query_end(void *data, const char *name) {
+    struct stanza_info *stanza_info = (struct stanza_info*)data;
+    struct client_info *info = stanza_info->info;
+
+    char msg[strlen(MSG_ROSTER) + strlen(stanza_info->id)];
+
+    log_info("Roster Query IQ End");
+    xmpp_print_end_tag(name);
+    check(strcmp(name, XMPP_IQ_QUERY_ROSTER) == 0, "Unexpected stanza");
+
+    snprintf(msg, sizeof(msg), MSG_ROSTER, stanza_info->id);
+    check(sendall(info->fd, msg, strlen(msg)) > 0,
+          "Error sending roster message");
 
     XML_SetEndElementHandler(info->parser, stanza_end);
     return;
