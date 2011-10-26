@@ -66,6 +66,32 @@ struct common_attrs {
     char *type;
 };
 
+struct message_data {
+    struct client_info *info;
+    struct common_attrs attrs;
+    XML_EndElementHandler end_handler;
+};
+
+struct presence_data {
+    struct client_info *info;
+    struct common_attrs attrs;
+    XML_EndElementHandler end_handler;
+};
+
+struct iq_data {
+    struct client_info *info;
+    struct common_attrs attrs;
+    XML_EndElementHandler end_handler;
+};
+
+// Callback function definitions
+typedef void (*xep_message_handler)(struct message_data *data,
+                                    const char *name, const char **attrs);
+typedef void (*xep_presence_handler)(struct presence_data *data,
+                                     const char *name, const char **attrs);
+typedef void (*xep_iq_handler)(struct iq_data *data, const char *name,
+                               const char **attrs);
+
 /** Print out an XML start element and its attributes */
 void xmpp_print_start_tag(const char *name, const char **attrs);
 
