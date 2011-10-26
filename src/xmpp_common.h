@@ -59,38 +59,19 @@ struct client_info {
     struct jid jid;
 };
 
-struct common_attrs {
+struct stanza_info {
+    struct client_info *info;
+    bool is_unhandled;
+    char *name;
     char *id;
     char *to;
     char *from;
     char *type;
 };
 
-struct message_data {
-    struct client_info *info;
-    struct common_attrs attrs;
-    XML_EndElementHandler end_handler;
-};
-
-struct presence_data {
-    struct client_info *info;
-    struct common_attrs attrs;
-    XML_EndElementHandler end_handler;
-};
-
-struct iq_data {
-    struct client_info *info;
-    struct common_attrs attrs;
-    XML_EndElementHandler end_handler;
-};
-
 // Callback function definitions
-typedef void (*xep_message_handler)(struct message_data *data,
+typedef bool (*xmpp_stanza_handler)(struct stanza_info *data,
                                     const char *name, const char **attrs);
-typedef void (*xep_presence_handler)(struct presence_data *data,
-                                     const char *name, const char **attrs);
-typedef void (*xep_iq_handler)(struct iq_data *data, const char *name,
-                               const char **attrs);
 
 /** Print out an XML start element and its attributes */
 void xmpp_print_start_tag(const char *name, const char **attrs);
@@ -109,8 +90,3 @@ void xmpp_error_end(void *data, const char *name);
 
 /** Expat callback for when you do not expect XML data. */
 void xmpp_error_data(void *data, const char *s, int len);
-
-void xmpp_handle_common_attrs(struct common_attrs *common_attrs,
-                              const char **attrs);
-
-void xmpp_del_common_attrs(struct common_attrs *common_attrs);
