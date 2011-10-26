@@ -207,6 +207,7 @@ static bool iq_session(struct stanza_info *stanza_info, const char *name,
 
     log_info("Session IQ Start");
 
+    check(strcmp(name, XMPP_IQ_SESSION) == 0, "Unexpected stanza");
     check(stanza_info->id != NULL, "Session IQ needs id attribute");
     check(strcmp(stanza_info->type, XMPP_ATTR_TYPE_SET) == 0,
           "Session IQ type must be \"set\"");
@@ -226,16 +227,17 @@ static void iq_session_end(void *data, const char *name) {
     struct stanza_info *stanza_info = (struct stanza_info*)data;
     struct client_info *info = stanza_info->info;
 
-    char stream_msg[strlen(MSG_STREAM_SUCCESS)
-                    + strlen(stanza_info->id)];
+    char msg[strlen(MSG_STREAM_SUCCESS) + strlen(stanza_info->id)];
 
     log_info("Session IQ End");
-    check(strcmp(name, XMPP_IQ_SESSION) == 0, "Unexpected IQ");
+    xmpp_print_end_tag(name);
 
-    snprintf(stream_msg, sizeof(stream_msg), MSG_STREAM_SUCCESS,
-             stanza_info->id);
-    check(sendall(info->fd, stream_msg, strlen(stream_msg)) > 0,
-          "Error sending stream success message.");
+    check(strcmp(name, XMPP_IQ_SESSION) == 0, "Unexpected stanza");
+
+    snprintf(msg, sizeof(msg), MSG_STREAM_SUCCESS, stanza_info->id);
+    check(sendall(info->fd, msg, strlen(msg)) > 0,
+          "Error sending stream success message");
+
 
     XML_SetEndElementHandler(info->parser, stanza_end);
     return;
