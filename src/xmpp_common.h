@@ -56,6 +56,7 @@ struct client_info {
     struct sockaddr_in caddr;
     XML_Parser parser;
     bool authenticated;
+    bool connected;
     struct jid jid;
 };
 
@@ -81,6 +82,8 @@ void xmpp_print_end_tag(const char *name);
 
 /** Print out a string of XML data */
 void xmpp_print_data(const char *s, int len);
+
+void xmpp_stream_end(void *data, const char *name);
 
 /** Expat callback for when you do not expect a start tag. */
 void xmpp_error_start(void *data, const char *name, const char **attrs);

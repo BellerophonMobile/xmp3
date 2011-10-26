@@ -50,6 +50,7 @@ static struct client_info* new_client_info() {
     check_mem(info);
 
     info->authenticated = false;
+    info->connected = true;
 
     // Create the XML parser we'll use to parse messages from the client.
     info->parser = XML_ParserCreateNS(NULL, ' ');
@@ -88,6 +89,12 @@ static void read_client(struct event_loop *loop, int fd, void *data) {
                                        false);
     check(status != XML_STATUS_ERROR, "Error parsing XML: %s",
           XML_ErrorString(XML_GetErrorCode(info->parser)));
+
+    if (!info->connected) {
+        XML_Parse(info->parser, NULL, 0, true);
+        goto error;
+    }
+
     return;
 
 error:
