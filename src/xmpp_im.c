@@ -45,11 +45,12 @@ static struct stanza_info* new_stanza_info(struct client_info *info,
 
 static void del_stanza_info(struct stanza_info *stanza_info);
 
+static void send_not_supported(struct stanza_info *stanza_info);
+
 static bool iq_session(struct stanza_info *stanza_info, const char *name,
                        const char **attrs);
 static void iq_session_end(void *data, const char *name);
 
-static void send_not_supported(struct stanza_info *stanza_info);
 
 static struct xep_namespaces {
     const char *namespace;
@@ -167,6 +168,35 @@ static void del_stanza_info(struct stanza_info *stanza_info) {
     free(stanza_info);
 }
 
+static void send_not_supported(struct stanza_info *stanza_info) {
+    struct client_info *info = stanza_info->info;
+    char tag_name_buffer[strlen(stanza_info->name)];
+    strcpy(tag_name_buffer, stanza_info->name);
+
+    char *tag_name = tag_name_buffer;
+    char *tag_ns = strsep(&tag_name, " ");
+
+    char err_msg[strlen(MSG_NOT_IMPLEMENTED)
+                 + strlen(tag_name)
+                 + strlen(tag_ns)
+                 + strlen(stanza_info->id)
+                 + strlen(info->jid.local)
+                 + strlen(info->jid.resource)
+                 ];
+
+    log_warn("Unimplemented stanza");
+
+    snprintf(err_msg, sizeof(err_msg), MSG_NOT_IMPLEMENTED,
+             tag_name, tag_ns, stanza_info->id, info->jid.local,
+             info->jid.resource);
+    check(sendall(info->fd, err_msg, strlen(err_msg)) > 0,
+          "Error sending not supported error items");
+    return;
+
+error:
+    XML_StopParser(info->parser, false);
+}
+
 static bool iq_session(struct stanza_info *stanza_info, const char *name,
                        const char **attrs) {
     struct client_info *info = stanza_info->info;
@@ -214,34 +244,5 @@ error:
     /* TODO: Get rid of this error label.  We shouldn't stop the whole client
      * connection unless there is something really really wrong.  This also
      * will leak memory. */
-    XML_StopParser(info->parser, false);
-}
-
-static void send_not_supported(struct stanza_info *stanza_info) {
-    struct client_info *info = stanza_info->info;
-    char tag_name_buffer[strlen(stanza_info->name)];
-    strcpy(tag_name_buffer, stanza_info->name);
-
-    char *tag_name = tag_name_buffer;
-    char *tag_ns = strsep(&tag_name, " ");
-
-    char err_msg[strlen(MSG_NOT_IMPLEMENTED)
-                 + strlen(tag_name)
-                 + strlen(tag_ns)
-                 + strlen(stanza_info->id)
-                 + strlen(info->jid.local)
-                 + strlen(info->jid.resource)
-                 ];
-
-    log_warn("Unimplemented stanza");
-
-    snprintf(err_msg, sizeof(err_msg), MSG_NOT_IMPLEMENTED,
-             tag_name, tag_ns, stanza_info->id, info->jid.local,
-             info->jid.resource);
-    check(sendall(info->fd, err_msg, strlen(err_msg)) > 0,
-          "Error sending not supported error items");
-    return;
-
-error:
     XML_StopParser(info->parser, false);
 }
