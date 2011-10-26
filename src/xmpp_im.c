@@ -13,32 +13,53 @@
 #include "xmpp_common.h"
 #include "xep_disco.h"
 
+struct xep_namespaces {
+    const char *namespace;
+    xep_message_handler message_handler;
+    xep_presence_handler presence_handler;
+    xep_iq_handler iq_handler;
+};
+
 // XML String constants
 static const char *MSG_STREAM_SUCCESS =
     "<iq from='localhost' type='result' id='%s'/>";
 
 // Forward declarations
-static void msg_start(void *data, const char *name, const char **attrs);
+static void stanza_start(void *data, const char *name, const char **attrs);
 
 // IQ Stanzas
 static void handle_iq(struct client_info *info, const char **attrs);
 static void iq_start(void *data, const char *name, const char **attrs);
 static void iq_end(void *data, const char *name);
-static void handle_iq_session(struct iq_data *iq_data, const char **attrs);
+
+static void iq_session(struct iq_data *iq_data, const char *name,
+                       const char **attrs);
 static void iq_session_end(void *data, const char *name);
 
 static void handle_presence(struct client_info *info, const char **attrs);
 static void handle_message(struct client_info *info, const char **attrs);
 
+static void message_error(struct message_data *iq_data, const char *name,
+                          const char **attrs);
+static void presence_error(struct presence_data *iq_data, const char *name,
+                           const char **attrs);
+static void iq_error(struct iq_data *iq_data, const char **attrs);
+
+static struct xep_namespaces NAMESPACES[] = {
+    {XMPP_NS_SESSION, message_error, presence_error, iq_session},
+    {XMPP_NS_DISCO_INFO, message_error, presence_error, disco_query_info},
+    {XMPP_NS_DISCO_ITEMS, message_error, presence_error, disco_query_items},
+};
+
 void xmpp_im_set_handlers(XML_Parser parser) {
-    XML_SetElementHandler(parser, msg_start, xmpp_error_end);
+    XML_SetElementHandler(parser, stanza_start, xmpp_error_end);
     XML_SetCharacterDataHandler(parser, xmpp_error_data);
 }
 
-static void msg_start(void *data, const char *name, const char **attrs) {
+static void stanza_start(void *data, const char *name, const char **attrs) {
     struct client_info *info = (struct client_info*)data;
 
-    log_info("Message start");
+    log_info("Stanza start");
     xmpp_print_start_tag(name, attrs);
 
     if (strcmp(name, XMPP_IQ) == 0) {
@@ -48,7 +69,7 @@ static void msg_start(void *data, const char *name, const char **attrs) {
     } else if (strcmp(name, XMPP_MESSAGE) == 0) {
         handle_message(info, attrs);
     } else {
-        sentinel("Unexpected XMPP message type.");
+        sentinel("Unexpected XMPP stanza type.");
     }
     return;
 
@@ -77,13 +98,18 @@ static void iq_start(void *data, const char *name, const char **attrs) {
     log_info("IQ Start");
     xmpp_print_start_tag(name, attrs);
 
-    if (strcmp(name, XMPP_IQ_SESSION) == 0) {
-        handle_iq_session(iq_data, attrs);
-    } else if (strcmp(name, XMPP_IQ_QUERY_INFO) == 0) {
-        disco_handle_query_info(iq_data, attrs);
-    } else if (strcmp(name, XMPP_IQ_QUERY_ITEMS) == 0) {
-        disco_handle_query_items(iq_data, attrs);
-    } else {
+    int i;
+    for (i = 0; i < sizeof(NAMESPACES) / sizeof(struct xep_namespaces); i++) {
+        /* name is "namespace tag_name", a space inbetween.  We only want to
+         * compare namespaces. */
+        int ns_len = strchr(name, ' ') - name;
+        if (strncmp(name, NAMESPACES[i].namespace, ns_len) == 0) {
+            NAMESPACES[i].iq_handler(iq_data, name, attrs);
+            break;
+        }
+    }
+
+    if (i == sizeof(NAMESPACES)) {
         sentinel("Unexpected XMPP IQ type.");
     }
     return;
@@ -115,7 +141,8 @@ error:
     XML_StopParser(info->parser, false);
 }
 
-static void handle_iq_session(struct iq_data *iq_data, const char **attrs) {
+static void iq_session(struct iq_data *iq_data, const char *name,
+                                                const char **attrs) {
     struct client_info *info = iq_data->info;
 
     log_info("Session IQ Start");
@@ -161,4 +188,18 @@ static void handle_presence(struct client_info *info, const char **attrs) {
 
 static void handle_message(struct client_info *info, const char **attrs) {
     log_info("Got Message");
+}
+
+static void message_error(struct message_data *iq_data, const char *name,
+                          const char **attrs) {
+    log_err("Unexpected message stanza");
+}
+
+static void presence_error(struct presence_data *iq_data, const char *name,
+                           const char **attrs) {
+    log_err("Unexpected presence stanza");
+}
+
+static void iq_error(struct iq_data *iq_data, const char **attrs) {
+    log_err("Unexpected iq stanza");
 }

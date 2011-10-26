@@ -18,7 +18,8 @@ static void query_info_end(void *data, const char *name);
 
 static void query_items_end(void *data, const char *name);
 
-void disco_handle_query_info(struct iq_data *iq_data, const char **attrs) {
+void disco_query_info(struct iq_data *iq_data, const char *name,
+                      const char **attrs) {
     struct client_info *info = iq_data->info;
 
     log_info("Info Query IQ Start");
@@ -50,7 +51,8 @@ error:
     XML_StopParser(info->parser, false);
 }
 
-void disco_handle_query_items(struct iq_data *iq_data, const char **attrs) {
+void disco_query_items(struct iq_data *iq_data, const char *name,
+                       const char **attrs) {
     struct client_info *info = iq_data->info;
 
     log_info("Items Query IQ Start");
