@@ -226,6 +226,10 @@ static void auth_plain_end(void *data, const char *name) {
     check_mem(info->jid.local);
     strcpy(info->jid.local, authcid);
 
+    info->jid.domain = calloc(strlen(SERVER_DOMAIN) + 1, sizeof(char));
+    check_mem(info->jid.domain);
+    strcpy(info->jid.domain, SERVER_DOMAIN);
+
     // If we wanted to do any authentication, do it here.
 
     // Sucess!
