@@ -24,6 +24,30 @@ error:
     return -1;
 }
 
+char* jid_to_str(struct jid *jid) {
+    int locallen = strlen(jid->local);
+    int domainlen = 0;
+    int resourcelen = 0;
+    if (jid->domain != NULL) {
+        domainlen = strlen(jid->domain) + 1; // + 1 for '@' character
+        if (jid->resource != NULL) {
+            resourcelen = strlen(jid->resource) + 1; // + 1 for '/' character
+        }
+    }
+
+    char *strjid = calloc(locallen + domainlen + resourcelen, sizeof(char));
+    strcpy(strjid, jid->local);
+    if (jid->domain != NULL) {
+        *(strjid + locallen + 1) = '@';
+        strcpy(strjid + locallen + 2, jid->domain);
+        if (jid->resource != NULL) {
+            *(strjid + locallen + domainlen + 1) = '/';
+            strcpy(strjid + locallen + domainlen + 2, jid->resource);
+        }
+    }
+    return strjid;
+}
+
 /*
  * These functions are from libb64, found at: http://libb64.sourceforge.net/
  *
