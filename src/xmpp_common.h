@@ -20,8 +20,8 @@
 #define XMPP_NS_BIND "urn:ietf:params:xml:ns:xmpp-bind"
 #define XMPP_NS_CLIENT "jabber:client"
 #define XMPP_NS_SESSION "urn:ietf:params:xml:ns:xmpp-session"
-#define XMPP_NS_DISCO_INFO "http://jabber.org/protocol/disco#info"
 #define XMPP_NS_DISCO_ITEMS "http://jabber.org/protocol/disco#items"
+#define XMPP_NS_DISCO_INFO "http://jabber.org/protocol/disco#info"
 #define XMPP_NS_ROSTER "jabber:iq:roster"
 
 const char *XMPP_STREAM;
@@ -49,7 +49,7 @@ const char *XMPP_ATTR_TYPE_ERROR;
 // Client data structures
 struct jid {
     char *local;
-    // domainpart is just "localhost"
+    char *domain;
     char *resource;
 };
 
@@ -67,8 +67,8 @@ struct stanza_info {
     bool is_unhandled;
     char *name;
     char *id;
-    char *to;
-    char *from;
+    struct jid to;
+    struct jid from;
     char *type;
 };
 
@@ -95,3 +95,5 @@ void xmpp_error_end(void *data, const char *name);
 
 /** Expat callback for when you do not expect XML data. */
 void xmpp_error_data(void *data, const char *s, int len);
+
+void xmpp_send_not_supported(struct stanza_info *stanza_info);

@@ -6,11 +6,12 @@
 
 #pragma once
 
+#include <stdbool.h>
+
 #include "xmpp_common.h"
-#include "xmpp_im.h"
 
-void disco_query_info(struct iq_data *iq_data, const char *name,
-                      const char **attrs);
-
-void disco_query_items(struct iq_data *iq_data, const char *name,
+bool disco_query_items(struct stanza_info *stanza_info, const char *name,
                        const char **attrs);
+
+bool disco_query_info(struct stanza_info *stanza_info, const char *name,
+                      const char **attrs);

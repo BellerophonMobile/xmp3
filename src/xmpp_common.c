@@ -8,6 +8,8 @@
 
 #include <stdio.h>
 
+#include "utils.h"
+
 const char *XMPP_STREAM = XMPP_NS_STREAM " stream";
 const char *XMPP_AUTH = XMPP_NS_SASL " auth";
 const char *XMPP_BIND = XMPP_NS_BIND " bind";
@@ -29,6 +31,15 @@ const char *XMPP_ATTR_TYPE_GET = "get";
 const char *XMPP_ATTR_TYPE_SET = "set";
 const char *XMPP_ATTR_TYPE_RESULT = "result";
 const char *XMPP_ATTR_TYPE_ERROR = "error";
+
+static const char *MSG_NOT_IMPLEMENTED =
+    "<%s xmlns='%s' type='error' id='%s'"
+            " from='localhost' to='%s@localhost/%s'>"
+        "<error type='cancel'>"
+            "<feature-not-implemented "
+                "xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>"
+        "</error>"
+    "</%1$s>";
 
 void xmpp_print_start_tag(const char *name, const char **attrs) {
     printf("\t<%s", name);
@@ -81,5 +92,34 @@ void xmpp_error_data(void *data, const char *s, int len) {
     struct client_info *info = (struct client_info*)data;
     log_err("Unexpected data");
     xmpp_print_data(s, len);
+    XML_StopParser(info->parser, false);
+}
+
+void xmpp_send_not_supported(struct stanza_info *stanza_info) {
+    struct client_info *info = stanza_info->info;
+    char tag_name_buffer[strlen(stanza_info->name)];
+    strcpy(tag_name_buffer, stanza_info->name);
+
+    char *tag_name = tag_name_buffer;
+    char *tag_ns = strsep(&tag_name, " ");
+
+    char err_msg[strlen(MSG_NOT_IMPLEMENTED)
+                 + strlen(tag_name)
+                 + strlen(tag_ns)
+                 + strlen(stanza_info->id)
+                 + strlen(info->jid.local)
+                 + strlen(info->jid.resource)
+                 ];
+
+    log_warn("Unimplemented stanza");
+
+    snprintf(err_msg, sizeof(err_msg), MSG_NOT_IMPLEMENTED,
+             tag_name, tag_ns, stanza_info->id, info->jid.local,
+             info->jid.resource);
+    check(sendall(info->fd, err_msg, strlen(err_msg)) > 0,
+          "Error sending not supported error items");
+    return;
+
+error:
     XML_StopParser(info->parser, false);
 }
