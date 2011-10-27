@@ -10,12 +10,15 @@
 
 #include "utils.h"
 
+const char *SERVER_DOMAIN = "localhost";
+
 const char *XMPP_STREAM = XMPP_NS_STREAM " stream";
 const char *XMPP_AUTH = XMPP_NS_SASL " auth";
 const char *XMPP_BIND = XMPP_NS_BIND " bind";
 const char *XMPP_BIND_RESOURCE = XMPP_NS_BIND " resource";
 
 const char *XMPP_MESSAGE = XMPP_NS_CLIENT " message";
+const char *XMPP_MESSAGE_BODY = XMPP_NS_CLIENT " body";
 const char *XMPP_PRESENCE = XMPP_NS_CLIENT " presence";
 const char *XMPP_IQ = XMPP_NS_CLIENT " iq";
 const char *XMPP_IQ_SESSION = XMPP_NS_SESSION " session";

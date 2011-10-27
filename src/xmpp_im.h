@@ -9,3 +9,5 @@
 #include <expat.h>
 
 void xmpp_im_set_handlers(XML_Parser parser);
+
+void xmpp_im_stanza_end(void *data, const char *name);

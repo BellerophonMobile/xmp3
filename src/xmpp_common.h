@@ -7,8 +7,8 @@
 #pragma once
 
 #include <stdbool.h>
-
 #include <netinet/in.h>
+#include <sys/queue.h>
 
 #include <expat.h>
 
@@ -24,12 +24,15 @@
 #define XMPP_NS_DISCO_INFO "http://jabber.org/protocol/disco#info"
 #define XMPP_NS_ROSTER "jabber:iq:roster"
 
+const char *SERVER_DOMAIN;
+
 const char *XMPP_STREAM;
 const char *XMPP_AUTH;
 const char *XMPP_BIND;
 const char *XMPP_BIND_RESOURCE;
 
 const char *XMPP_MESSAGE;
+const char *XMPP_MESSAGE_BODY;
 const char *XMPP_PRESENCE;
 const char *XMPP_IQ;
 const char *XMPP_IQ_SESSION;
@@ -46,7 +49,8 @@ const char *XMPP_ATTR_TYPE_SET;
 const char *XMPP_ATTR_TYPE_RESULT;
 const char *XMPP_ATTR_TYPE_ERROR;
 
-// Client data structures
+struct server_info;
+
 struct jid {
     char *local;
     char *domain;
@@ -57,9 +61,13 @@ struct client_info {
     int fd;
     struct sockaddr_in caddr;
     XML_Parser parser;
+    struct server_info *server_info;
     bool authenticated;
     bool connected;
     struct jid jid;
+
+    // Infos are stored in a linked list in the server
+    LIST_ENTRY(client_info) list_entry;
 };
 
 struct stanza_info {
