@@ -13,6 +13,10 @@
 #include <expat.h>
 
 #include "event.h"
+#include "xmpp_common.h"
 
 /** Initializes the XMPP server and listens for new connections */
 bool xmpp_init(struct event_loop *loop, struct in_addr addr, uint16_t port);
+
+struct client_info* xmpp_find_client(struct jid *jid,
+                                     struct server_info *server_info);
