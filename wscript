@@ -15,15 +15,21 @@ def options(opt):
 
 def configure(conf):
     conf.load('compiler_c')
+
+    # To compile for android...
+    # grab libexpat.so from an android phone, and copy expat.h and
+    # expat_external.h and put them in the root directory.
+    # and comment out the next two lines (with the right paths)
+    #conf.env.INCLUDES += ['/home/tom/code/xmp3']
+    #conf.env.LIBPATH += ['/home/tom/code/xmp3']
+
+    # Then run
+    # CC="/opt/android-ndk/toolchains/arm-linux-androideabi-4.4.3/prebuilt/linux-x86/bin/arm-linux-androideabi-gcc --sysroot=/opt/android-ndk/platforms/android-9/arch-arm/" ./waf configure
+
     conf.check_cc(lib='expat')
 
     conf.env.CFLAGS += ['-std=gnu99', '-Wall']
     conf.env.CFLAGS += ['-O0', '-ggdb']
-
-    # Check out https://github.com/android/platform_external_expat
-    # And grab libexpat.so from an android phone.
-    #conf.env.INCLUDES += ['extern/expat_android/lib']
-    #conf.env.LIBPATH += ['../extern/expat_android/lib']
 
 def build(bld):
     bld.program(
