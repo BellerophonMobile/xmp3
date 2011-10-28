@@ -104,4 +104,7 @@ void xmpp_error_end(void *data, const char *name);
 /** Expat callback for when you do not expect XML data. */
 void xmpp_error_data(void *data, const char *s, int len);
 
+/** Expat callback to ignore data. */
+void xmpp_ignore_data(void *data, const char *s, int len);
+
 void xmpp_send_not_supported(struct stanza_info *stanza_info);

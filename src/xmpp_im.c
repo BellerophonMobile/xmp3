@@ -87,7 +87,7 @@ static struct xep_iq_namespace {
 
 void xmpp_im_set_handlers(XML_Parser parser) {
     XML_SetElementHandler(parser, stanza_start, xmpp_stream_end);
-    XML_SetCharacterDataHandler(parser, xmpp_error_data);
+    XML_SetCharacterDataHandler(parser, xmpp_ignore_data);
 }
 
 void xmpp_im_stanza_end(void *data, const char *name) {

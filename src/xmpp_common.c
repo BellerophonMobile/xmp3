@@ -98,6 +98,11 @@ void xmpp_error_data(void *data, const char *s, int len) {
     XML_StopParser(info->parser, false);
 }
 
+void xmpp_ignore_data(void *data, const char *s, int len) {
+    debug("Ignoring data:");
+    xmpp_print_data(s, len);
+}
+
 void xmpp_send_not_supported(struct stanza_info *stanza_info) {
     struct client_info *info = stanza_info->info;
     char tag_name_buffer[strlen(stanza_info->name)];
