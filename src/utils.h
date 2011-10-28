@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <expat.h>
+
 #include "xmpp_common.h"
 
 /**
@@ -15,6 +17,9 @@
  * rewritten to add a write callback using a non-blocking socket.
  */
 int sendall(int fd, const char *buffer, int len);
+
+/** Send the raw text of the current Expat parse event to a client. */
+int sendxml(XML_Parser parser, int fd);
 
 /** Allocates and returns a string version of a jid. */
 char* jid_to_str(struct jid *jid);

@@ -24,6 +24,15 @@ error:
     return -1;
 }
 
+int sendxml(XML_Parser parser, int fd) {
+    int offset, size;
+    const char *buffer = XML_GetInputContext(parser, &offset, &size);
+    check_mem(buffer);
+    int count = XML_GetCurrentByteCount(parser);
+
+    return sendall(fd, buffer + offset, count);
+}
+
 char* jid_to_str(struct jid *jid) {
     int locallen = strlen(jid->local);
     int domainlen = 0;

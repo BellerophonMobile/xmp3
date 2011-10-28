@@ -71,7 +71,7 @@ struct client_info {
 };
 
 struct stanza_info {
-    struct client_info *info;
+    struct client_info *client_info;
     bool is_unhandled;
     char *name;
     char *id;

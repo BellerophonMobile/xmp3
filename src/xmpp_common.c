@@ -104,7 +104,7 @@ void xmpp_ignore_data(void *data, const char *s, int len) {
 }
 
 void xmpp_send_not_supported(struct stanza_info *stanza_info) {
-    struct client_info *info = stanza_info->info;
+    struct client_info *info = stanza_info->client_info;
     char tag_name_buffer[strlen(stanza_info->name)];
     strcpy(tag_name_buffer, stanza_info->name);
 
