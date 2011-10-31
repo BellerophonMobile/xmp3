@@ -18,7 +18,10 @@
 
 #include <expat.h>
 
+#include "utlist.h"
+
 #include "log.h"
+#include "utils.h"
 #include "event.h"
 
 #include "xmpp_common.h"
@@ -30,9 +33,21 @@ static const int SERVER_BACKLOG = 3;
 
 static char MSG_BUFFER[BUFFER_SIZE];
 
+struct message_route {
+    struct jid *jid;
+    xmpp_message_route route_func;
+    void *data;
+
+    // These are kept in a doubly-linked list.
+    struct message_route *prev;
+    struct message_route *next;
+};
+
 struct xmpp_server {
     int fd;
     LIST_HEAD(clients, xmpp_client) client_list;
+
+    struct message_route *message_routes;
 };
 
 // Forward declarations
@@ -44,6 +59,12 @@ static void del_client(struct xmpp_client *client);
 static void add_connection(struct event_loop *loop, int fd, void *data);
 static void remove_connection(struct xmpp_server *server,
                               struct xmpp_client *client);
+
+static struct message_route* new_message_route(struct jid *jid,
+        xmpp_message_route route_func, void *data);
+static void del_message_route(struct message_route *route);
+static struct message_route* find_message_route(struct xmpp_server *server,
+                                                struct jid *jid);
 
 static void read_client(struct event_loop *loop, int fd, void *data);
 
@@ -79,17 +100,36 @@ error:
     return false;
 }
 
-struct xmpp_client* xmpp_find_client(struct jid *jid,
-                                     struct xmpp_server *server) {
-    struct xmpp_client *item;
-    LIST_FOREACH(item, &server->client_list, list_entry) {
-        if ((strcmp(item->jid.local, jid->local) == 0) &&
-            (jid->resource == NULL ||
-             strcmp(item->jid.resource, jid->resource) == 0)) {
-            return item;
-        }
+void xmpp_register_message_route(struct xmpp_server *server, struct jid *jid,
+                                 xmpp_message_route route_func, void *data) {
+    struct message_route *route = find_message_route(server, jid);
+    if (route != NULL) {
+        log_warn("Attempted to insert duplicate route");
+        return;
     }
-    return NULL;
+    DL_APPEND(server->message_routes,
+              new_message_route(jid, route_func, data));
+}
+
+void xmpp_deregister_message_desitnation(struct xmpp_server *server,
+                                         struct jid *jid) {
+    struct message_route *route = find_message_route(server, jid);
+    if (route == NULL) {
+        log_warn("Attempted to remove non-existent key");
+        return;
+    }
+    DL_DELETE(server->message_routes, route);
+    del_message_route(route);
+}
+
+bool xmpp_route_message(struct xmpp_stanza *stanza) {
+    struct xmpp_server *server = stanza->from->server;
+    struct message_route *route = find_message_route(server, &stanza->to);
+    if (route == NULL) {
+        log_info("No route for destination");
+        return false;
+    }
+    return route->route_func(stanza, route->data);
 }
 
 static struct xmpp_server* new_server() {
@@ -216,4 +256,36 @@ static void remove_connection(struct xmpp_server *server,
             return;
         }
     }
+}
+
+static struct message_route* new_message_route(struct jid *jid,
+        xmpp_message_route route_func, void *data) {
+    struct message_route *route = calloc(1, sizeof(*route));
+    check_mem(route);
+    route->jid = jid;
+    route->route_func = route_func;
+    route->data = data;
+    return route;
+}
+
+static void del_message_route(struct message_route *route) {
+    free(route);
+}
+
+static struct message_route* find_message_route(struct xmpp_server *server,
+                                                struct jid *jid) {
+    struct message_route *route;
+    DL_FOREACH(server->message_routes, route) {
+        if (strcmp(route->jid->local, jid->local) == 0
+            && strcmp(route->jid->domain, jid->domain) == 0) {
+            /* If no resource specified in search, then return the first one
+             * that matches the local and domain parts, else return an exact
+             * match. */
+            if (jid->resource == NULL
+                || strcmp(route->jid->resource, jid->resource) == 0) {
+                return route;
+            }
+        }
+    }
+    return NULL;
 }

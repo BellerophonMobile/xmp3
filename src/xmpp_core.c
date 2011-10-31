@@ -17,6 +17,7 @@
 #include "log.h"
 #include "utils.h"
 
+#include "xmpp.h"
 #include "xmpp_common.h"
 #include "xmpp_im.h"
 
@@ -297,6 +298,7 @@ error:
 static void bind_iq_end(void *data, const char *name) {
     struct resource_bind_tmp *bind_data = (struct resource_bind_tmp*)data;
     struct xmpp_client *client = bind_data->client;
+    struct xmpp_server *server = client->server;
     // Need space to construct our binding success message
     char success_msg[strlen(MSG_BIND_SUCCESS)
                      + strlen(bind_data->id)
@@ -317,7 +319,8 @@ static void bind_iq_end(void *data, const char *name) {
     /* Resource binding, and thus authentication, is complete!  Continue to
      * process general messages. */
     xmpp_im_set_handlers(client->parser);
-
+    xmpp_register_message_route(server, &client->jid,
+                                xmpp_im_message_to_client, client);
     return;
 
 error:

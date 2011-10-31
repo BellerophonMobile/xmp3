@@ -15,8 +15,15 @@
 #include "event.h"
 #include "xmpp_common.h"
 
+typedef bool (*xmpp_message_route)(struct xmpp_stanza *stanza, void *data);
+
 /** Initializes the XMPP server and listens for new connections */
 bool xmpp_init(struct event_loop *loop, struct in_addr addr, uint16_t port);
 
-struct xmpp_client* xmpp_find_client(struct jid *jid,
-                                     struct xmpp_server *server);
+void xmpp_register_message_route(struct xmpp_server *server, struct jid *jid,
+                                 xmpp_message_route route_func, void *data);
+
+void xmpp_deregister_message_route(struct xmpp_server *server,
+                                   struct jid *jid);
+
+bool xmpp_route_message(struct xmpp_stanza *stanza);

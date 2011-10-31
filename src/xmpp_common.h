@@ -49,7 +49,7 @@ const char *XMPP_ATTR_TYPE_SET;
 const char *XMPP_ATTR_TYPE_RESULT;
 const char *XMPP_ATTR_TYPE_ERROR;
 
-struct server_info;
+struct xmpp_server;
 
 struct jid {
     char *local;
@@ -77,6 +77,7 @@ struct xmpp_stanza {
     char *id;
     struct jid to;
     char *type;
+    char **other_attrs;
 };
 
 // Callback function definitions
