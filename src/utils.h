@@ -8,6 +8,8 @@
 
 #include <expat.h>
 
+#include "utstring.h"
+
 #include "xmpp_common.h"
 
 /**
@@ -22,7 +24,7 @@ int sendall(int fd, const char *buffer, int len);
 int sendxml(XML_Parser parser, int fd);
 
 /** Allocates and returns a string version of a jid. */
-char* jid_to_str(struct jid *jid);
+UT_string* jid_to_str(struct jid *jid);
 
 /*
  * These functions are from libb64, found at: http://libb64.sourceforge.net/

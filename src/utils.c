@@ -33,26 +33,16 @@ int sendxml(XML_Parser parser, int fd) {
     return sendall(fd, buffer + offset, count);
 }
 
-char* jid_to_str(struct jid *jid) {
-    int locallen = strlen(jid->local);
-    int domainlen = 0;
-    int resourcelen = 0;
-    if (jid->domain != NULL) {
-        domainlen = strlen(jid->domain) + 1; // + 1 for '@' character
-        if (jid->resource != NULL) {
-            resourcelen = strlen(jid->resource) + 1; // + 1 for '/' character
-        }
+UT_string* jid_to_str(struct jid *jid) {
+    UT_string *strjid;
+    utstring_new(strjid);
+
+    utstring_printf(strjid, "%s@%s", jid->local, jid->domain);
+    if (jid->resource != NULL) {
+        utstring_printf(strjid, "/%s", jid->resource);
     }
 
-    char *strjid = calloc(locallen + domainlen + resourcelen, sizeof(char));
-    strcpy(strjid, jid->local);
     if (jid->domain != NULL) {
-        *(strjid + locallen + 1) = '@';
-        strcpy(strjid + locallen + 2, jid->domain);
-        if (jid->resource != NULL) {
-            *(strjid + locallen + domainlen + 1) = '/';
-            strcpy(strjid + locallen + domainlen + 2, jid->resource);
-        }
     }
     return strjid;
 }
