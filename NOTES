@@ -6,3 +6,5 @@
 * Normalize all Unicode strings received.
 * Possibly try to recover from out of memory?
 * Clean up header includes
+* Use ut* macros for strings
+* Recheck all memory allocations
