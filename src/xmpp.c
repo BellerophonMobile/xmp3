@@ -30,20 +30,20 @@ static const int SERVER_BACKLOG = 3;
 
 static char MSG_BUFFER[BUFFER_SIZE];
 
-struct server_info {
+struct xmpp_server {
     int fd;
-    LIST_HEAD(clients, client_info) clients_head;
+    LIST_HEAD(clients, xmpp_client) client_list;
 };
 
 // Forward declarations
-static struct server_info* new_server_info();
-static void del_server_info(struct server_info *server_info);
-static struct client_info* new_client_info(struct server_info *server_info);
-static void del_client_info(struct client_info *client_info);
+static struct xmpp_server* new_server();
+static void del_server(struct xmpp_server *server);
+static struct xmpp_client* new_client(struct xmpp_server *server);
+static void del_client(struct xmpp_client *client);
 
 static void add_connection(struct event_loop *loop, int fd, void *data);
-static void remove_connection(struct server_info *server_info,
-                              struct client_info *client_info);
+static void remove_connection(struct xmpp_server *server,
+                              struct xmpp_client *client);
 
 static void read_client(struct event_loop *loop, int fd, void *data);
 
@@ -69,9 +69,9 @@ bool xmpp_init(struct event_loop *loop, struct in_addr addr, uint16_t port) {
 
     log_info("Listening for XMPP connections on %s:%d", inet_ntoa(addr), port);
 
-    struct server_info *server_info = new_server_info();
+    struct xmpp_server *server = new_server();
 
-    event_register_callback(loop, fd, add_connection, server_info);
+    event_register_callback(loop, fd, add_connection, server);
     return true;
 
 error:
@@ -79,10 +79,10 @@ error:
     return false;
 }
 
-struct client_info* xmpp_find_client(struct jid *jid,
-                                     struct server_info *server_info) {
-    struct client_info *item;
-    LIST_FOREACH(item, &server_info->clients_head, list_entry) {
+struct xmpp_client* xmpp_find_client(struct jid *jid,
+                                     struct xmpp_server *server) {
+    struct xmpp_client *item;
+    LIST_FOREACH(item, &server->client_list, list_entry) {
         if ((strcmp(item->jid.local, jid->local) == 0) &&
             (jid->resource == NULL ||
              strcmp(item->jid.resource, jid->resource) == 0)) {
@@ -92,58 +92,58 @@ struct client_info* xmpp_find_client(struct jid *jid,
     return NULL;
 }
 
-static struct server_info* new_server_info() {
-    struct server_info *server_info = calloc(1, sizeof(*server_info));
-    check_mem(server_info);
-    LIST_INIT(&server_info->clients_head);
-    return server_info;
+static struct xmpp_server* new_server() {
+    struct xmpp_server *server = calloc(1, sizeof(*server));
+    check_mem(server);
+    LIST_INIT(&server->client_list);
+    return server;
 }
 
-static void del_server_info(struct server_info *server_info) {
-    struct client_info *item;
-    LIST_FOREACH(item, &server_info->clients_head, list_entry) {
-        del_client_info(item);
+static void del_server(struct xmpp_server *server) {
+    struct xmpp_client *item;
+    LIST_FOREACH(item, &server->client_list, list_entry) {
+        del_client(item);
     }
-    free(server_info);
+    free(server);
 }
 
-static struct client_info* new_client_info(struct server_info *server_info) {
-    struct client_info *client_info = calloc(1, sizeof(*client_info));
-    check_mem(client_info);
+static struct xmpp_client* new_client(struct xmpp_server *server) {
+    struct xmpp_client *client = calloc(1, sizeof(*client));
+    check_mem(client);
 
-    client_info->authenticated = false;
-    client_info->connected = true;
-    client_info->server_info = server_info;
+    client->authenticated = false;
+    client->connected = true;
+    client->server = server;
 
     // Create the XML parser we'll use to parse messages from the client.
-    client_info->parser = XML_ParserCreateNS(NULL, ' ');
-    check(client_info->parser != NULL, "Error creating XML parser");
+    client->parser = XML_ParserCreateNS(NULL, ' ');
+    check(client->parser != NULL, "Error creating XML parser");
 
-    return client_info;
+    return client;
 
 error:
-    del_client_info(client_info);
+    del_client(client);
     return NULL;
 }
 
-static void del_client_info(struct client_info *client_info) {
-    if (client_info == NULL) {
+static void del_client(struct xmpp_client *client) {
+    if (client == NULL) {
         return;
     }
-    if (client_info->fd != -1) {
-        if (close(client_info->fd) != 0) {
+    if (client->fd != -1) {
+        if (close(client->fd) != 0) {
             log_err("Error closing file descriptor");
         }
     }
-    XML_ParserFree(client_info->parser);
-    free(client_info->jid.local);
-    free(client_info->jid.resource);
-    free(client_info);
+    XML_ParserFree(client->parser);
+    free(client->jid.local);
+    free(client->jid.resource);
+    free(client);
 }
 
 static void read_client(struct event_loop *loop, int fd, void *data) {
-    struct client_info *client_info = (struct client_info *)data;
-    struct server_info *server_info = client_info->server_info;
+    struct xmpp_client *client = (struct xmpp_client*)data;
+    struct xmpp_server *server = client->server;
 
     ssize_t numrecv = recv(fd, MSG_BUFFER, sizeof(MSG_BUFFER), 0);
 
@@ -151,28 +151,28 @@ static void read_client(struct event_loop *loop, int fd, void *data) {
         switch (numrecv) {
             case 0:
                 log_info("%s:%d disconnected",
-                         inet_ntoa(client_info->caddr.sin_addr),
-                                   client_info->caddr.sin_port);
+                         inet_ntoa(client->caddr.sin_addr),
+                                   client->caddr.sin_port);
                 break;
             case -1:
                 log_err("Error reading from %s:%d: %s",
-                        inet_ntoa(client_info->caddr.sin_addr),
-                        client_info->caddr.sin_port, strerror(errno));
+                        inet_ntoa(client->caddr.sin_addr),
+                        client->caddr.sin_port, strerror(errno));
                 break;
         }
         goto error;
     }
 
-    log_info("%s:%d - Read %ld bytes", inet_ntoa(client_info->caddr.sin_addr),
-             client_info->caddr.sin_port, numrecv);
+    log_info("%s:%d - Read %ld bytes", inet_ntoa(client->caddr.sin_addr),
+             client->caddr.sin_port, numrecv);
     xmpp_print_data(MSG_BUFFER, numrecv);
-    enum XML_Status status = XML_Parse(client_info->parser, MSG_BUFFER,
+    enum XML_Status status = XML_Parse(client->parser, MSG_BUFFER,
                                        numrecv, false);
     check(status != XML_STATUS_ERROR, "Error parsing XML: %s",
-          XML_ErrorString(XML_GetErrorCode(client_info->parser)));
+          XML_ErrorString(XML_GetErrorCode(client->parser)));
 
-    if (!client_info->connected) {
-        XML_Parse(client_info->parser, NULL, 0, true);
+    if (!client->connected) {
+        XML_Parse(client->parser, NULL, 0, true);
         goto error;
     }
 
@@ -180,41 +180,39 @@ static void read_client(struct event_loop *loop, int fd, void *data) {
 
 error:
     event_deregister_callback(loop, fd);
-    remove_connection(server_info, client_info);
+    remove_connection(server, client);
 }
 
 static void add_connection(struct event_loop *loop, int fd, void *data) {
-    struct server_info *server_info = (struct server_info*)data;
-    struct client_info *client_info = new_client_info(server_info);
+    struct xmpp_server *server = (struct xmpp_server*)data;
+    struct xmpp_client *client = new_client(server);
 
-    socklen_t addrlen = sizeof(client_info->caddr);
-    client_info->fd = accept(fd, (struct sockaddr*)&client_info->caddr,
-                             &addrlen);
-    check(client_info->fd != -1, "Error accepting client connection");
+    socklen_t addrlen = sizeof(client->caddr);
+    client->fd = accept(fd, (struct sockaddr*)&client->caddr, &addrlen);
+    check(client->fd != -1, "Error accepting client connection");
 
-    xmpp_core_set_handlers(client_info->parser);
-    XML_SetUserData(client_info->parser, client_info);
+    xmpp_core_set_handlers(client->parser);
+    XML_SetUserData(client->parser, client);
 
     log_info("New connection from %s:%d",
-             inet_ntoa(client_info->caddr.sin_addr),
-             client_info->caddr.sin_port);
+             inet_ntoa(client->caddr.sin_addr), client->caddr.sin_port);
 
-    LIST_INSERT_HEAD(&server_info->clients_head, client_info, list_entry);
+    LIST_INSERT_HEAD(&server->client_list, client, list_entry);
 
-    event_register_callback(loop, client_info->fd, read_client, client_info);
+    event_register_callback(loop, client->fd, read_client, client);
     return;
 
 error:
-    del_client_info(client_info);
+    del_client(client);
 }
 
-static void remove_connection(struct server_info *server_info,
-                              struct client_info *client_info) {
-    struct client_info *item;
-    LIST_FOREACH(item, &server_info->clients_head, list_entry) {
-        if (client_info == item) {
+static void remove_connection(struct xmpp_server *server,
+                              struct xmpp_client *client) {
+    struct xmpp_client *item;
+    LIST_FOREACH(item, &server->client_list, list_entry) {
+        if (client == item) {
             LIST_REMOVE(item, list_entry);
-            del_client_info(item);
+            del_client(item);
             return;
         }
     }

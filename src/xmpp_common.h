@@ -57,31 +57,30 @@ struct jid {
     char *resource;
 };
 
-struct client_info {
+struct xmpp_client {
     int fd;
     struct sockaddr_in caddr;
     XML_Parser parser;
-    struct server_info *server_info;
+    struct xmpp_server *server;
     bool authenticated;
     bool connected;
     struct jid jid;
 
     // Infos are stored in a linked list in the server
-    LIST_ENTRY(client_info) list_entry;
+    LIST_ENTRY(xmpp_client) list_entry;
 };
 
-struct stanza_info {
-    struct client_info *client_info;
+struct xmpp_stanza {
+    struct xmpp_client *from;
     bool is_unhandled;
     char *name;
     char *id;
     struct jid to;
-    struct jid from;
     char *type;
 };
 
 // Callback function definitions
-typedef bool (*xmpp_stanza_handler)(struct stanza_info *data,
+typedef bool (*xmpp_stanza_handler)(struct xmpp_stanza *stanza,
                                     const char *name, const char **attrs);
 
 /** Print out an XML start element and its attributes */
@@ -107,4 +106,4 @@ void xmpp_error_data(void *data, const char *s, int len);
 /** Expat callback to ignore data. */
 void xmpp_ignore_data(void *data, const char *s, int len);
 
-void xmpp_send_not_supported(struct stanza_info *stanza_info);
+void xmpp_send_not_supported(struct xmpp_stanza *stanza);

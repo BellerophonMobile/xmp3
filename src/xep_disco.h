@@ -10,8 +10,8 @@
 
 #include "xmpp_common.h"
 
-bool disco_query_items(struct stanza_info *stanza_info, const char *name,
+bool disco_query_items(struct xmpp_stanza *stanza, const char *name,
                        const char **attrs);
 
-bool disco_query_info(struct stanza_info *stanza_info, const char *name,
+bool disco_query_info(struct xmpp_stanza *stanza, const char *name,
                       const char **attrs);

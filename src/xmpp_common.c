@@ -68,34 +68,34 @@ void xmpp_print_data(const char *s, int len) {
 }
 
 void xmpp_stream_end(void *data, const char *name) {
-    struct client_info *info = (struct client_info*)data;
+    struct xmpp_client *client = (struct xmpp_client*)data;
     check(strcmp(name, XMPP_STREAM) == 0, "Unexpected stanza");
-    info->connected = false;
+    client->connected = false;
     return;
 
 error:
-    XML_StopParser(info->parser, false);
+    XML_StopParser(client->parser, false);
 }
 
 void xmpp_error_start(void *data, const char *name, const char **attrs) {
-    struct client_info *info = (struct client_info*)data;
+    struct xmpp_client *client = (struct xmpp_client*)data;
     log_err("Unexpected start tag %s", name);
     xmpp_print_start_tag(name, attrs);
-    XML_StopParser(info->parser, false);
+    XML_StopParser(client->parser, false);
 }
 
 void xmpp_error_end(void *data, const char *name) {
-    struct client_info *info = (struct client_info*)data;
+    struct xmpp_client *client = (struct xmpp_client*)data;
     log_err("Unexpected end tag %s", name);
     xmpp_print_end_tag(name);
-    XML_StopParser(info->parser, false);
+    XML_StopParser(client->parser, false);
 }
 
 void xmpp_error_data(void *data, const char *s, int len) {
-    struct client_info *info = (struct client_info*)data;
+    struct xmpp_client *client = (struct xmpp_client*)data;
     log_err("Unexpected data");
     xmpp_print_data(s, len);
-    XML_StopParser(info->parser, false);
+    XML_StopParser(client->parser, false);
 }
 
 void xmpp_ignore_data(void *data, const char *s, int len) {
@@ -103,10 +103,10 @@ void xmpp_ignore_data(void *data, const char *s, int len) {
     xmpp_print_data(s, len);
 }
 
-void xmpp_send_not_supported(struct stanza_info *stanza_info) {
-    struct client_info *info = stanza_info->client_info;
-    char tag_name_buffer[strlen(stanza_info->name)];
-    strcpy(tag_name_buffer, stanza_info->name);
+void xmpp_send_not_supported(struct xmpp_stanza *stanza) {
+    struct xmpp_client *client = stanza->from;
+    char tag_name_buffer[strlen(stanza->name)];
+    strcpy(tag_name_buffer, stanza->name);
 
     char *tag_name = tag_name_buffer;
     char *tag_ns = strsep(&tag_name, " ");
@@ -114,20 +114,20 @@ void xmpp_send_not_supported(struct stanza_info *stanza_info) {
     char err_msg[strlen(MSG_NOT_IMPLEMENTED)
                  + strlen(tag_name)
                  + strlen(tag_ns)
-                 + strlen(stanza_info->id)
-                 + strlen(info->jid.local)
-                 + strlen(info->jid.resource)
+                 + strlen(stanza->id)
+                 + strlen(client->jid.local)
+                 + strlen(client->jid.resource)
                  ];
 
     log_warn("Unimplemented stanza");
 
     snprintf(err_msg, sizeof(err_msg), MSG_NOT_IMPLEMENTED,
-             tag_name, tag_ns, stanza_info->id, info->jid.local,
-             info->jid.resource);
-    check(sendall(info->fd, err_msg, strlen(err_msg)) > 0,
+             tag_name, tag_ns, stanza->id, client->jid.local,
+             client->jid.resource);
+    check(sendall(client->fd, err_msg, strlen(err_msg)) > 0,
           "Error sending not supported error items");
     return;
 
 error:
-    XML_StopParser(info->parser, false);
+    XML_StopParser(client->parser, false);
 }
