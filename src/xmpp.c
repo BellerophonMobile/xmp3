@@ -33,23 +33,6 @@ static const int SERVER_BACKLOG = 3;
 
 static char MSG_BUFFER[BUFFER_SIZE];
 
-struct message_route {
-    struct jid *jid;
-    xmpp_message_route route_func;
-    void *data;
-
-    // These are kept in a doubly-linked list.
-    struct message_route *prev;
-    struct message_route *next;
-};
-
-struct xmpp_server {
-    int fd;
-    LIST_HEAD(clients, xmpp_client) client_list;
-
-    struct message_route *message_routes;
-};
-
 // Forward declarations
 static struct xmpp_server* new_server();
 static void del_server(struct xmpp_server *server);
@@ -63,8 +46,6 @@ static void remove_connection(struct xmpp_server *server,
 static struct message_route* new_message_route(struct jid *jid,
         xmpp_message_route route_func, void *data);
 static void del_message_route(struct message_route *route);
-static struct message_route* find_message_route(struct xmpp_server *server,
-                                                struct jid *jid);
 
 static void read_client(struct event_loop *loop, int fd, void *data);
 
@@ -102,7 +83,7 @@ error:
 
 void xmpp_register_message_route(struct xmpp_server *server, struct jid *jid,
                                  xmpp_message_route route_func, void *data) {
-    struct message_route *route = find_message_route(server, jid);
+    struct message_route *route = xmpp_find_message_route(server, jid);
     if (route != NULL) {
         log_warn("Attempted to insert duplicate route");
         return;
@@ -113,7 +94,7 @@ void xmpp_register_message_route(struct xmpp_server *server, struct jid *jid,
 
 void xmpp_deregister_message_desitnation(struct xmpp_server *server,
                                          struct jid *jid) {
-    struct message_route *route = find_message_route(server, jid);
+    struct message_route *route = xmpp_find_message_route(server, jid);
     if (route == NULL) {
         log_warn("Attempted to remove non-existent key");
         return;
@@ -122,14 +103,22 @@ void xmpp_deregister_message_desitnation(struct xmpp_server *server,
     del_message_route(route);
 }
 
-bool xmpp_route_message(struct xmpp_stanza *stanza) {
-    struct xmpp_server *server = stanza->from->server;
-    struct message_route *route = find_message_route(server, &stanza->to);
-    if (route == NULL) {
-        log_info("No route for destination");
-        return false;
+struct message_route* xmpp_find_message_route(struct xmpp_server *server,
+                                              struct jid *jid) {
+    struct message_route *route;
+    DL_FOREACH(server->message_routes, route) {
+        if (strcmp(route->jid->local, jid->local) == 0
+            && strcmp(route->jid->domain, jid->domain) == 0) {
+            /* If no resource specified in search, then return the first one
+             * that matches the local and domain parts, else return an exact
+             * match. */
+            if (jid->resource == NULL
+                || strcmp(route->jid->resource, jid->resource) == 0) {
+                return route;
+            }
+        }
     }
-    return route->route_func(stanza, route->data);
+    return NULL;
 }
 
 static struct xmpp_server* new_server() {
@@ -270,22 +259,4 @@ static struct message_route* new_message_route(struct jid *jid,
 
 static void del_message_route(struct message_route *route) {
     free(route);
-}
-
-static struct message_route* find_message_route(struct xmpp_server *server,
-                                                struct jid *jid) {
-    struct message_route *route;
-    DL_FOREACH(server->message_routes, route) {
-        if (strcmp(route->jid->local, jid->local) == 0
-            && strcmp(route->jid->domain, jid->domain) == 0) {
-            /* If no resource specified in search, then return the first one
-             * that matches the local and domain parts, else return an exact
-             * match. */
-            if (jid->resource == NULL
-                || strcmp(route->jid->resource, jid->resource) == 0) {
-                return route;
-            }
-        }
-    }
-    return NULL;
 }

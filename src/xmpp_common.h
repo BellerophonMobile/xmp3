@@ -12,6 +12,8 @@
 
 #include <expat.h>
 
+#include "utarray.h"
+
 #include "log.h"
 
 // XML string constants
@@ -49,12 +51,27 @@ const char *XMPP_ATTR_TYPE_SET;
 const char *XMPP_ATTR_TYPE_RESULT;
 const char *XMPP_ATTR_TYPE_ERROR;
 
-struct xmpp_server;
+struct xmpp_server {
+    int fd;
+    LIST_HEAD(clients, xmpp_client) client_list;
+
+    struct message_route *message_routes;
+};
+
+struct message_route {
+    struct jid *jid;
+    xmpp_message_route route_func;
+    void *data;
+
+    // These are kept in a doubly-linked list.
+    struct message_route *prev;
+    struct message_route *next;
+};
 
 struct jid {
-    char *local;
-    char *domain;
-    char *resource;
+    const char *local;
+    const char *domain;
+    const char *resource;
 };
 
 struct xmpp_client {
@@ -71,13 +88,12 @@ struct xmpp_client {
 };
 
 struct xmpp_stanza {
-    struct xmpp_client *from;
-    bool is_unhandled;
-    char *name;
-    char *id;
-    struct jid to;
-    char *type;
-    char **other_attrs;
+    struct xmpp_client *from_client;
+    const char *name;
+    const char *id;
+    const struct jid to_jid;
+    const char *type;
+    UT_array *other_attrs;
 };
 
 // Callback function definitions
@@ -92,8 +108,6 @@ void xmpp_print_end_tag(const char *name);
 
 /** Print out a string of XML data */
 void xmpp_print_data(const char *s, int len);
-
-void xmpp_stream_end(void *data, const char *name);
 
 /** Expat callback for when you do not expect a start tag. */
 void xmpp_error_start(void *data, const char *name, const char **attrs);

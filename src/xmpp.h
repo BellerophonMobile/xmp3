@@ -26,4 +26,4 @@ void xmpp_register_message_route(struct xmpp_server *server, struct jid *jid,
 void xmpp_deregister_message_route(struct xmpp_server *server,
                                    struct jid *jid);
 
-bool xmpp_route_message(struct xmpp_stanza *stanza);
+void xmpp_find_message_route(struct xmpp_server *server, struct jid *jid);

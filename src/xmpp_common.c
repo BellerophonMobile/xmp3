@@ -67,16 +67,6 @@ void xmpp_print_data(const char *s, int len) {
     printf("\t%1$d bytes: '%2$.*1$s'\n", len, s);
 }
 
-void xmpp_stream_end(void *data, const char *name) {
-    struct xmpp_client *client = (struct xmpp_client*)data;
-    check(strcmp(name, XMPP_STREAM) == 0, "Unexpected stanza");
-    client->connected = false;
-    return;
-
-error:
-    XML_StopParser(client->parser, false);
-}
-
 void xmpp_error_start(void *data, const char *name, const char **attrs) {
     struct xmpp_client *client = (struct xmpp_client*)data;
     log_err("Unexpected start tag %s", name);

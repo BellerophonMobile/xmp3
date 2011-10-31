@@ -21,6 +21,20 @@
 #include "xmpp_common.h"
 #include "xmpp_im.h"
 
+/* This should probably go in the utils module, if I use it outside of here,
+ * I will. */
+#define ALLOC_COPY_STRING(a, b) do {
+    a = calloc(strlen(b) + 1, sizeof(char));
+    check_mem(a);
+    strcpy(a, b);
+} while (0)
+
+#define ALLOC_PUSH_BACK(a, b) do {
+    char *tmp = calloc(strlen(b), sizeof(*tmp));
+    check_mem(tmp);
+    utarray_push_back(a, tmp);
+} while (0)
+
 // authzid, authcid, passed can be 255 octets, plus 2 NULLs inbetween
 #define PLAIN_AUTH_BUFFER_SIZE 3 * 255 + 2
 
@@ -94,7 +108,9 @@ struct resource_bind_tmp {
 
 // Forward declarations
 static void stream_start(void *data, const char *name, const char **attrs);
+static void stream_end(void *data, const char *name);
 
+/* Inital authentication handlers */
 static void auth_plain_start(void *data, const char *name, const char **attrs);
 static void auth_plain_data(void *data, const char *s, int len);
 static void auth_plain_end(void *data, const char *name);
@@ -109,6 +125,17 @@ static void bind_resource_start(void *data, const char *name,
                                 const char **attrs);
 static void bind_resource_data(void *data, const char *s, int len);
 static void bind_resource_end(void *data, const char *name);
+
+/* General stream stanza handlers */
+static void stanza_start(void *data, const char *name, const char **attrs);
+static void stanza_end(void *data, const char *name);
+
+/* Misc local functions */
+static struct xmpp_stanza* new_stanza(struct xmpp_client *client,
+                                      const char *name, const char **attrs);
+static void del_stanza(struct xmpp_stanza *stanza);
+static void new_stanza_jid(struct jid *jid, const char *strjid);
+
 
 void xmpp_core_set_handlers(XML_Parser parser) {
     XML_SetElementHandler(parser, stream_start, xmpp_error_end);
@@ -146,6 +173,16 @@ static void stream_start(void *data, const char *name, const char **attrs) {
     }
 
     log_info("Sent stream features to client");
+    return;
+
+error:
+    XML_StopParser(client->parser, false);
+}
+
+static void stream_end(void *data, const char *name) {
+    struct xmpp_client *client = (struct xmpp_client*)data;
+    check(strcmp(name, XMPP_STREAM) == 0, "Unexpected stanza");
+    client->connected = false;
     return;
 
 error:
@@ -313,14 +350,15 @@ static void bind_iq_end(void *data, const char *name) {
     check(sendall(client->fd, success_msg, strlen(success_msg)) > 0,
           "Error sending resource binding success message.");
 
-    XML_SetUserData(client->parser, client);
-    free(bind_data);
 
     /* Resource binding, and thus authentication, is complete!  Continue to
      * process general messages. */
-    xmpp_im_set_handlers(client->parser);
-    xmpp_register_message_route(server, &client->jid,
-                                xmpp_im_message_to_client, client);
+    XML_SetElementHandler(client->parser, stanza_start, stream_end);
+    XML_SetUserData(client->parser, client);
+    xmpp_register_message_route(server, &client->jid, message_to_client,
+                                client);
+
+    free(bind_data);
     return;
 
 error:
@@ -414,3 +452,114 @@ error:
     free(bind_data);
     XML_StopParser(client->parser, false);
 }
+
+static void stanza_start(void *data, const char *name, const char **attrs) {
+    struct xmpp_client *client = (struct xmpp_client*)data;
+    log_info("Stanza start");
+
+    struct xmpp_stanza *stanza = new_stanza(client, name, attrs);
+    XML_SetUserData(client->parser, stanza);
+    XML_SetEndElementHandler(client->parser, xmpp_im_stanza_end);
+
+    if (strcmp(name, XMPP_MESSAGE) == 0) {
+        xmpp_message_route(stanza);
+    } else if (strcmp(name, XMPP_PRESENCE) == 0) {
+        handle_presence(stanza, attrs);
+    } else if (strcmp(name, XMPP_IQ) == 0) {
+        handle_iq(stanza, attrs);
+    } else {
+        log_warn("Unknown stanza");
+    }
+}
+
+static void stanza_end(void *data, const char *name) {
+}
+
+static void new_stanza_jid(struct jid *jid, const char *strjid) {
+    char *domainstr = strchr(strjid, '@');
+    char *resourcestr = strchr(strjid, '/');
+
+    int locallen;
+    if (domainstr == NULL) {
+        locallen = strlen(strjid);
+    } else {
+        locallen = domainstr - strjid;
+    }
+
+    jid->local = calloc(1, locallen);
+    check_mem(jid->local);
+    strncpy(jid->local, strjid, locallen);
+
+    if (domainstr == NULL) {
+        return;
+    } else {
+        domainstr++; // was previously on the '@' character in the string
+    }
+
+    int domainlen;
+    if (resourcestr == NULL) {
+        domainlen = strlen(domainstr);
+    } else {
+        domainlen = resourcestr - domainstr;
+    }
+    jid->domain = calloc(1, domainlen);
+    check_mem(jid->domain);
+    strncpy(jid->domain, domainstr, domainlen);
+
+    if (resourcestr == NULL) {
+        return;
+    } else {
+        resourcestr++; // was previously on the '/' character
+    }
+
+    jid->resource = calloc(1, strlen(resourcestr));
+    check_mem(jid->resource);
+    strncpy(jid->resource, resourcestr, strlen(resourcestr));
+}
+
+static struct xmpp_stanza* new_stanza(struct xmpp_client *client,
+                                           const char *name,
+                                           const char **attrs) {
+    struct xmpp_stanza *stanza = calloc(1, sizeof(*stanza));
+    check_mem(stanza);
+
+    utarray_new(stanza->other_attrs, &ut_str_icd);
+
+    ALLOC_COPY_STRING(stanza->name, name);
+
+    /* RFC6120 Section 8.1.2.1 states that the server is to basically ignore
+     * any "from" attribute in the stanza, and append the JID of the client the
+     * server got the stanza from. */
+    stanza->from = client;
+
+    for (int i = 0; attrs[i] != NULL; i += 2) {
+        if (strcmp(attrs[i], XMPP_ATTR_ID) == 0) {
+            ALLOC_COPY_STRING(stanza->id, attrs[i + 1]);
+        } else if (strcmp(attrs[i], XMPP_ATTR_TO) == 0) {
+            new_stanza_jid(&stanza->to, attrs[i + 1]);
+        } else if (strcmp(attrs[i], XMPP_ATTR_TYPE) == 0) {
+            ALLOC_COPY_STRING(stanza->type, attrs[i + 1]);
+        } else {
+            ALLOC_PUSH_BACK(stanza->other_attrs, attrs[i]);
+            ALLOC_PUSH_BACK(stanza->other_attrs, attrs[i + 1]);
+        }
+    }
+    return stanza;
+}
+
+static void del_stanza(struct xmpp_stanza *stanza) {
+    free(stanza->name);
+    free(stanza->id);
+    free(stanza->to.local);
+    free(stanza->to.domain);
+    free(stanza->to.resource);
+    free(stanza->type);
+
+    char **p = NULL;
+    while ((p = utarray_next(stanza->other_attrs, p)) != NULL) {
+        free(*p);
+    }
+    utarray_free(stanza->other_attrs);
+    free(stanza);
+}
+

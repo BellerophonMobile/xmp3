@@ -16,12 +16,6 @@
 #include "xmpp_common.h"
 #include "xep_disco.h"
 
-/* This should probably go in the utils module, if I use it outside of here,
- * I will. */
-#define ALLOC_COPY_STRING(a, b) a = calloc(strlen(b) + 1, sizeof(char)); \
-                                check_mem(a); \
-                                strcpy(a, b)
-
 // XML String constants
 static const char *MSG_STREAM_SUCCESS =
     "<iq from='localhost' type='result' id='%s'/>";
@@ -50,14 +44,6 @@ static void handle_iq(struct xmpp_stanza *stanza, const char **attrs);
 static void iq_start(void *data, const char *name, const char **attrs);
 static void iq_end(void *data, const char *name);
 
-
-static void new_stanza_jid(struct jid *jid, const char *strjid);
-
-static struct xmpp_stanza* new_stanza(struct xmpp_client *client,
-                                           const char *name,
-                                           const char **attrs);
-
-static void del_stanza(struct xmpp_stanza *stanza);
 
 static bool iq_session(struct xmpp_stanza *stanza, const char *name,
                        const char **attrs);
@@ -246,112 +232,6 @@ static void iq_end(void *data, const char *name) {
         }
         xmpp_im_stanza_end(data, name);
     }
-}
-
-static void new_stanza_jid(struct jid *jid, const char *strjid) {
-    char *domainstr = strchr(strjid, '@');
-    char *resourcestr = strchr(strjid, '/');
-
-    int locallen;
-    if (domainstr == NULL) {
-        locallen = strlen(strjid);
-    } else {
-        locallen = domainstr - strjid;
-    }
-
-    jid->local = calloc(1, locallen);
-    check_mem(jid->local);
-    strncpy(jid->local, strjid, locallen);
-
-    if (domainstr == NULL) {
-        return;
-    } else {
-        domainstr++; // was previously on the '@' character in the string
-    }
-
-    int domainlen;
-    if (resourcestr == NULL) {
-        domainlen = strlen(domainstr);
-    } else {
-        domainlen = resourcestr - domainstr;
-    }
-    jid->domain = calloc(1, domainlen);
-    check_mem(jid->domain);
-    strncpy(jid->domain, domainstr, domainlen);
-
-    if (resourcestr == NULL) {
-        return;
-    } else {
-        resourcestr++; // was previously on the '/' character
-    }
-
-    jid->resource = calloc(1, strlen(resourcestr));
-    check_mem(jid->resource);
-    strncpy(jid->resource, resourcestr, strlen(resourcestr));
-}
-
-static struct xmpp_stanza* new_stanza(struct xmpp_client *client,
-                                           const char *name,
-                                           const char **attrs) {
-    struct xmpp_stanza *stanza = calloc(1, sizeof(*stanza));
-    check_mem(stanza);
-    stanza->is_unhandled = false;
-
-    /* RFC6120 Section 8.1.2.1 states that the server is to basically ignore
-     * any "from" attribute in the stanza, and append the JID of the client the
-     * server got the stanza from. */
-    stanza->from = client;
-
-    ALLOC_COPY_STRING(stanza->name, name);
-
-    int num_other_attrs = 0;
-    for (int i = 0; attrs[i] != NULL; i += 2) {
-        if (strcmp(attrs[i], XMPP_ATTR_ID) == 0) {
-            ALLOC_COPY_STRING(stanza->id, attrs[i + 1]);
-        } else if (strcmp(attrs[i], XMPP_ATTR_TO) == 0) {
-            new_stanza_jid(&stanza->to, attrs[i + 1]);
-        } else if (strcmp(attrs[i], XMPP_ATTR_TYPE) == 0) {
-            ALLOC_COPY_STRING(stanza->type, attrs[i + 1]);
-        } else {
-            num_other_attrs++;
-        }
-    }
-
-    stanza->other_attrs = calloc(num_other_attrs * 2,
-                                 sizeof(*stanza->other_attrs));
-    check_mem(stanza->other_attrs);
-    int j = 0;
-    for (int i = 0; attrs[i] != NULL; i += 2) {
-        if ((strcmp(attrs[i], XMPP_ATTR_ID) == 0)
-            || (strcmp(attrs[i], XMPP_ATTR_TO) == 0)
-            || (strcmp(attrs[i], XMPP_ATTR_FROM) == 0)
-            || (strcmp(attrs[i], XMPP_ATTR_TYPE) == 0)) {
-            continue;
-        }
-        stanza->other_attrs[j] = calloc(strlen(attrs[i]), sizeof(char));
-        strcpy(stanza->other_attrs[j], attrs[i]);
-        stanza->other_attrs[j + 1] = calloc(strlen(attrs[i + 1]),
-                                            sizeof(char));
-        strcpy(stanza->other_attrs[j + 1], attrs[i + 1]);
-        j += 2;
-    }
-
-    return stanza;
-}
-
-static void del_stanza(struct xmpp_stanza *stanza) {
-    free(stanza->name);
-    free(stanza->id);
-    free(stanza->to.local);
-    free(stanza->to.domain);
-    free(stanza->to.resource);
-    free(stanza->type);
-    for (int i = 0; stanza->other_attrs[i] != NULL; i += 2) {
-        free(stanza->other_attrs[i]);
-        free(stanza->other_attrs[i + 1]);
-    }
-    free(stanza->other_attrs);
-    free(stanza);
 }
 
 static bool iq_session(struct xmpp_stanza *stanza, const char *name,
