@@ -41,10 +41,21 @@ UT_string* jid_to_str(struct jid *jid) {
     if (jid->resource != NULL) {
         utstring_printf(strjid, "/%s", jid->resource);
     }
-
-    if (jid->domain != NULL) {
-    }
     return strjid;
+}
+
+ssize_t jid_len(struct jid *jid) {
+    ssize_t len = 1; // For '@'
+    if (jid->local != NULL) {
+        len += strlen(jid->local);
+    }
+    if (jid->domain != NULL) {
+        len += strlen(jid->domain);
+    }
+    if (jid->resource != NULL) {
+        len += strlen(jid->resource) + 1; // +1 for '/'
+    }
+    return len;
 }
 
 /*

@@ -26,6 +26,9 @@ int sendxml(XML_Parser parser, int fd);
 /** Allocates and returns a string version of a jid. */
 UT_string* jid_to_str(struct jid *jid);
 
+/** Gets the string length of a jid. */
+ssize_t jid_len(struct jid *jid);
+
 /*
  * These functions are from libb64, found at: http://libb64.sourceforge.net/
  *
