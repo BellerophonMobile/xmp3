@@ -165,6 +165,7 @@ static void read_client(struct event_loop *loop, int fd, void *data) {
 
     log_info("%s:%d - Read %ld bytes", inet_ntoa(client_info->caddr.sin_addr),
              client_info->caddr.sin_port, numrecv);
+    xmpp_print_data(MSG_BUFFER, numrecv);
     enum XML_Status status = XML_Parse(client_info->parser, MSG_BUFFER,
                                        numrecv, false);
     check(status != XML_STATUS_ERROR, "Error parsing XML: %s",

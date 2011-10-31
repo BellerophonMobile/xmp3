@@ -96,13 +96,11 @@ void xmpp_im_stanza_end(void *data, const char *name) {
 
     if (strcmp(stanza_info->name, name) == 0) {
         log_info("Stanza end");
-        xmpp_print_end_tag(name);
         XML_SetUserData(info->parser, info);
         xmpp_im_set_handlers(info->parser);
         del_stanza_info(stanza_info);
     } else {
         log_warn("Unhandled stanza end");
-        xmpp_print_end_tag(name);
     }
 }
 
@@ -110,7 +108,6 @@ static void stanza_start(void *data, const char *name, const char **attrs) {
     struct client_info *info = (struct client_info*)data;
 
     log_info("Stanza start");
-    xmpp_print_start_tag(name, attrs);
 
     struct stanza_info *stanza_info = new_stanza_info(info, name, attrs);
     XML_SetUserData(info->parser, stanza_info);
@@ -129,7 +126,6 @@ static void stanza_start(void *data, const char *name, const char **attrs) {
 
 static void stanza_data(void *data, const char *s, int len) {
     log_warn("Unhandled main stanza data");
-    xmpp_print_data(s, len);
 }
 
 static void handle_message(struct stanza_info *stanza_info,
@@ -143,7 +139,6 @@ static void message_start(void *data, const char *name, const char **attrs) {
     //struct client_info *info = stanza_info->info;
 
     log_info("Inner message start");
-    xmpp_print_start_tag(name, attrs);
 
     if (strcmp(name, XMPP_MESSAGE_BODY) == 0) {
         message_body(stanza_info, name, attrs);
@@ -157,7 +152,6 @@ static void message_end(void *data, const char *name) {
     struct client_info *client_info = stanza_info->info;
 
     log_info("Inner message end");
-    xmpp_print_end_tag(name);
 
     if (strcmp(name, XMPP_MESSAGE) == 0) {
         struct client_info *to_info = xmpp_find_client(&stanza_info->to,
@@ -189,7 +183,6 @@ static void handle_presence(struct stanza_info *stanza_info,
 
 static void presence_start(void *data, const char *name, const char **attrs) {
     log_info("Inner presence start");
-    xmpp_print_start_tag(name, attrs);
     // ignore
 }
 
@@ -198,7 +191,6 @@ static void presence_end(void *data, const char *name) {
     //struct client_info *client_info = stanza_info->info;
 
     log_info("Inner presence end");
-    xmpp_print_end_tag(name);
 
     if (strcmp(name, XMPP_PRESENCE) == 0) {
         xmpp_im_stanza_end(data, name);
@@ -216,7 +208,6 @@ static void iq_start(void *data, const char *name, const char **attrs) {
     //struct client_info *info = stanza_info->info;
 
     log_info("Inner IQ start");
-    xmpp_print_start_tag(name, attrs);
 
     if (stanza_info->is_unhandled) {
         /* We are not going to magically start handling an IQ block
@@ -247,7 +238,6 @@ static void iq_end(void *data, const char *name) {
     //struct client_info *client_info = stanza_info->info;
 
     log_info("Inner IQ end");
-    xmpp_print_end_tag(name);
 
     if (strcmp(name, XMPP_IQ) == 0) {
         if (stanza_info->is_unhandled && stanza_info->id != NULL) {
@@ -368,7 +358,6 @@ static void iq_session_end(void *data, const char *name) {
     char msg[strlen(MSG_STREAM_SUCCESS) + strlen(stanza_info->id)];
 
     log_info("Session IQ End");
-    xmpp_print_end_tag(name);
 
     check(strcmp(name, XMPP_IQ_SESSION) == 0, "Unexpected stanza");
 
@@ -418,7 +407,6 @@ static void iq_roster_query_end(void *data, const char *name) {
     char msg[strlen(MSG_ROSTER) + strlen(stanza_info->id)];
 
     log_info("Roster Query IQ End");
-    xmpp_print_end_tag(name);
     check(strcmp(name, XMPP_IQ_QUERY_ROSTER) == 0, "Unexpected stanza");
 
     snprintf(msg, sizeof(msg), MSG_ROSTER, stanza_info->id);
@@ -494,7 +482,6 @@ static void message_body_end(void *data, const char *name) {
     struct client_info *client_info = stanza_info->info;
 
     log_info("Message body end");
-    xmpp_print_end_tag(name);
 
     XML_SetEndElementHandler(client_info->parser, message_end);
     return;
@@ -505,7 +492,6 @@ static void message_body_data(void *data, const char *s, int len) {
     struct client_info *client_info = stanza_info->info;
 
     log_info("Message body data");
-    xmpp_print_data(s, len);
 
     struct client_info *to_info = xmpp_find_client(&stanza_info->to,
                                                    client_info->server_info);

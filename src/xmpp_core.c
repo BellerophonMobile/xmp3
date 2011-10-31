@@ -118,7 +118,6 @@ static void stream_start(void *data, const char *name, const char **attrs) {
     struct client_info *info = (struct client_info*)data;
 
     log_info("Starting stream...");
-    xmpp_print_start_tag(name, attrs);
 
     // name and attrs are guaranteed to be null terminated, so strcmp is OK.
     check(strcmp(name, XMPP_STREAM) == 0, "Unexpected stanza");
@@ -154,7 +153,6 @@ static void auth_plain_start(void *data, const char *name, const char **attrs)
 {
     struct client_info *info = (struct client_info*)data;
     log_info("Starting SASL plain...");
-    xmpp_print_start_tag(name, attrs);
 
     check(strcmp(name, XMPP_AUTH) == 0, "Unexpected stanza");
 
@@ -186,7 +184,6 @@ static void auth_plain_data(void *data, const char *s, int len) {
     struct client_info *info = auth_data->info;
 
     log_info("SASL data");
-    xmpp_print_data(s, len);
 
     /* Expat explicitly does not guarantee that you will get all data in
      * one callback call.  Thus, we need to incrementally decode the data
@@ -210,7 +207,6 @@ static void auth_plain_end(void *data, const char *name) {
     struct client_info *info = auth_data->info;
 
     log_info("SASL end tag");
-    xmpp_print_end_tag(name);
 
     check(strcmp(name, XMPP_AUTH) == 0, "Unexpected stanza");
 
@@ -261,7 +257,6 @@ static void bind_iq_start(void *data, const char *name, const char **attrs) {
     struct resource_bind_data *bind_data = NULL;
 
     log_info("Start resource binding IQ");
-    xmpp_print_start_tag(name, attrs);
 
     check(strcmp(name, XMPP_IQ) == 0, "Unexpected stanza");
 
@@ -307,7 +302,6 @@ static void bind_iq_end(void *data, const char *name) {
                      + strlen(info->jid.resource)];
 
     log_info("Bind IQ end");
-    xmpp_print_end_tag(name);
     check(strcmp(name, XMPP_IQ) == 0, "Unexpected stanza");
 
     snprintf(success_msg, sizeof(success_msg), MSG_BIND_SUCCESS,
@@ -335,7 +329,6 @@ static void bind_start(void *data, const char *name, const char **attrs) {
     struct client_info *info = bind_data->info;
 
     log_info("Start bind");
-    xmpp_print_start_tag(name, attrs);
 
     check(strcmp(name, XMPP_BIND) == 0, "Unexpected stanza");
     XML_SetElementHandler(info->parser, bind_resource_start,
@@ -369,7 +362,6 @@ static void bind_resource_start(void *data, const char *name,
     struct client_info *info = bind_data->info;
 
     log_info("Start bind resource");
-    xmpp_print_start_tag(name, attrs);
 
     check(strcmp(name, XMPP_BIND_RESOURCE) == 0, "Unexpected stanza");
     return;
