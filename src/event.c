@@ -13,7 +13,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include <sys/queue.h>
 #include <sys/select.h>
 #include <sys/socket.h>
 
@@ -31,7 +30,8 @@ struct event_item {
     void *data;
 
     /* Linked-list entries to more event_items */
-    LIST_ENTRY(event_item) list_entry;
+    struct event_item *prev;
+    struct event_item *next;
 };
 
 /* Contains data about the whole event loop */
@@ -46,22 +46,20 @@ struct event_loop {
     int nfds;
 
     /* Linked-list of callback functions */
-    LIST_HEAD(event_items, event_item) list_head;
+    struct event_item *events;
 };
 
 struct event_loop* event_new_loop(void) {
     struct event_loop *loop = calloc(1, sizeof(struct event_loop));
     check_mem(loop);
-
-    LIST_INIT(&loop->list_head);
-
     return loop;
 }
 
 void event_del_loop(struct event_loop *loop) {
     // Free the memory for all the callback entries
     struct event_item *item;
-    LIST_FOREACH(item, &loop->list_head, list_entry) {
+    struct event_item *tmp;
+    DL_FOREACH_SAFE(loop->events, item, tmp) {
         free(item);
     }
     free(loop);
@@ -77,7 +75,7 @@ void event_register_callback(struct event_loop *loop, int fd,
     item->func = func;
     item->data = data;
 
-    LIST_INSERT_HEAD(&loop->list_head, item, list_entry);
+    DL_APPEND(loop->events, item);
 
     // Select needs nfds, one plus the highest numbered fd in readfds
     if (fd + 1 > loop->nfds) {
@@ -88,9 +86,9 @@ void event_register_callback(struct event_loop *loop, int fd,
 void event_deregister_callback(struct event_loop *loop, int fd) {
     // Find the entry in the list, and free it
     struct event_item *item;
-    LIST_FOREACH(item, &loop->list_head, list_entry) {
+    DL_FOREACH(loop->events, item) {
         if (item->fd == fd) {
-            LIST_REMOVE(item, list_entry);
+            DL_DELETE(loop->events, item);
             free(item);
             break;
         }
@@ -98,7 +96,7 @@ void event_deregister_callback(struct event_loop *loop, int fd) {
 
     if (fd + 1 == loop->nfds) {
         // We need to find a new maximum
-        LIST_FOREACH(item, &loop->list_head, list_entry) {
+        DL_FOREACH(loop->events, item) {
             if (item->fd + 1 > loop->nfds) {
                 loop->nfds = item->fd + 1;
             }
@@ -111,7 +109,7 @@ void event_init_readfds(struct event_loop *loop) {
 
     // Add each file descriptor to the select set
     struct event_item *item;
-    LIST_FOREACH(item, &loop->list_head, list_entry) {
+    DL_FOREACH(loop->events, item) {
         FD_SET(item->fd, &loop->readfds);
     }
 }
@@ -154,7 +152,7 @@ void event_loop_start(struct event_loop *loop) {
             continue;
         }
 
-        LIST_FOREACH(item, &loop->list_head, list_entry) {
+        DL_FOREACH(loop->events, item) {
             if (FD_ISSET(item->fd, &loop->readfds)) {
                 item->func(loop, item->fd, item->data);
             }
@@ -164,7 +162,7 @@ void event_loop_start(struct event_loop *loop) {
     /* Close all of the sockets before exiting the event loop.  Next, there
      * should be a callback before shutdown, so you could send a close message
      * or something. */
-    LIST_FOREACH(item, &loop->list_head, list_entry) {
+    DL_FOREACH(loop->events, item) {
         int rv = close(item->fd);
         if (rv == -1) {
             log_err("Error closing socket");

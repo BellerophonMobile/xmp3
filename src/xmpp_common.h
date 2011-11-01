@@ -8,7 +8,6 @@
 
 #include <stdbool.h>
 #include <netinet/in.h>
-#include <sys/queue.h>
 
 #include <expat.h>
 
@@ -53,8 +52,7 @@ const char *XMPP_ATTR_TYPE_ERROR;
 
 struct xmpp_server {
     int fd;
-    LIST_HEAD(clients, xmpp_client) client_list;
-
+    struct xmpp_client *clients;
     struct message_route *message_routes;
 };
 
@@ -83,8 +81,9 @@ struct xmpp_client {
     bool connected;
     struct jid jid;
 
-    // Infos are stored in a linked list in the server
-    LIST_ENTRY(xmpp_client) list_entry;
+    // Clients are stored in a doubly-linked list.
+    struct xmpp_client *prev;
+    struct xmpp_client *next;
 };
 
 struct xmpp_stanza {
