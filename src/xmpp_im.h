@@ -11,7 +11,3 @@
 #include "xmpp_common.h"
 
 void xmpp_im_set_handlers(XML_Parser parser);
-
-bool xmpp_im_message_to_client(struct xmpp_stanza *stanza_info, void *data);
-
-void xmpp_im_stanza_end(void *data, const char *name);

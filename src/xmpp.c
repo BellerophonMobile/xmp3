@@ -81,57 +81,23 @@ error:
     return false;
 }
 
-void xmpp_register_message_route(struct xmpp_server *server, struct jid *jid,
-                                 xmpp_message_route route_func, void *data) {
-    struct message_route *route = xmpp_find_message_route(server, jid);
-    if (route != NULL) {
-        log_warn("Attempted to insert duplicate route");
-        return;
-    }
-    DL_APPEND(server->message_routes,
-              new_message_route(jid, route_func, data));
-}
-
-void xmpp_deregister_message_desitnation(struct xmpp_server *server,
-                                         struct jid *jid) {
-    struct message_route *route = xmpp_find_message_route(server, jid);
-    if (route == NULL) {
-        log_warn("Attempted to remove non-existent key");
-        return;
-    }
-    DL_DELETE(server->message_routes, route);
-    del_message_route(route);
-}
-
-struct message_route* xmpp_find_message_route(struct xmpp_server *server,
-                                              struct jid *jid) {
-    struct message_route *route;
-    DL_FOREACH(server->message_routes, route) {
-        if (strcmp(route->jid->local, jid->local) == 0
-            && strcmp(route->jid->domain, jid->domain) == 0) {
-            /* If no resource specified in search, then return the first one
-             * that matches the local and domain parts, else return an exact
-             * match. */
-            if (jid->resource == NULL
-                || strcmp(route->jid->resource, jid->resource) == 0) {
-                return route;
-            }
-        }
-    }
-    return NULL;
-}
-
 static struct xmpp_server* new_server() {
     struct xmpp_server *server = calloc(1, sizeof(*server));
     check_mem(server);
-    LIST_INIT(&server->client_list);
     return server;
 }
 
 static void del_server(struct xmpp_server *server) {
-    struct xmpp_client *item;
-    LIST_FOREACH(item, &server->client_list, list_entry) {
-        del_client(item);
+    struct xmpp_client *client;
+    struct xmpp_client *client_tmp;
+    DL_FOREACH_SAFE(server->clients, client, client_tmp) {
+        del_client(client);
+    }
+
+    struct message_route *route;
+    struct message_route *route_tmp;
+    DL_FOREACH_SAFE(server->message_routes, route, route_tmp) {
+        del_client(route);
     }
     free(server);
 }
@@ -226,8 +192,7 @@ static void add_connection(struct event_loop *loop, int fd, void *data) {
     log_info("New connection from %s:%d",
              inet_ntoa(client->caddr.sin_addr), client->caddr.sin_port);
 
-    LIST_INSERT_HEAD(&server->client_list, client, list_entry);
-
+    DL_APPEND(server->clients, client);
     event_register_callback(loop, client->fd, read_client, client);
     return;
 
@@ -238,25 +203,11 @@ error:
 static void remove_connection(struct xmpp_server *server,
                               struct xmpp_client *client) {
     struct xmpp_client *item;
-    LIST_FOREACH(item, &server->client_list, list_entry) {
+    DL_FOREACH(server->clients, item) {
         if (client == item) {
-            LIST_REMOVE(item, list_entry);
+            DL_DELETE(server->clients, item);
             del_client(item);
             return;
         }
     }
-}
-
-static struct message_route* new_message_route(struct jid *jid,
-        xmpp_message_route route_func, void *data) {
-    struct message_route *route = calloc(1, sizeof(*route));
-    check_mem(route);
-    route->jid = jid;
-    route->route_func = route_func;
-    route->data = data;
-    return route;
-}
-
-static void del_message_route(struct message_route *route) {
-    free(route);
 }

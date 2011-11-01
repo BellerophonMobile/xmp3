@@ -355,7 +355,7 @@ static void bind_iq_end(void *data, const char *name) {
      * process general messages. */
     XML_SetElementHandler(client->parser, stanza_start, stream_end);
     XML_SetUserData(client->parser, client);
-    xmpp_register_message_route(server, &client->jid, message_to_client,
+    xmpp_message_register_route(server, &client->jid, xmpp_message_to_client,
                                 client);
 
     free(bind_data);
@@ -473,6 +473,13 @@ static void stanza_start(void *data, const char *name, const char **attrs) {
 }
 
 static void stanza_end(void *data, const char *name) {
+    struct xmpp_stanza *stanza = (struct xmpp_stanza*)data;
+    struct xmpp_client *client = (struct xmpp_client*)stanza->from;
+    XML_SetUserData(client->parser, client);
+    del_stanza(stanza);
+
+    XML_SetElementHandler(client->parser, stanza_start, stream_end);
+    XML_SetCharacterDataHandler(client->parser, xmpp_ignore_data);
 }
 
 static void new_stanza_jid(struct jid *jid, const char *strjid) {
