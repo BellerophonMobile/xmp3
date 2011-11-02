@@ -9,6 +9,8 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
+#include "utstring.h"
+
 #include "log.h"
 
 int sendall(int fd, const char *buffer, int len) {
@@ -33,15 +35,25 @@ int sendxml(XML_Parser parser, int fd) {
     return sendall(fd, buffer + offset, count);
 }
 
-UT_string* jid_to_str(struct jid *jid) {
-    UT_string *strjid;
-    utstring_new(strjid);
+char* jid_to_str(struct jid *jid) {
+    UT_string strjid;
+    utstring_init(&strjid);
 
-    utstring_printf(strjid, "%s@%s", jid->local, jid->domain);
-    if (jid->resource != NULL) {
-        utstring_printf(strjid, "/%s", jid->resource);
+    // Domain part is required
+    if (jid->domain != NULL) {
+        if (jid->local == NULL) {
+            utstring_printf(&strjid, jid->domain);
+        } else {
+            utstring_printf(&strjid, "%s@%s", jid->local, jid->domain);
+        }
+
+        if (jid->resource != NULL) {
+            utstring_printf(&strjid, "/%s", jid->resource);
+        }
     }
-    return strjid;
+
+    return utstring_body(&strjid);
+}
 }
 
 ssize_t jid_len(struct jid *jid) {
