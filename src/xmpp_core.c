@@ -130,6 +130,7 @@ static struct xmpp_stanza* new_stanza(struct xmpp_client *client,
 
     utarray_new(stanza->other_attrs, &ut_str_icd);
 
+    ALLOC_COPY_STRING(stanza->ns_name, name);
     char *ns_delim = strrchr(name, *XMPP_NS_SEPARATOR);
     if (ns_delim == NULL) {
         ALLOC_COPY_STRING(stanza->name, name);

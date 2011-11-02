@@ -69,6 +69,7 @@ struct xmpp_client {
 };
 
 struct xmpp_stanza {
+    char *ns_name;
     char *name;
     char *namespace;
     char *id;
