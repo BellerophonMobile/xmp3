@@ -35,7 +35,7 @@ static char MSG_BUFFER[BUFFER_SIZE];
 
 struct message_route {
     const struct jid *jid;
-    xmpp_message_route_callback route_func;
+    xmpp_message_callback func;
     void *data;
 
     // These are kept in a doubly-linked list.
@@ -66,7 +66,7 @@ static void remove_connection(struct xmpp_server *server,
 
 
 static struct message_route* new_message_route(const struct jid *jid,
-        xmpp_message_route_callback route_func, void *data);
+        xmpp_message_callback func, void *data);
 static void del_message_route(struct message_route *route);
 static struct message_route* find_message_route(
         const struct xmpp_server *server, const struct jid *jid);
@@ -105,7 +105,7 @@ error:
 }
 
 void xmpp_message_register_route(struct xmpp_server *server, struct jid *jid,
-                                 xmpp_message_route_callback route_func,
+                                 xmpp_message_callback cb,
                                  void *data) {
     struct message_route *route = find_message_route(server, jid);
     if (route != NULL) {
@@ -113,7 +113,7 @@ void xmpp_message_register_route(struct xmpp_server *server, struct jid *jid,
         return;
     }
     DL_APPEND(server->message_routes,
-              new_message_route(jid, route_func, data));
+              new_message_route(jid, cb, data));
 }
 
 void xmpp_message_deregister_route(struct xmpp_server *server,
@@ -134,7 +134,7 @@ bool xmpp_message_route(struct xmpp_stanza *stanza) {
         log_info("No route for destination");
         return false;
     }
-    return route->route_func(stanza, route->data);
+    return route->func(stanza, route->data);
 }
 
 static struct xmpp_server* new_server() {
@@ -271,11 +271,11 @@ static void remove_connection(struct xmpp_server *server,
 }
 
 static struct message_route* new_message_route(const struct jid *jid,
-        xmpp_message_route_callback route_func, void *data) {
+        xmpp_message_callback func, void *data) {
     struct message_route *route = calloc(1, sizeof(*route));
     check_mem(route);
     route->jid = jid;
-    route->route_func = route_func;
+    route->func = func;
     route->data = data;
     return route;
 }

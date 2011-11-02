@@ -13,8 +13,8 @@
 #include "event.h"
 #include "xmpp_common.h"
 
-typedef bool (*xmpp_message_route_callback)(struct xmpp_stanza *from_stanza,
-                                            void *data);
+typedef bool (*xmpp_message_callback)(struct xmpp_stanza *from_stanza,
+                                      void *data);
 
 struct xmpp_server;
 
@@ -22,8 +22,7 @@ struct xmpp_server;
 bool xmpp_init(struct event_loop *loop, struct in_addr addr, uint16_t port);
 
 void xmpp_message_register_route(struct xmpp_server *server, struct jid *jid,
-                                 xmpp_message_route_callback route_func,
-                                 void *data);
+                                 xmpp_message_callback cb, void *data);
 
 void xmpp_message_deregister_route(struct xmpp_server *server,
                                    struct jid *jid);
