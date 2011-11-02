@@ -21,10 +21,10 @@ struct xmpp_server;
 /** Initializes the XMPP server and listens for new connections */
 bool xmpp_init(struct event_loop *loop, struct in_addr addr, uint16_t port);
 
-void xmpp_message_register_route(struct xmpp_server *server, struct jid *jid,
+void xmpp_register_message_route(struct xmpp_server *server, struct jid *jid,
                                  xmpp_message_callback cb, void *data);
 
-void xmpp_message_deregister_route(struct xmpp_server *server,
+void xmpp_deregister_message_route(struct xmpp_server *server,
                                    struct jid *jid);
 
-bool xmpp_message_route(struct xmpp_stanza *stanza);
+bool xmpp_route_message(struct xmpp_stanza *stanza);

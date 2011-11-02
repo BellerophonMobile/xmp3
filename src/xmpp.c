@@ -104,8 +104,8 @@ error:
     return false;
 }
 
-void xmpp_message_register_route(struct xmpp_server *server, struct jid *jid,
-                                 xmpp_message_callback cb,
+void xmpp_register_message_route(struct xmpp_server *server, struct jid *jid,
+                                 xmpp_message_callback func,
                                  void *data) {
     struct message_route *route = find_message_route(server, jid);
     if (route != NULL) {
@@ -116,7 +116,7 @@ void xmpp_message_register_route(struct xmpp_server *server, struct jid *jid,
               new_message_route(jid, cb, data));
 }
 
-void xmpp_message_deregister_route(struct xmpp_server *server,
+void xmpp_deregister_message_route(struct xmpp_server *server,
                                    struct jid *jid) {
     struct message_route *route = find_message_route(server, jid);
     if (route == NULL) {
@@ -127,7 +127,7 @@ void xmpp_message_deregister_route(struct xmpp_server *server,
     del_message_route(route);
 }
 
-bool xmpp_message_route(struct xmpp_stanza *stanza) {
+bool xmpp_route_message(struct xmpp_stanza *stanza) {
     struct xmpp_server *server = stanza->from_client->server;
     struct message_route *route = find_message_route(server, &stanza->to_jid);
     if (route == NULL) {

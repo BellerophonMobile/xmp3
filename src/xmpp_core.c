@@ -52,7 +52,7 @@ void xmpp_core_stanza_start(void *data, const char *name, const char **attrs) {
 
     if (strcmp(name, XMPP_MESSAGE) == 0) {
         log_info("Message stanza start");
-        xmpp_message_route(stanza);
+        xmpp_route_message(stanza);
     } else if (strcmp(name, XMPP_PRESENCE) == 0) {
         log_info("Presence stanza start");
         //handle_presence(stanza, attrs);
