@@ -63,6 +63,7 @@ void str_to_jid(const char *str, struct jid *jid) {
         jid->local = calloc(local_len, sizeof(*jid->local));
         check_mem(jid->local);
         strncpy(jid->local, str, local_len);
+        debug("Setting local to '%s'", jid->local);
     }
 
     char *slash_delim = strchr(str, '/');
@@ -72,12 +73,14 @@ void str_to_jid(const char *str, struct jid *jid) {
         jid->resource = calloc(resource_len, sizeof(*jid->resource));
         check_mem(jid->resource);
         strncpy(jid->resource, slash_delim + 1, resource_len);
+        debug("Setting resource to '%s'", jid->resource);
     }
 
     int domain_len = strlen(str) - local_len - resource_len;
     jid->domain = calloc(domain_len, sizeof(*jid->domain));
     check_mem(jid->domain);
-    strncpy(jid->domain, str + local_len, domain_len);
+    strncpy(jid->domain, str + local_len + 1, domain_len - 1);
+    debug("Setting domain to '%s'", jid->domain);
 }
 
 ssize_t jid_len(struct jid *jid) {
