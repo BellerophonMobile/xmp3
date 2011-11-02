@@ -42,6 +42,7 @@ def build(bld):
             'src/xmpp.c',
             'src/xmpp_common.c',
             'src/xmpp_core.c',
+            'src/xmpp_im.c',
         ],
         use = ['EXPAT'],
     )

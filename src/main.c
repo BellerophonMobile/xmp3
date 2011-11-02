@@ -102,8 +102,8 @@ int main(int argc, char *argv[]) {
 
     loop = event_new_loop();
 
-    check(xmpp_init(loop, client_addr, client_port),
-            "XMPP server initialization failed");
+    struct xmpp_server *server = xmpp_init(loop, client_addr, client_port);
+    check(server != NULL, "XMPP server initialization failed");
 
     log_info("Starting event loop...");
     event_loop_start(loop);

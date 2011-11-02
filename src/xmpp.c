@@ -19,6 +19,7 @@
 #include <expat.h>
 
 #include "utlist.h"
+#include "uthash.h"
 
 #include "log.h"
 #include "utils.h"
@@ -26,6 +27,7 @@
 
 #include "xmpp_common.h"
 #include "xmpp_auth.h"
+#include "xmpp_im.h"
 
 #define BUFFER_SIZE 2000
 
@@ -34,13 +36,22 @@ static const int SERVER_BACKLOG = 3;
 static char MSG_BUFFER[BUFFER_SIZE];
 
 struct message_route {
-    const struct jid *jid;
+    struct jid *jid;
     xmpp_message_callback func;
     void *data;
 
     // These are kept in a doubly-linked list.
     struct message_route *prev;
     struct message_route *next;
+};
+
+struct iq_route {
+    const char *ns;
+    xmpp_iq_callback func;
+    void *data;
+
+    // These are kept in a hash table
+    UT_hash_handle hh;
 };
 
 struct xmpp_server {
@@ -51,6 +62,9 @@ struct xmpp_server {
 
     // Linked list of message routes
     struct message_route *message_routes;
+
+    // Hash table of iq routes
+    struct iq_route *iq_routes;
 };
 
 // Forward declarations
@@ -64,16 +78,13 @@ static void add_connection(struct event_loop *loop, int fd, void *data);
 static void remove_connection(struct xmpp_server *server,
                               const struct xmpp_client *client);
 
-
-static struct message_route* new_message_route(const struct jid *jid,
-        xmpp_message_callback func, void *data);
-static void del_message_route(struct message_route *route);
 static struct message_route* find_message_route(
         const struct xmpp_server *server, const struct jid *jid);
 
-
-bool xmpp_init(struct event_loop *loop, struct in_addr addr, uint16_t port) {
+struct xmpp_server* xmpp_init(struct event_loop *loop, struct in_addr addr,
+                              uint16_t port) {
     int fd = socket(AF_INET, SOCK_STREAM, 0);
+    struct xmpp_server *server = NULL;
     check(fd != -1, "Error creating XMPP server socket");
 
     // Allow address reuse when in the TIME_WAIT state.
@@ -94,14 +105,21 @@ bool xmpp_init(struct event_loop *loop, struct in_addr addr, uint16_t port) {
 
     log_info("Listening for XMPP connections on %s:%d", inet_ntoa(addr), port);
 
-    struct xmpp_server *server = new_server();
+    server = new_server();
+
+    // Register IQ handlers
+    xmpp_register_iq_namespace(server, XMPP_IQ_SESSION, xmpp_im_iq_session,
+                               NULL);
 
     event_register_callback(loop, fd, add_connection, server);
-    return true;
+    return server;
 
 error:
     close(fd);
-    return false;
+    if (server != NULL) {
+        del_server(server);
+    }
+    return NULL;
 }
 
 void xmpp_register_message_route(struct xmpp_server *server, struct jid *jid,
@@ -109,29 +127,75 @@ void xmpp_register_message_route(struct xmpp_server *server, struct jid *jid,
                                  void *data) {
     struct message_route *route = find_message_route(server, jid);
     if (route != NULL) {
-        log_warn("Attempted to insert duplicate route");
+        log_warn("Attempted to insert duplicate message route");
         return;
     }
-    DL_APPEND(server->message_routes,
-              new_message_route(jid, cb, data));
+
+    route = calloc(1, sizeof(*route));
+    check_mem(route);
+    route->jid = jid;
+    route->func = func;
+    route->data = data;
+
+    DL_APPEND(server->message_routes, route);
 }
 
 void xmpp_deregister_message_route(struct xmpp_server *server,
                                    struct jid *jid) {
     struct message_route *route = find_message_route(server, jid);
     if (route == NULL) {
-        log_warn("Attempted to remove non-existent key");
+        log_warn("Attempted to remove non-existent message route");
         return;
     }
     DL_DELETE(server->message_routes, route);
-    del_message_route(route);
+    free(route);
 }
 
 bool xmpp_route_message(struct xmpp_stanza *stanza) {
     struct xmpp_server *server = stanza->from_client->server;
     struct message_route *route = find_message_route(server, &stanza->to_jid);
     if (route == NULL) {
-        log_info("No route for destination");
+        log_info("No message route for destination");
+        return false;
+    }
+    return route->func(stanza, route->data);
+}
+
+void xmpp_register_iq_namespace(struct xmpp_server *server, const char *ns,
+                                xmpp_iq_callback func, void *data) {
+    struct iq_route *route = NULL;
+    HASH_FIND_STR(server->iq_routes, ns, route);
+    if (route != NULL) {
+        log_warn("Attempted to insert duplicate iq route");
+        return;
+    }
+
+    route = calloc(1, sizeof(*route));
+    check_mem(route);
+    route->ns = ns;
+    route->func = func;
+    route->data = data;
+    HASH_ADD_KEYPTR(hh, server->iq_routes, route->ns, strlen(route->ns),
+                    route);
+}
+
+void xmpp_deregister_iq_namespace(struct xmpp_server *server, const char *ns) {
+    struct iq_route *route = NULL;
+    HASH_FIND_STR(server->iq_routes, ns, route);
+    if (route == NULL) {
+        log_warn("Attempted to remove non-existent iq route");
+        return;
+    }
+    HASH_DEL(server->iq_routes, route);
+    free(route);
+}
+
+bool xmpp_route_iq(const char *ns, struct xmpp_stanza *stanza) {
+    struct xmpp_server *server = stanza->from_client->server;
+    struct iq_route *route = NULL;
+    HASH_FIND_STR(server->iq_routes, ns, route);
+    if (route == NULL) {
+        log_info("No iq route for destination");
         return false;
     }
     return route->func(stanza, route->data);
@@ -153,7 +217,7 @@ static void del_server(struct xmpp_server *server) {
     struct message_route *route;
     struct message_route *route_tmp;
     DL_FOREACH_SAFE(server->message_routes, route, route_tmp) {
-        del_message_route(route);
+        free(route);
     }
     free(server);
 }
@@ -167,7 +231,7 @@ static struct xmpp_client* new_client(struct xmpp_server *server) {
     client->server = server;
 
     // Create the XML parser we'll use to parse messages from the client.
-    client->parser = XML_ParserCreateNS(NULL, ' ');
+    client->parser = XML_ParserCreateNS(NULL, *XMPP_NS_SEPARATOR);
     check(client->parser != NULL, "Error creating XML parser");
 
     return client;
@@ -268,20 +332,6 @@ static void remove_connection(struct xmpp_server *server,
             return;
         }
     }
-}
-
-static struct message_route* new_message_route(const struct jid *jid,
-        xmpp_message_callback func, void *data) {
-    struct message_route *route = calloc(1, sizeof(*route));
-    check_mem(route);
-    route->jid = jid;
-    route->func = func;
-    route->data = data;
-    return route;
-}
-
-static void del_message_route(struct message_route *route) {
-    free(route);
 }
 
 static struct message_route* find_message_route(

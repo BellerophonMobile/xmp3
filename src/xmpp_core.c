@@ -27,10 +27,7 @@
     utarray_push_back(a, tmp); \
 } while (0)
 
-static const char *MSG_MESSAGE_START = "<message";
-
 // Forward declarations
-static void new_stanza_jid(struct jid *jid, const char *strjid);
 static struct xmpp_stanza* new_stanza(struct xmpp_client *client,
                                       const char *name, const char **attrs);
 static void del_stanza(struct xmpp_stanza *stanza);
@@ -40,6 +37,8 @@ static void message_client_start(void *data, const char *name,
                                  const char **attrs);
 static void message_client_end(void *data, const char *name);
 static void message_client_data(void *data, const char *s, int len);
+
+static void iq_start(void *data, const char *name, const char **attrs);
 
 void xmpp_core_stanza_start(void *data, const char *name, const char **attrs) {
     struct xmpp_client *client = (struct xmpp_client*)data;
@@ -58,7 +57,7 @@ void xmpp_core_stanza_start(void *data, const char *name, const char **attrs) {
         //handle_presence(stanza, attrs);
     } else if (strcmp(name, XMPP_IQ) == 0) {
         log_info("IQ stanza start");
-        //handle_iq(stanza, attrs);
+        XML_SetStartElementHandler(client->parser, iq_start);
     } else {
         log_warn("Unknown stanza");
     }
@@ -68,17 +67,30 @@ void xmpp_core_stanza_end(void *data, const char *name) {
     struct xmpp_stanza *stanza = (struct xmpp_stanza*)data;
     struct xmpp_client *client = stanza->from_client;
 
-    if (strcmp(name, stanza->name) == 0) {
-        log_info("Stanza end");
-        XML_SetUserData(client->parser, client);
-        del_stanza(stanza);
-
-        XML_SetElementHandler(client->parser, xmpp_core_stanza_start,
-                xmpp_core_stream_end);
-        XML_SetCharacterDataHandler(client->parser, xmpp_ignore_data);
-    } else {
-        log_info("Ignoring end tag");
+    if (stanza->namespace != NULL) {
+        if (strncmp(name, stanza->namespace, strlen(stanza->namespace)) != 0) {
+            return;
+        }
     }
+
+    const char *tag_name = strchr(name, *XMPP_NS_SEPARATOR);
+    if (tag_name == NULL) {
+        tag_name = name;
+    } else {
+        tag_name++; // tag_name is on the "#" character
+    }
+
+    if (strcmp(tag_name, stanza->name) != 0) {
+        return;
+    }
+
+    log_info("Stanza end");
+    XML_SetUserData(client->parser, client);
+    del_stanza(stanza);
+
+    XML_SetElementHandler(client->parser, xmpp_core_stanza_start,
+            xmpp_core_stream_end);
+    XML_SetCharacterDataHandler(client->parser, xmpp_ignore_data);
 }
 
 void xmpp_core_stream_end(void *data, const char *name) {
@@ -100,42 +112,38 @@ bool xmpp_core_message_handler(struct xmpp_stanza *from_stanza, void *data) {
 
     /* We need to add a "from" field to the outgoing stanza regardless of
      * whether or not the client gave us one. */
-    UT_string *msg;
-    utstring_new(msg);
+    char* msg = create_start_tag(from_stanza);
 
-    utstring_printf(msg, MSG_MESSAGE_START);
-
-    UT_string *from = jid_to_str(&from_stanza->from_client->jid);
-    utstring_printf(msg, " %s='%s'", XMPP_ATTR_FROM, utstring_body(from));
-    utstring_free(from);
-
-    UT_string *to = jid_to_str(&from_stanza->to_jid);
-    utstring_printf(msg, " %s='%s'", XMPP_ATTR_TO, utstring_body(to));
-    utstring_free(to);
-
-    for (int i = 0; i < utarray_len(from_stanza->other_attrs); i += 2) {
-        utstring_printf(msg, " %s='%s'",
-                utarray_eltptr(from_stanza->other_attrs, i),
-                utarray_eltptr(from_stanza->other_attrs, i + 1));
-    }
-
-    if (sendall(to_client->fd, utstring_body(msg), utstring_len(msg)) <= 0) {
+    if (sendall(to_client->fd, msg, strlen(msg)) <= 0) {
         log_err("Error sending message start tag to destination.");
     }
 
-    utstring_free(msg);
+    free(msg);
     return true;
 }
 
 static struct xmpp_stanza* new_stanza(struct xmpp_client *client,
-                                           const char *name,
-                                           const char **attrs) {
+                                      const char *name,
+                                      const char **attrs) {
     struct xmpp_stanza *stanza = calloc(1, sizeof(*stanza));
     check_mem(stanza);
 
     utarray_new(stanza->other_attrs, &ut_str_icd);
 
-    ALLOC_COPY_STRING(stanza->name, name);
+    char *ns_delim = strrchr(name, *XMPP_NS_SEPARATOR);
+    if (ns_delim == NULL) {
+        ALLOC_COPY_STRING(stanza->name, name);
+    } else {
+        int ns_len = ns_delim - name;
+        stanza->namespace = calloc(ns_len, sizeof(*stanza->namespace));
+        check_mem(stanza->namespace);
+        strncpy(stanza->namespace, name, ns_len);
+
+        int name_len = strlen(name) - ns_len - 1;
+        stanza->name= calloc(name_len, sizeof(*stanza->name));
+        check_mem(stanza->name);
+        strncpy(stanza->name, name + ns_len + 1, name_len);
+    }
 
     /* RFC6120 Section 8.1.2.1 states that the server is to basically ignore
      * any "from" attribute in the stanza, and append the JID of the client the
@@ -146,7 +154,10 @@ static struct xmpp_stanza* new_stanza(struct xmpp_client *client,
         if (strcmp(attrs[i], XMPP_ATTR_ID) == 0) {
             ALLOC_COPY_STRING(stanza->id, attrs[i + 1]);
         } else if (strcmp(attrs[i], XMPP_ATTR_TO) == 0) {
-            new_stanza_jid(&stanza->to_jid, attrs[i + 1]);
+            ALLOC_COPY_STRING(stanza->to, attrs[i + 1]);
+            str_to_jid(attrs[i + 1], &stanza->to_jid);
+        } else if (strcmp(attrs[i], XMPP_ATTR_FROM) == 0) {
+            ALLOC_COPY_STRING(stanza->from, attrs[i + 1]);
         } else if (strcmp(attrs[i], XMPP_ATTR_TYPE) == 0) {
             ALLOC_COPY_STRING(stanza->type, attrs[i + 1]);
         } else {
@@ -200,4 +211,20 @@ static void message_client_data(void *data, const char *s, int len) {
     log_info("Client message data");
     xmpp_print_data(s, len);
     //route_message(stanza);
+}
+
+static void iq_start(void *data, const char *name, const char **attrs) {
+    struct xmpp_stanza *stanza = (struct xmpp_stanza*)data;
+    struct xmpp_client *client = stanza->from_client;
+
+    /* Routing for IQ stanzas is based on the namespace (and tag name) of the
+     * first child of the top IQ tag. */
+    if (!xmpp_route_iq(name, stanza)) {
+        /* If we can't answer the IQ, then let the client know.  Make sure to
+         * ignore anything inside this stanza. */
+        xmpp_send_service_unavailable(stanza);
+        XML_SetElementHandler(client->parser, xmpp_ignore_start,
+                              xmpp_core_stanza_end);
+        XML_SetCharacterDataHandler(client->parser, xmpp_ignore_data);
+    }
 }

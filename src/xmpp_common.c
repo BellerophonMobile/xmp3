@@ -8,23 +8,21 @@
 
 #include <stdio.h>
 
+#include "utstring.h"
+
 #include "utils.h"
 
 const char *SERVER_DOMAIN = "localhost";
 
-const char *XMPP_STREAM = XMPP_NS_STREAM " stream";
-const char *XMPP_AUTH = XMPP_NS_SASL " auth";
-const char *XMPP_BIND = XMPP_NS_BIND " bind";
-const char *XMPP_BIND_RESOURCE = XMPP_NS_BIND " resource";
+const char *XMPP_STREAM = XMPP_NS_STREAM XMPP_NS_SEPARATOR "stream";
+const char *XMPP_AUTH = XMPP_NS_SASL XMPP_NS_SEPARATOR "auth";
+const char *XMPP_BIND = XMPP_NS_BIND XMPP_NS_SEPARATOR "bind";
+const char *XMPP_BIND_RESOURCE = XMPP_NS_BIND XMPP_NS_SEPARATOR "resource";
 
-const char *XMPP_MESSAGE = XMPP_NS_CLIENT " message";
-const char *XMPP_MESSAGE_BODY = XMPP_NS_CLIENT " body";
-const char *XMPP_PRESENCE = XMPP_NS_CLIENT " presence";
-const char *XMPP_IQ = XMPP_NS_CLIENT " iq";
-const char *XMPP_IQ_SESSION = XMPP_NS_SESSION " session";
-const char *XMPP_IQ_QUERY_INFO = XMPP_NS_DISCO_INFO " query";
-const char *XMPP_IQ_QUERY_ITEMS = XMPP_NS_DISCO_ITEMS " query";
-const char *XMPP_IQ_QUERY_ROSTER = XMPP_NS_ROSTER " query";
+const char *XMPP_MESSAGE = XMPP_NS_CLIENT XMPP_NS_SEPARATOR "message";
+const char *XMPP_MESSAGE_BODY = XMPP_NS_CLIENT XMPP_NS_SEPARATOR "body";
+const char *XMPP_PRESENCE = XMPP_NS_CLIENT XMPP_NS_SEPARATOR "presence";
+const char *XMPP_IQ = XMPP_NS_CLIENT XMPP_NS_SEPARATOR "iq";
 
 const char *XMPP_ATTR_TO = "to";
 const char *XMPP_ATTR_FROM = "from";
@@ -36,13 +34,17 @@ const char *XMPP_ATTR_TYPE_RESULT = "result";
 const char *XMPP_ATTR_TYPE_ERROR = "error";
 
 static const char *MSG_NOT_IMPLEMENTED =
-    "<%s xmlns='%s' type='error' id='%s'"
-            " from='localhost' to='%s@localhost/%s'>"
-        "<error type='cancel'>"
-            "<feature-not-implemented "
-                "xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>"
-        "</error>"
-    "</%1$s>";
+    "<error type='cancel'>"
+        "<feature-not-implemented "
+            "xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>"
+    "</error>";
+
+static const char *MSG_SERVICE_UNAVAILABLE =
+    "<error type='cancel'>"
+        "<service-unavailable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>"
+    "</error>";
+
+static void send_error(struct xmpp_stanza *stanza, const char *error);
 
 void xmpp_print_start_tag(const char *name, const char **attrs) {
     printf("\t<%s", name);
@@ -86,38 +88,65 @@ void xmpp_error_data(void *data, const char *s, int len) {
 }
 
 void xmpp_ignore_start(void *data, const char *name, const char **attrs) {
-    debug("Ignoring start tag:");
+    debug("Ignoring start tag");
 }
 
 void xmpp_ignore_data(void *data, const char *s, int len) {
-    debug("Ignoring data:");
+    debug("Ignoring data");
 }
 
-void xmpp_send_not_supported(struct xmpp_stanza *stanza) {
+void xmpp_send_feature_not_implemented(struct xmpp_stanza *stanza) {
+    log_warn("Sending feature not implemented");
+    send_error(stanza, MSG_NOT_IMPLEMENTED);
+}
+
+void xmpp_send_service_unavailable(struct xmpp_stanza *stanza) {
+    log_warn("Sending service unavailable");
+    send_error(stanza, MSG_SERVICE_UNAVAILABLE);
+}
+
+static void send_error(struct xmpp_stanza *stanza, const char *error) {
     struct xmpp_client *client = stanza->from_client;
-    char tag_name_buffer[strlen(stanza->name)];
-    strcpy(tag_name_buffer, stanza->name);
 
-    char *tag_name = tag_name_buffer;
-    char *tag_ns = strsep(&tag_name, " ");
+    UT_string *msg = NULL;
+    utstring_new(msg);
 
-    char err_msg[strlen(MSG_NOT_IMPLEMENTED)
-                 + strlen(tag_name)
-                 + strlen(tag_ns)
-                 + strlen(stanza->id)
-                 + strlen(client->jid.local)
-                 + strlen(client->jid.resource)
-                 ];
+    // Ignore the "to" and "from" attributes
+    char *to = stanza->to;
+    stanza->to = NULL;
+    char *from = stanza->from;
+    stanza->from = NULL;
 
-    log_warn("Unimplemented stanza");
+    // We need to change the type to "error"
+    char *type = stanza->type;
+    stanza->type = calloc(strlen(XMPP_ATTR_TYPE_ERROR) + 1,
+                          sizeof(*stanza->type));
+    check_mem(stanza->type);
+    strcpy(stanza->type, XMPP_ATTR_TYPE_ERROR);
 
-    snprintf(err_msg, sizeof(err_msg), MSG_NOT_IMPLEMENTED,
-             tag_name, tag_ns, stanza->id, client->jid.local,
-             client->jid.resource);
-    check(sendall(client->fd, err_msg, strlen(err_msg)) > 0,
+    char *start_tag = create_start_tag(stanza);
+
+    // Put everything back how it was
+    stanza->to = to;
+    stanza->from = from;
+    free(stanza->type);
+    stanza->type = type;
+
+    utstring_printf(msg, start_tag);
+    free(start_tag);
+
+    utstring_printf(msg, error);
+
+    utstring_printf(msg, "</%s>", stanza->name);
+
+    /* TODO: If this fails, we should probably close the connection or
+     * something. */
+    check(sendall(client->fd, utstring_body(msg), utstring_len(msg)) > 0,
           "Error sending not supported error items");
-    return;
 
+    // Explicit fallthrough
 error:
-    XML_StopParser(client->parser, false);
+    if (msg != NULL) {
+        utstring_free(msg);
+    }
 }

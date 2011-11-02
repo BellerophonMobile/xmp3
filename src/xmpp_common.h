@@ -16,6 +16,8 @@
 #include "log.h"
 
 // XML string constants
+#define XMPP_NS_SEPARATOR "#"
+
 #define XMPP_NS_STREAM "http://etherx.jabber.org/streams"
 #define XMPP_NS_SASL "urn:ietf:params:xml:ns:xmpp-sasl"
 #define XMPP_NS_BIND "urn:ietf:params:xml:ns:xmpp-bind"
@@ -36,10 +38,6 @@ const char *XMPP_MESSAGE;
 const char *XMPP_MESSAGE_BODY;
 const char *XMPP_PRESENCE;
 const char *XMPP_IQ;
-const char *XMPP_IQ_SESSION;
-const char *XMPP_IQ_QUERY_INFO;
-const char *XMPP_IQ_QUERY_ITEMS;
-const char *XMPP_IQ_QUERY_ROSTER;
 
 const char *XMPP_ATTR_TO;
 const char *XMPP_ATTR_FROM;
@@ -71,10 +69,13 @@ struct xmpp_client {
 };
 
 struct xmpp_stanza {
-    struct xmpp_client *from_client;
     char *name;
+    char *namespace;
     char *id;
+    char *to;
     struct jid to_jid;
+    char *from;
+    struct xmpp_client *from_client;
     char *type;
     UT_array *other_attrs;
 };
@@ -107,4 +108,6 @@ void xmpp_ignore_start(void *data, const char *name, const char **attrs);
 /** Expat callback to ignore data. */
 void xmpp_ignore_data(void *data, const char *s, int len);
 
-void xmpp_send_not_supported(struct xmpp_stanza *stanza);
+void xmpp_send_feature_not_implemented(struct xmpp_stanza *stanza);
+
+void xmpp_send_service_unavailable(struct xmpp_stanza *stanza);
