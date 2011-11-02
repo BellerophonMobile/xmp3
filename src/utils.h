@@ -30,6 +30,9 @@ void str_to_jid(const char *str, struct jid *jid);
 /** Gets the string length of a jid. */
 ssize_t jid_len(struct jid *jid);
 
+/** Takes a stanza struct and recreates the string tag. */
+char* create_start_tag(struct xmpp_stanza *stanza);
+
 /*
  * These functions are from libb64, found at: http://libb64.sourceforge.net/
  *

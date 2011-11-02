@@ -94,6 +94,43 @@ ssize_t jid_len(struct jid *jid) {
     return len;
 }
 
+char* create_start_tag(struct xmpp_stanza *stanza) {
+    UT_string s;
+    utstring_init(&s);
+
+    utstring_printf(&s, "<%s", stanza->name);
+
+    if (stanza->namespace != NULL) {
+        utstring_printf(&s, " xmlns='%s'", stanza->namespace);
+    }
+
+    if (stanza->id != NULL) {
+        utstring_printf(&s, " id='%s'", stanza->id);
+    }
+
+    if (stanza->type != NULL) {
+        utstring_printf(&s, " type='%s'", stanza->type);
+    }
+
+    if (stanza->to != NULL) {
+        utstring_printf(&s, " to='%s'", stanza->to);
+    }
+
+    if (stanza->from != NULL) {
+        utstring_printf(&s, " from='%s'", stanza->from);
+    }
+
+    for (int i = 0; i < utarray_len(stanza->other_attrs); i += 2) {
+        utstring_printf(&s, " %s='%s'",
+                utarray_eltptr(stanza->other_attrs, i),
+                utarray_eltptr(stanza->other_attrs, i + 1));
+    }
+
+    utstring_printf(&s, ">");
+
+    return utstring_body(&s);
+}
+
 /*
  * These functions are from libb64, found at: http://libb64.sourceforge.net/
  *
