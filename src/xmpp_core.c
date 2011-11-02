@@ -27,6 +27,12 @@
     utarray_push_back(a, tmp); \
 } while (0)
 
+// Temporary structures
+struct message_tmp {
+    struct xmpp_client *to_client;
+    struct xmpp_stanza *from_stanza;
+};
+
 // Forward declarations
 static struct xmpp_stanza* new_stanza(struct xmpp_client *client,
                                       const char *name, const char **attrs);
@@ -67,20 +73,7 @@ void xmpp_core_stanza_end(void *data, const char *name) {
     struct xmpp_stanza *stanza = (struct xmpp_stanza*)data;
     struct xmpp_client *client = stanza->from_client;
 
-    if (stanza->namespace != NULL) {
-        if (strncmp(name, stanza->namespace, strlen(stanza->namespace)) != 0) {
-            return;
-        }
-    }
-
-    const char *tag_name = strchr(name, *XMPP_NS_SEPARATOR);
-    if (tag_name == NULL) {
-        tag_name = name;
-    } else {
-        tag_name++; // tag_name is on the "#" character
-    }
-
-    if (strcmp(tag_name, stanza->name) != 0) {
+    if (strcmp(name, stanza->ns_name) != 0) {
         return;
     }
 
@@ -112,11 +105,20 @@ bool xmpp_core_message_handler(struct xmpp_stanza *from_stanza, void *data) {
 
     /* We need to add a "from" field to the outgoing stanza regardless of
      * whether or not the client gave us one. */
+    char *fromstr = from_stanza->from;
+    from_stanza->from = jid_to_str(&from_client->jid);
     char* msg = create_start_tag(from_stanza);
+    free(from_stanza->from);
+    from_stanza->from = fromstr;
 
     if (sendall(to_client->fd, msg, strlen(msg)) <= 0) {
         log_err("Error sending message start tag to destination.");
     }
+
+    struct message_tmp *tmp = calloc(1, sizeof(*tmp));
+    tmp->to_client = to_client;
+    tmp->from_stanza = from_stanza;
+    XML_SetUserData(from_client->parser, tmp);
 
     free(msg);
     return true;
@@ -187,31 +189,43 @@ static void del_stanza(struct xmpp_stanza *stanza) {
 
 static void message_client_start(void *data, const char *name,
                                  const char **attrs) {
-    //struct xmpp_stanza *stanza = (struct xmpp_stanza*)data;
-    //struct xmpp_client *client = stanza->from;
+    struct message_tmp *tmp = (struct message_tmp*)data;
 
     log_info("Client message start");
-    //route_message(stanza);
+
+    if (sendxml(tmp->from_stanza->from_client->parser,
+                tmp->to_client->fd) <= 0) {
+        log_err("Error sending message to destination.");
+    }
 }
 
 static void message_client_end(void *data, const char *name) {
-    //struct xmpp_stanza *stanza = (struct xmpp_stanza*)data;
-    //struct xmpp_client *client = stanza->from;
+    struct message_tmp *tmp = (struct message_tmp*)data;
 
     log_info("Client message end");
-    //route_message(stanza);
+
+    if (sendxml(tmp->from_stanza->from_client->parser,
+                tmp->to_client->fd) <= 0) {
+        log_err("Error sending message to destination.");
+    }
 
     if (strcmp(name, XMPP_MESSAGE) == 0) {
-        xmpp_core_stanza_end(data, name);
+        XML_SetUserData(tmp->from_stanza->from_client->parser,
+                        tmp->from_stanza);
+        xmpp_core_stanza_end(tmp->from_stanza, name);
+        free(tmp);
     }
     return;
 }
 
 static void message_client_data(void *data, const char *s, int len) {
-    //struct xmpp_stanza *stanza = (struct xmpp_stanza*)data;
+    struct message_tmp *tmp = (struct message_tmp*)data;
     log_info("Client message data");
-    xmpp_print_data(s, len);
-    //route_message(stanza);
+
+    if (sendxml(tmp->from_stanza->from_client->parser,
+                tmp->to_client->fd) <= 0) {
+        log_err("Error sending message to destination.");
+    }
 }
 
 static void iq_start(void *data, const char *name, const char **attrs) {

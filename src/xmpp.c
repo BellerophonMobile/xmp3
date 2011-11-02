@@ -337,7 +337,13 @@ static void remove_connection(struct xmpp_server *server,
 static struct message_route* find_message_route(
         const struct xmpp_server *server, const struct jid *jid) {
     struct message_route *route;
+    char *strjid = jid_to_str(jid);
+    debug("Looking for %s", strjid);
+    free(strjid);
     DL_FOREACH(server->message_routes, route) {
+        strjid = jid_to_str(route->jid);
+        debug("Is it %s?", strjid);
+        free(strjid);
         if (strcmp(route->jid->local, jid->local) == 0
             && strcmp(route->jid->domain, jid->domain) == 0) {
             /* If no resource specified in search, then return the first one
