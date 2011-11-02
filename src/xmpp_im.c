@@ -26,15 +26,8 @@ static const char *MSG_ROSTER =
         "</query>"
     "</iq>";
 
-static const char *MSG_MESSAGE_START = "<message";
-
 // Forward declarations
 static void stanza_start(void *data, const char *name, const char **attrs);
-
-static void message_client_start(void *data, const char *name,
-                                 const char **attrs);
-static void message_client_end(void *data, const char *name);
-static void message_client_data(void *data, const char *s, int len);
 
 static void handle_presence(struct xmpp_stanza *stanza, const char **attrs);
 static void presence_start(void *data, const char *name, const char **attrs);
@@ -131,35 +124,6 @@ static void stanza_start(void *data, const char *name, const char **attrs) {
     } else {
         log_warn("Unknown stanza");
     }
-}
-
-static void message_client_start(void *data, const char *name,
-                                 const char **attrs) {
-    struct xmpp_stanza *stanza = (struct xmpp_stanza*)data;
-    //struct xmpp_client *client = stanza->from;
-
-    log_info("Inner message start");
-    //route_message(stanza);
-}
-
-static void message_client_end(void *data, const char *name) {
-    struct xmpp_stanza *stanza = (struct xmpp_stanza*)data;
-    //struct xmpp_client *client = stanza->from;
-
-    log_info("Inner message end");
-    //route_message(stanza);
-
-    if (strcmp(name, XMPP_MESSAGE) == 0) {
-        xmpp_im_stanza_end(data, name);
-    }
-    return;
-}
-
-static void message_client_data(void *data, const char *s, int len) {
-    struct xmpp_stanza *stanza = (struct xmpp_stanza*)data;
-    log_info("Inner message data");
-    xmpp_print_data(s, len);
-    //route_message(stanza);
 }
 
 static void handle_presence(struct xmpp_stanza *stanza,

@@ -70,31 +70,31 @@ void xmpp_print_data(const char *s, int len) {
 void xmpp_error_start(void *data, const char *name, const char **attrs) {
     struct xmpp_client *client = (struct xmpp_client*)data;
     log_err("Unexpected start tag %s", name);
-    xmpp_print_start_tag(name, attrs);
     XML_StopParser(client->parser, false);
 }
 
 void xmpp_error_end(void *data, const char *name) {
     struct xmpp_client *client = (struct xmpp_client*)data;
     log_err("Unexpected end tag %s", name);
-    xmpp_print_end_tag(name);
     XML_StopParser(client->parser, false);
 }
 
 void xmpp_error_data(void *data, const char *s, int len) {
     struct xmpp_client *client = (struct xmpp_client*)data;
     log_err("Unexpected data");
-    xmpp_print_data(s, len);
     XML_StopParser(client->parser, false);
+}
+
+void xmpp_ignore_start(void *data, const char *name, const char **attrs) {
+    debug("Ignoring start tag:");
 }
 
 void xmpp_ignore_data(void *data, const char *s, int len) {
     debug("Ignoring data:");
-    xmpp_print_data(s, len);
 }
 
 void xmpp_send_not_supported(struct xmpp_stanza *stanza) {
-    struct xmpp_client *client = stanza->from;
+    struct xmpp_client *client = stanza->from_client;
     char tag_name_buffer[strlen(stanza->name)];
     strcpy(tag_name_buffer, stanza->name);
 

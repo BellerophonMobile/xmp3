@@ -6,6 +6,4 @@
 
 #pragma once
 
-#include <expat.h>
-
-void xmpp_auth_set_handlers(XML_Parser parser);
+void xmpp_auth_stream_start(void *data, const char *name, const char **attrs);

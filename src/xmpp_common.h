@@ -50,26 +50,10 @@ const char *XMPP_ATTR_TYPE_SET;
 const char *XMPP_ATTR_TYPE_RESULT;
 const char *XMPP_ATTR_TYPE_ERROR;
 
-struct xmpp_server {
-    int fd;
-    struct xmpp_client *clients;
-    struct message_route *message_routes;
-};
-
-struct message_route {
-    struct jid *jid;
-    xmpp_message_route route_func;
-    void *data;
-
-    // These are kept in a doubly-linked list.
-    struct message_route *prev;
-    struct message_route *next;
-};
-
 struct jid {
-    const char *local;
-    const char *domain;
-    const char *resource;
+    char *local;
+    char *domain;
+    char *resource;
 };
 
 struct xmpp_client {
@@ -88,10 +72,10 @@ struct xmpp_client {
 
 struct xmpp_stanza {
     struct xmpp_client *from_client;
-    const char *name;
-    const char *id;
-    const struct jid to_jid;
-    const char *type;
+    char *name;
+    char *id;
+    struct jid to_jid;
+    char *type;
     UT_array *other_attrs;
 };
 
@@ -116,6 +100,9 @@ void xmpp_error_end(void *data, const char *name);
 
 /** Expat callback for when you do not expect XML data. */
 void xmpp_error_data(void *data, const char *s, int len);
+
+/** Expat callback to ignore start tags. */
+void xmpp_ignore_start(void *data, const char *name, const char **attrs);
 
 /** Expat callback to ignore data. */
 void xmpp_ignore_data(void *data, const char *s, int len);
