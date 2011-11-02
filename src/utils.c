@@ -54,6 +54,30 @@ char* jid_to_str(struct jid *jid) {
 
     return utstring_body(&strjid);
 }
+
+void str_to_jid(const char *str, struct jid *jid) {
+    char *at_delim = strchr(str, '@');
+    int local_len = 0;
+    if (at_delim != NULL) {
+        local_len = at_delim - str;
+        jid->local = calloc(local_len, sizeof(*jid->local));
+        check_mem(jid->local);
+        strncpy(jid->local, str, local_len);
+    }
+
+    char *slash_delim = strchr(str, '/');
+    int resource_len = 0;
+    if (slash_delim != NULL) {
+        resource_len = strchr(str, '\0') - slash_delim;
+        jid->resource = calloc(resource_len, sizeof(*jid->resource));
+        check_mem(jid->resource);
+        strncpy(jid->resource, slash_delim + 1, resource_len);
+    }
+
+    int domain_len = strlen(str) - local_len - resource_len;
+    jid->domain = calloc(domain_len, sizeof(*jid->domain));
+    check_mem(jid->domain);
+    strncpy(jid->domain, str + local_len, domain_len);
 }
 
 ssize_t jid_len(struct jid *jid) {

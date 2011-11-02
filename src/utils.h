@@ -24,6 +24,9 @@ int sendxml(XML_Parser parser, int fd);
 /** Allocates and returns a string version of a jid. */
 char* jid_to_str(struct jid *jid);
 
+/** Fills in a previously allocated jid structure from a string. */
+void str_to_jid(const char *str, struct jid *jid);
+
 /** Gets the string length of a jid. */
 ssize_t jid_len(struct jid *jid);
 

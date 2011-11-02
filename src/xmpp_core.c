@@ -127,48 +127,6 @@ bool xmpp_core_message_handler(struct xmpp_stanza *from_stanza, void *data) {
     return true;
 }
 
-static void new_stanza_jid(struct jid *jid, const char *strjid) {
-    char *domainstr = strchr(strjid, '@');
-    char *resourcestr = strchr(strjid, '/');
-
-    int locallen;
-    if (domainstr == NULL) {
-        locallen = strlen(strjid);
-    } else {
-        locallen = domainstr - strjid;
-    }
-
-    jid->local = calloc(1, locallen);
-    check_mem(jid->local);
-    strncpy(jid->local, strjid, locallen);
-
-    if (domainstr == NULL) {
-        return;
-    } else {
-        domainstr++; // was previously on the '@' character in the string
-    }
-
-    int domainlen;
-    if (resourcestr == NULL) {
-        domainlen = strlen(domainstr);
-    } else {
-        domainlen = resourcestr - domainstr;
-    }
-    jid->domain = calloc(1, domainlen);
-    check_mem(jid->domain);
-    strncpy(jid->domain, domainstr, domainlen);
-
-    if (resourcestr == NULL) {
-        return;
-    } else {
-        resourcestr++; // was previously on the '/' character
-    }
-
-    jid->resource = calloc(1, strlen(resourcestr));
-    check_mem(jid->resource);
-    strncpy(jid->resource, resourcestr, strlen(resourcestr));
-}
-
 static struct xmpp_stanza* new_stanza(struct xmpp_client *client,
                                            const char *name,
                                            const char **attrs) {
