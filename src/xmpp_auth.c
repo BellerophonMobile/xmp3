@@ -1,10 +1,10 @@
 /**
  * xmp3 - XMPP Proxy
- * xmpp_core.{c,h} - Implement RFC6121 XMPP-CORE functions.
+ * xmpp_auth.{c,h} - Implement initial XMPP authendication
  * Copyright (c) 2011 Drexel University
  */
 
-#include "xmpp_core.h"
+#include "xmpp_auth.h"
 
 #include <string.h>
 #include <unistd.h>
@@ -137,7 +137,7 @@ static void del_stanza(struct xmpp_stanza *stanza);
 static void new_stanza_jid(struct jid *jid, const char *strjid);
 
 
-void xmpp_core_set_handlers(XML_Parser parser) {
+void xmpp_auth_set_handlers(XML_Parser parser) {
     XML_SetElementHandler(parser, stream_start, xmpp_error_end);
     XML_SetCharacterDataHandler(parser, xmpp_error_data);
 }
