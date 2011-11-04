@@ -337,23 +337,40 @@ static void remove_connection(struct xmpp_server *server,
 static struct message_route* find_message_route(
         const struct xmpp_server *server, const struct jid *jid) {
     struct message_route *route;
-    char *strjid = jid_to_str(jid);
-    debug("Looking for %s", strjid);
-    free(strjid);
     DL_FOREACH(server->message_routes, route) {
-        strjid = jid_to_str(route->jid);
-        debug("Is it %s?", strjid);
-        free(strjid);
-        if (strcmp(route->jid->local, jid->local) == 0
-            && strcmp(route->jid->domain, jid->domain) == 0) {
-            /* If no resource specified in search, then return the first one
-             * that matches the local and domain parts, else return an exact
-             * match. */
-            if (jid->resource == NULL
-                || strcmp(route->jid->resource, jid->resource) == 0) {
-                return route;
-            }
+
+        // If one domain is NULL and the other isn't, this can't be a match.
+        if ((jid->domain == NULL) != (route->jid->domain == NULL)) {
+            continue;
         }
+
+        /* If the domains are not the same, this is not a match (check for null
+         * first) */
+        if (jid->domain != NULL &&
+            strcmp(jid->domain, route->jid->domain) != 0) {
+            continue;
+        }
+
+        // Same for local and resource
+        if ((jid->local == NULL) != (route->jid->local == NULL)) {
+            continue;
+        }
+        if (jid->local != NULL && strcmp(jid->local, route->jid->local) != 0) {
+            continue;
+        }
+
+        /* If we made it this far, and we don't have a resource to search for,
+         * just use this route. */
+        if (jid->resource == NULL) {
+            return route;
+        }
+        if (route->jid->resource == NULL)) {
+            continue;
+        }
+        if (strcmp(jid->resource, route->jid->resource) != 0) {
+            continue;
+        }
+        return route;
     }
     return NULL;
 }
