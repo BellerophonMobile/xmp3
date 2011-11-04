@@ -201,12 +201,16 @@ static void message_client_start(void *data, const char *name,
 
 static void message_client_end(void *data, const char *name) {
     struct message_tmp *tmp = (struct message_tmp*)data;
+    struct xmpp_client *from_client = tmp->from_stanza->from_client;
 
     log_info("Client message end");
 
-    if (sendxml(tmp->from_stanza->from_client->parser,
-                tmp->to_client->fd) <= 0) {
-        log_err("Error sending message to destination.");
+    /* For self-closing tags "<foo/>" we get an end event without any data to
+     * send.  We already sent the end tag with the start tag. */
+    if (XML_GetCurrentByteCount(from_client->parser) > 0) {
+        if (sendxml(from_client->parser, tmp->to_client->fd) <= 0) {
+            log_err("Error sending message to destination.");
+        }
     }
 
     if (strcmp(name, XMPP_MESSAGE) == 0) {

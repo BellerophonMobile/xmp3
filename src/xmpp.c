@@ -364,7 +364,7 @@ static struct message_route* find_message_route(
         if (jid->resource == NULL) {
             return route;
         }
-        if (route->jid->resource == NULL)) {
+        if (route->jid->resource == NULL) {
             continue;
         }
         if (strcmp(jid->resource, route->jid->resource) != 0) {
