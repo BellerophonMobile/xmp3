@@ -52,15 +52,15 @@ struct event_loop {
 };
 
 struct event_loop* event_new_loop(void) {
-    struct event_loop *loop = calloc(1, sizeof(struct event_loop));
+    struct event_loop *loop = calloc(1, sizeof(*loop));
     check_mem(loop);
     return loop;
 }
 
 void event_del_loop(struct event_loop *loop) {
-    // Free the memory for all the callback entries
     struct event_item *item;
     struct event_item *tmp;
+    // Free the memory for all the callback entries
     DL_FOREACH_SAFE(loop->events, item, tmp) {
         free(item);
     }
@@ -69,7 +69,7 @@ void event_del_loop(struct event_loop *loop) {
 
 void event_register_callback(struct event_loop *loop, int fd,
                              event_callback func, void *data) {
-    struct event_item *item = calloc(1, sizeof(struct event_item));
+    struct event_item *item = calloc(1, sizeof(*item));
     check_mem(item);
 
     // Add the item to the list
@@ -97,7 +97,7 @@ void event_deregister_callback(struct event_loop *loop, int fd) {
     }
 
     if (fd + 1 == loop->nfds) {
-        // We need to find a new maximum
+        // We need to find a new maximum fd for select
         DL_FOREACH(loop->events, item) {
             if (item->fd + 1 > loop->nfds) {
                 loop->nfds = item->fd + 1;
@@ -173,7 +173,7 @@ void event_loop_start(struct event_loop *loop) {
 
     // Unblock signals if we still have them blocked.
     check(sigprocmask(SIG_UNBLOCK, &blockset, NULL) != -1,
-          "Can't block signals");
+          "Can't unblock signals");
 
 error:
     // TODO: Make this return a bool or something.

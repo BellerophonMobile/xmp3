@@ -22,7 +22,7 @@
 #include "xmpp_core.h"
 
 // authzid, authcid, passed can be 255 octets, plus 2 NULLs inbetween
-#define PLAIN_AUTH_BUFFER_SIZE 3 * 255 + 2
+#define PLAIN_AUTH_BUFFER_SIZE (3 * 255 + 2)
 
 // Maximum size of "id" attributes
 #define ID_BUFFER_SIZE 256
@@ -35,7 +35,7 @@ static const char *XMPP_AUTH_MECHANISM = "mechanism";
 static const char *XMPP_AUTH_MECHANISM_PLAIN = "PLAIN";
 
 /* TODO: Technically, the id field should be unique per stream on the server,
- * but it doesn't seem to reall matter. */
+ * but it doesn't seem to really matter. */
 static const char *MSG_STREAM_HEADER =
     "<stream:stream "
         "from='localhost' "
@@ -77,7 +77,7 @@ static const char *MSG_BIND_SUCCESS =
         "</bind>"
     "</iq>";
 
-// Temporary structures
+// Temporary structure used during SASL PLAIN authentication
 struct auth_plain_tmp {
     struct xmpp_client *client;
     struct base64_decodestate state;
@@ -85,6 +85,7 @@ struct auth_plain_tmp {
     char plaintext[PLAIN_AUTH_BUFFER_SIZE];
 };
 
+// Temporary structure used during resource binding
 struct resource_bind_tmp {
     struct xmpp_client *client;
     char id[ID_BUFFER_SIZE];
@@ -93,7 +94,8 @@ struct resource_bind_tmp {
 };
 
 // Forward declarations
-// Inital authentication handlers
+/* Inital authentication handlers
+ * See: http://tools.ietf.org/html/rfc6120#section-9.1 */
 static void auth_plain_start(void *data, const char *name, const char **attrs);
 static void auth_plain_data(void *data, const char *s, int len);
 static void auth_plain_end(void *data, const char *name);
@@ -109,6 +111,7 @@ static void bind_resource_start(void *data, const char *name,
 static void bind_resource_data(void *data, const char *s, int len);
 static void bind_resource_end(void *data, const char *name);
 
+/* Step 1: Client initiates stream to server. */
 void xmpp_auth_stream_start(void *data, const char *name, const char **attrs) {
     struct xmpp_client *client = (struct xmpp_client*)data;
 
@@ -117,13 +120,16 @@ void xmpp_auth_stream_start(void *data, const char *name, const char **attrs) {
     // name and attrs are guaranteed to be null terminated, so strcmp is OK.
     check(strcmp(name, XMPP_STREAM) == 0, "Unexpected stanza");
 
-    // Send the stream header
+    // Step 2: Server responds by sending a response stream header to client
     check(sendall(client->fd, MSG_STREAM_HEADER,
                   strlen(MSG_STREAM_HEADER)) > 0,
           "Error sending stream header to client");
 
+    /* If we already authenticated, then we get ready for resource binding,
+     * else we need to authenticate. */
     if (!client->authenticated) {
-        // Send the (plain) stream features
+        /* Step 3: Server sends stream features to client (only the STARTTLS
+         * extension at this point, which is mandatory-to-negotiate) */
         check(sendall(client->fd, MSG_STREAM_FEATURES_PLAIN,
                       strlen(MSG_STREAM_FEATURES_PLAIN)) > 0,
               "Error sending plain stream features to client");

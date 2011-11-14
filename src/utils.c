@@ -28,8 +28,10 @@ error:
 
 int sendxml(XML_Parser parser, int fd) {
     int offset, size;
+    // Gets us Expat's buffer
     const char *buffer = XML_GetInputContext(parser, &offset, &size);
     check_mem(buffer);
+    // Returns how much of the buffer is about the current event
     int count = XML_GetCurrentByteCount(parser);
 
     return sendall(fd, buffer + offset, count);

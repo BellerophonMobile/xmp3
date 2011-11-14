@@ -19,6 +19,7 @@
 #include "event.h"
 #include "xmpp.h"
 
+// Default address is loopback
 static const struct in_addr DEFAULT_CLIENT_ADDR = { 0x0100007f };
 static const uint16_t DEFAULT_CLIENT_PORT = 5222;
 
