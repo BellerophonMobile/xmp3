@@ -15,6 +15,7 @@ def options(opt):
 
 def configure(conf):
     conf.load('compiler_c')
+    conf.load('doxygen')
 
     # To compile for android...
     # grab libexpat.so from an android phone, and copy expat.h and
@@ -45,4 +46,9 @@ def build(bld):
             'src/xmpp_im.c',
         ],
         use = ['EXPAT'],
+    )
+
+    bld(
+        features = 'doxygen',
+        doxyfile = 'doxyfile',
     )
