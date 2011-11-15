@@ -2,6 +2,7 @@
  * xmp3 - XMPP Proxy
  * xmpp.{c,h} - Implements the server part of a normal XMPP server.
  * Copyright (c) 2011 Drexel University
+ * @file
  */
 
 #include "xmpp.h"
@@ -35,35 +36,55 @@ static const int SERVER_BACKLOG = 3;
 
 static char MSG_BUFFER[BUFFER_SIZE];
 
+/** Holds data on how to send a message stanza to a particular JID. */
 struct message_route {
+    /** The JID to send to. */
     struct jid *jid;
+
+    /** The function that will deliver the message. */
     xmpp_message_callback func;
+
+    /** Arbitrary data. */
     void *data;
 
-    // These are kept in a doubly-linked list.
+    /** @{ These are kept in a doubly-linked list. */
     struct message_route *prev;
     struct message_route *next;
+    /** @} */
 };
 
+/**
+ * Holds data on how to handle a particular iq stanza.
+ *
+ * This is determined by the namespace + tag name of the first child element
+ * (the spec says there can only be one child).
+ */
 struct iq_route {
+    /** The namespace + name of the tag to match. */
     const char *ns;
+
+    /** The function that will deliver the stanza. */
     xmpp_iq_callback func;
+
+    /** Arbitrary data that callbacks can use. */
     void *data;
 
-    // These are kept in a hash table
+    /** These are kept in a hash table. */
     UT_hash_handle hh;
 };
 
+/** Holds data for a XMPP server instance. */
 struct xmpp_server {
+    /** The bound and listening file descriptor. */
     int fd;
 
-    // Linked list of connected clients
+    /** Linked list of connected clients. */
     struct xmpp_client *clients;
 
-    // Linked list of message routes
+    /** Linked list of message routes. */
     struct message_route *message_routes;
 
-    // Hash table of iq routes
+    /** Hash table of iq routes. */
     struct iq_route *iq_routes;
 };
 
@@ -111,6 +132,8 @@ struct xmpp_server* xmpp_init(struct event_loop *loop, struct in_addr addr,
     xmpp_register_iq_namespace(server, XMPP_IQ_SESSION, xmpp_im_iq_session,
                                NULL);
 
+    /* Register the event callback so we can be notified of when the client
+     * sends more data. */
     event_register_callback(loop, fd, add_connection, server);
     return server;
 
@@ -256,6 +279,13 @@ static void del_client(struct xmpp_client *client) {
     free(client);
 }
 
+/**
+ * Event loop callback when we receive new data from a client.
+ *
+ * @param loop Event loop instance.
+ * @param fd   The client file descriptor.
+ * @param data A struct xmpp_client instance.
+ */
 static void read_client(struct event_loop *loop, int fd, void *data) {
     struct xmpp_client *client = (struct xmpp_client*)data;
     struct xmpp_server *server = client->server;
@@ -286,6 +316,8 @@ static void read_client(struct event_loop *loop, int fd, void *data) {
     check(status != XML_STATUS_ERROR, "Error parsing XML: %s",
           XML_ErrorString(XML_GetErrorCode(client->parser)));
 
+    /* If an error occurred which caused the client to disconnect, clean up
+     * after it. */
     if (!client->connected) {
         XML_Parse(client->parser, NULL, 0, true);
         goto error;
@@ -306,6 +338,8 @@ static void add_connection(struct event_loop *loop, int fd, void *data) {
     client->fd = accept(fd, (struct sockaddr*)&client->caddr, &addrlen);
     check(client->fd != -1, "Error accepting client connection");
 
+    /* The first Expat callback should be to handle the start of the XML
+     * stream, and begin authentication. */
     XML_SetElementHandler(client->parser, xmpp_auth_stream_start,
                            xmpp_error_end);
     XML_SetCharacterDataHandler(client->parser, xmpp_error_data);
@@ -334,6 +368,15 @@ static void remove_connection(struct xmpp_server *server,
     }
 }
 
+/**
+ * Searches for a matching JID route given a full or bare JID.
+ *
+ * If given a bare JID, matches the first full or bare JID found.
+ *
+ * @param server XMPP server instance to search on.
+ * @param jid    Full or bare JID to search for.
+ * @return The route to send this message to.
+ */
 static struct message_route* find_message_route(
         const struct xmpp_server *server, const struct jid *jid) {
     struct message_route *route;

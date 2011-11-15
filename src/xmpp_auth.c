@@ -2,6 +2,7 @@
  * xmp3 - XMPP Proxy
  * xmpp_auth.{c,h} - Implement initial XMPP authendication
  * Copyright (c) 2011 Drexel University
+ * @file
  */
 
 #include "xmpp_auth.h"
@@ -77,19 +78,33 @@ static const char *MSG_BIND_SUCCESS =
         "</bind>"
     "</iq>";
 
-// Temporary structure used during SASL PLAIN authentication
+/** Temporary structure used during SASL PLAIN authentication. */
 struct auth_plain_tmp {
+    /** Pointer back to the client this is for. */
     struct xmpp_client *client;
+
+    /** Keeps track of the state of the base64 decoding. */
     struct base64_decodestate state;
+
+    /** How far in our buffer we've written so far. */
     int length;
+
+    /** Buffer to write our decoded base64 string to. */
     char plaintext[PLAIN_AUTH_BUFFER_SIZE];
 };
 
-// Temporary structure used during resource binding
+/** Temporary structure used during resource binding. */
 struct resource_bind_tmp {
+    /** Pointer back to the client this is for. */
     struct xmpp_client *client;
+
+    /** ID of the <iq> tag we are responding to. */
     char id[ID_BUFFER_SIZE];
+
+    /** How far in our buffer we've written so far. */
     int length;
+
+    /** Buffer to write our resource part. */
     char resource[RESOURCEPART_BUFFER_SIZE];
 };
 
@@ -111,7 +126,11 @@ static void bind_resource_start(void *data, const char *name,
 static void bind_resource_data(void *data, const char *s, int len);
 static void bind_resource_end(void *data, const char *name);
 
-/* Step 1: Client initiates stream to server. */
+/**
+ * Step 1: Client initiates stream to server.
+ *
+ * Handles the starting <stream> tag.
+ */
 void xmpp_auth_stream_start(void *data, const char *name, const char **attrs) {
     struct xmpp_client *client = (struct xmpp_client*)data;
 
@@ -137,7 +156,8 @@ void xmpp_auth_stream_start(void *data, const char *name, const char **attrs) {
                               auth_plain_end);
         XML_SetCharacterDataHandler(client->parser, auth_plain_data);
     } else {
-        // Send the resource binding feature
+        /* Step 14: Server responds by sending a stream header to client along
+         * with supported features (in this case, resource binding) */
         check(sendall(client->fd, MSG_STREAM_FEATURES_BIND,
                       strlen(MSG_STREAM_FEATURES_BIND)) > 0,
               "Error sending bind stream features to client");
@@ -152,6 +172,11 @@ error:
     XML_StopParser(client->parser, false);
 }
 
+/**
+ * Begins SASL PLAIN authentication.
+ *
+ * Handles the starting <auth> tag.
+ */
 static void auth_plain_start(void *data, const char *name, const char **attrs)
 {
     struct xmpp_client *client = (struct xmpp_client*)data;
@@ -182,6 +207,11 @@ error:
     XML_StopParser(client->parser, false);
 }
 
+/**
+ * Begins reading the base64 encoded username/password from the client.
+ *
+ * Handles the data between <auth> tags.
+ */
 static void auth_plain_data(void *data, const char *s, int len) {
     struct auth_plain_tmp *auth_data = (struct auth_plain_tmp*)data;
     struct xmpp_client *client = auth_data->client;
@@ -192,6 +222,7 @@ static void auth_plain_data(void *data, const char *s, int len) {
      * one callback call.  Thus, we need to incrementally decode the data
      * as we get it. */
 
+    // length + (len * 0.75) is the maximum size of the base64 decoded string
     check(auth_data->length + (len * 0.75) <= PLAIN_AUTH_BUFFER_SIZE,
           "Auth plaintext buffer overflow");
 
@@ -205,6 +236,12 @@ error:
     XML_StopParser(client->parser, false);
 }
 
+/**
+ * Finishes SASL PLAIN authentication.
+ *
+ * When we receive this, we've received the username/password from the client
+ * and can authenticate.
+ */
 static void auth_plain_end(void *data, const char *name) {
     struct auth_plain_tmp *auth_data = (struct auth_plain_tmp*)data;
     struct xmpp_client *client = auth_data->client;
@@ -213,6 +250,8 @@ static void auth_plain_end(void *data, const char *name) {
 
     check(strcmp(name, XMPP_AUTH) == 0, "Unexpected stanza");
 
+    /* Now that we've received all the data between the auth tags, we can
+     * determine the username and password. */
     char *authzid = auth_data->plaintext;
     char *authcid = memchr(authzid, '\0', PLAIN_AUTH_BUFFER_SIZE) + 1;
     char *passwd = memchr(authcid, '\0', PLAIN_AUTH_BUFFER_SIZE) + 1;
@@ -229,7 +268,7 @@ static void auth_plain_end(void *data, const char *name) {
     check_mem(client->jid.domain);
     strcpy(client->jid.domain, SERVER_DOMAIN);
 
-    // If we wanted to do any authentication, do it here.
+    // TODO: If we wanted to do any authentication, do it here.
 
     // Sucess!
     check(sendall(client->fd, MSG_SASL_SUCCESS, strlen(MSG_SASL_SUCCESS)) > 0,
@@ -237,7 +276,7 @@ static void auth_plain_end(void *data, const char *name) {
 
     client->authenticated = true;
 
-    // Client should send a new stream header to us, so reset handlers
+    // Go to step 7, the client needs to send us a new stream header.
     XML_SetElementHandler(client->parser, xmpp_auth_stream_start,
                           xmpp_error_end);
     XML_SetCharacterDataHandler(client->parser, xmpp_error_data);
@@ -256,6 +295,11 @@ error:
     XML_StopParser(client->parser, false);
 }
 
+/**
+ * Step 15: Client binds a resource
+ *
+ * Handles the resource binding starting <iq> tag.
+ */
 static void bind_iq_start(void *data, const char *name, const char **attrs) {
     struct xmpp_client *client = (struct xmpp_client*)data;
     struct resource_bind_tmp *bind_data = NULL;
@@ -264,6 +308,7 @@ static void bind_iq_start(void *data, const char *name, const char **attrs) {
 
     check(strcmp(name, XMPP_IQ) == 0, "Unexpected stanza");
 
+    // Validate the correct attributes set on the start tag
     int i;
     for (i = 0; attrs[i] != NULL; i += 2) {
         if (strcmp(attrs[i], XMPP_ATTR_TYPE) == 0) {
@@ -287,6 +332,7 @@ static void bind_iq_start(void *data, const char *name, const char **attrs) {
     }
     check(attrs[i] != NULL, "Did not find \"id\" attribute");
 
+    // Next, we expect to see the <bind> tag
     XML_SetElementHandler(client->parser, bind_start, bind_end);
     XML_SetUserData(client->parser, bind_data);
     return;
@@ -296,10 +342,12 @@ error:
     XML_StopParser(client->parser, false);
 }
 
+/** Handles the resouce binding ending <iq> tag. */
 static void bind_iq_end(void *data, const char *name) {
     struct resource_bind_tmp *bind_data = (struct resource_bind_tmp*)data;
     struct xmpp_client *client = bind_data->client;
     struct xmpp_server *server = client->server;
+
     // Need space to construct our binding success message
     char success_msg[strlen(MSG_BIND_SUCCESS)
                      + strlen(bind_data->id)
@@ -309,11 +357,14 @@ static void bind_iq_end(void *data, const char *name) {
     log_info("Bind IQ end");
     check(strcmp(name, XMPP_IQ) == 0, "Unexpected stanza");
 
+    // Fill in our attributes to the success message
     snprintf(success_msg, sizeof(success_msg), MSG_BIND_SUCCESS,
              bind_data->id, client->jid.local, client->jid.resource);
+
+    /* Step 16: Server accepts submitted resourcepart and informs client of
+     * successful resource binding */
     check(sendall(client->fd, success_msg, strlen(success_msg)) > 0,
           "Error sending resource binding success message.");
-
 
     /* Resource binding, and thus authentication, is complete!  Continue to
      * process general messages. */
@@ -333,6 +384,7 @@ error:
     XML_StopParser(client->parser, false);
 }
 
+/** Handles the start <bind> tag inside a resource binding <iq>. */
 static void bind_start(void *data, const char *name, const char **attrs) {
     struct resource_bind_tmp *bind_data = (struct resource_bind_tmp*)data;
     struct xmpp_client *client = bind_data->client;
@@ -340,6 +392,8 @@ static void bind_start(void *data, const char *name, const char **attrs) {
     log_info("Start bind");
 
     check(strcmp(name, XMPP_BIND) == 0, "Unexpected stanza");
+
+    // We expect to see a <resource> tag next
     XML_SetElementHandler(client->parser, bind_resource_start,
                           bind_resource_end);
     XML_SetCharacterDataHandler(client->parser, bind_resource_data);
@@ -351,11 +405,14 @@ error:
     XML_StopParser(client->parser, false);
 }
 
+/** Handles the ending <bind> tag inside a resource binding <iq>. */
 static void bind_end(void *data, const char *name) {
     struct resource_bind_tmp *bind_data = (struct resource_bind_tmp*)data;
     struct xmpp_client *client = bind_data->client;
 
     check(strcmp(name, XMPP_BIND) == 0, "Unexpected stanza");
+
+    // We expect to see a closing </iq> tag next
     XML_SetElementHandler(client->parser, xmpp_error_start, bind_iq_end);
     return;
 
@@ -365,6 +422,7 @@ error:
     XML_StopParser(client->parser, false);
 }
 
+/** Handles the starting <resource> tag inside a resource binding <iq>. */
 static void bind_resource_start(void *data, const char *name,
                                 const char **attrs) {
     struct resource_bind_tmp *bind_data = (struct resource_bind_tmp*)data;
@@ -381,6 +439,7 @@ error:
     XML_StopParser(client->parser, false);
 }
 
+/** Handles the resouce string in the in a resource binding <iq>. */
 static void bind_resource_data(void *data, const char *s, int len) {
     struct resource_bind_tmp *bind_data = (struct resource_bind_tmp*)data;
     struct xmpp_client *client = bind_data->client;
@@ -388,6 +447,8 @@ static void bind_resource_data(void *data, const char *s, int len) {
     check(bind_data->length + len < RESOURCEPART_BUFFER_SIZE,
           "Resource buffer overflow.");
 
+    /* Since we might not get the whole resouce in one Expat callback call, we
+     * keep track of how far we've written so far, and append to the end. */
     memcpy(bind_data->resource + bind_data->length, s, len);
     bind_data->length += len;
     return;
@@ -398,6 +459,7 @@ error:
     XML_StopParser(client->parser, false);
 }
 
+/** Handles the ending <resource> tag inside a resource binding <iq>. */
 static void bind_resource_end(void *data, const char *name) {
     struct resource_bind_tmp *bind_data = (struct resource_bind_tmp*)data;
     struct xmpp_client *client = bind_data->client;

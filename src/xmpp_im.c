@@ -2,6 +2,7 @@
  * xmp3 - XMPP Proxy
  * xmpp_im.{c,h} - Implements the parsing for RFC6121 IM and Presence
  * Copyright (c) 2011 Drexel University
+ * @file
  */
 
 #include "xmpp_im.h"
@@ -49,6 +50,7 @@ bool xmpp_im_iq_session(struct xmpp_stanza *stanza, void *data) {
     check(strcmp(stanza->type, XMPP_ATTR_TYPE_SET) == 0,
           "Session IQ type must be \"set\"");
 
+    // We expect to see the </session> tag next
     XML_SetElementHandler(client->parser, xmpp_error_start, session_end);
     XML_SetCharacterDataHandler(client->parser, xmpp_error_data);
     return true;
@@ -57,6 +59,7 @@ error:
     return false;
 }
 
+/** Handles the end </session> tag in a session IQ. */
 static void session_end(void *data, const char *name) {
     struct xmpp_stanza *stanza = (struct xmpp_stanza*)data;
     struct xmpp_client *client = stanza->from_client;
@@ -71,6 +74,7 @@ static void session_end(void *data, const char *name) {
     check(sendall(client->fd, msg, strlen(msg)) > 0,
           "Error sending stream success message");
 
+    // We expect to see the </iq> tag next
     XML_SetElementHandler(client->parser, xmpp_error_start,
                           xmpp_core_stanza_end);
     XML_SetCharacterDataHandler(client->parser, xmpp_error_data);
@@ -89,6 +93,7 @@ bool xmpp_im_iq_roster_query(struct xmpp_stanza *stanza, void *data) {
     check(strcmp(stanza->type, XMPP_ATTR_TYPE_GET) == 0,
           "Session IQ type must be \"set\"");
 
+    // We expect to see the </query> tag next.
     XML_SetElementHandler(client->parser, xmpp_error_start, roster_query_end);
     XML_SetCharacterDataHandler(client->parser, xmpp_error_data);
     return true;
@@ -97,6 +102,7 @@ error:
     return false;
 }
 
+/** Handles the end </query> in a roster query. */
 static void roster_query_end(void *data, const char *name) {
     struct xmpp_stanza *stanza = (struct xmpp_stanza*)data;
     struct xmpp_client *client = stanza->from_client;
@@ -106,10 +112,12 @@ static void roster_query_end(void *data, const char *name) {
     log_info("Roster Query IQ End");
     check(strcmp(name, XMPP_IQ_QUERY_ROSTER) == 0, "Unexpected stanza");
 
+    // TODO: Actually manage the user's roster.
     snprintf(msg, sizeof(msg), MSG_ROSTER, stanza->id);
     check(sendall(client->fd, msg, strlen(msg)) > 0,
           "Error sending roster message");
 
+    // We expect to see the </iq> tag next.
     XML_SetElementHandler(client->parser, xmpp_error_start,
                           xmpp_core_stanza_end);
     XML_SetCharacterDataHandler(client->parser, xmpp_error_data);

@@ -2,6 +2,7 @@
  * xmp3 - XMPP Proxy
  * xmpp_core.{c,h} - Handles base stanza routing
  * Copyright (c) 2011 Drexel University
+ * @file
  */
 
 #include "xmpp_core.h"
@@ -27,7 +28,7 @@
     utarray_push_back(a, tmp); \
 } while (0)
 
-// Temporary structures
+/** Temporary structure for reading a message stanza. */
 struct message_tmp {
     struct xmpp_client *to_client;
     struct xmpp_stanza *from_stanza;
@@ -51,6 +52,9 @@ void xmpp_core_stanza_start(void *data, const char *name, const char **attrs) {
 
     struct xmpp_stanza *stanza = new_stanza(client, name, attrs);
     XML_SetUserData(client->parser, stanza);
+
+    /* We expect any stanza callbacks to change the XML callbacks if
+     * neccessary, else the whole stanza is ignored. */
     XML_SetElementHandler(client->parser, xmpp_ignore_start,
                           xmpp_core_stanza_end);
     XML_SetCharacterDataHandler(client->parser, xmpp_ignore_data);
@@ -59,6 +63,7 @@ void xmpp_core_stanza_start(void *data, const char *name, const char **attrs) {
         log_info("Message stanza start");
         xmpp_route_message(stanza);
     } else if (strcmp(name, XMPP_PRESENCE) == 0) {
+        // TODO: Handle presence stanzas.
         log_info("Presence stanza start");
         //handle_presence(stanza, attrs);
     } else if (strcmp(name, XMPP_IQ) == 0) {
@@ -78,9 +83,12 @@ void xmpp_core_stanza_end(void *data, const char *name) {
     }
 
     log_info("Stanza end");
+
+    // Clean up our stanza structure.
     XML_SetUserData(client->parser, client);
     del_stanza(stanza);
 
+    // We expect to see the start of a new stanza next.
     XML_SetElementHandler(client->parser, xmpp_core_stanza_start,
             xmpp_core_stream_end);
     XML_SetCharacterDataHandler(client->parser, xmpp_ignore_data);
@@ -99,6 +107,8 @@ error:
 bool xmpp_core_message_handler(struct xmpp_stanza *from_stanza, void *data) {
     struct xmpp_client *to_client = (struct xmpp_client*)data;
     struct xmpp_client *from_client = from_stanza->from_client;
+
+    // Set the XML handlers to expect the rest of the message stanza.
     XML_SetElementHandler(from_client->parser, message_client_start,
                           message_client_end);
     XML_SetCharacterDataHandler(from_client->parser, message_client_data);
@@ -124,6 +134,7 @@ bool xmpp_core_message_handler(struct xmpp_stanza *from_stanza, void *data) {
     return true;
 }
 
+/** Allocates an initializes a new XMPP stanza struct. */
 static struct xmpp_stanza* new_stanza(struct xmpp_client *client,
                                       const char *name,
                                       const char **attrs) {
@@ -171,6 +182,7 @@ static struct xmpp_stanza* new_stanza(struct xmpp_client *client,
     return stanza;
 }
 
+/** Cleans up and frees an XMPP stanza struct. */
 static void del_stanza(struct xmpp_stanza *stanza) {
     free(stanza->name);
     free(stanza->id);
@@ -187,6 +199,7 @@ static void del_stanza(struct xmpp_stanza *stanza) {
     free(stanza);
 }
 
+/** Handles a starting tag inside of a <message> stanza. */
 static void message_client_start(void *data, const char *name,
                                  const char **attrs) {
     struct message_tmp *tmp = (struct message_tmp*)data;
@@ -199,6 +212,7 @@ static void message_client_start(void *data, const char *name,
     }
 }
 
+/** Handles an end tag inside of a <message> stanza. */
 static void message_client_end(void *data, const char *name) {
     struct message_tmp *tmp = (struct message_tmp*)data;
     struct xmpp_client *from_client = tmp->from_stanza->from_client;
@@ -213,6 +227,7 @@ static void message_client_end(void *data, const char *name) {
         }
     }
 
+    // If we received a </message> tag, we are done parsing this stanza.
     if (strcmp(name, XMPP_MESSAGE) == 0) {
         XML_SetUserData(tmp->from_stanza->from_client->parser,
                         tmp->from_stanza);
@@ -222,6 +237,7 @@ static void message_client_end(void *data, const char *name) {
     return;
 }
 
+/** Handles character data inside of a <message> stanza. */
 static void message_client_data(void *data, const char *s, int len) {
     struct message_tmp *tmp = (struct message_tmp*)data;
     log_info("Client message data");
@@ -232,6 +248,7 @@ static void message_client_data(void *data, const char *s, int len) {
     }
 }
 
+/** Handles the routing of an IQ stanza. */
 static void iq_start(void *data, const char *name, const char **attrs) {
     struct xmpp_stanza *stanza = (struct xmpp_stanza*)data;
     struct xmpp_client *client = stanza->from_client;

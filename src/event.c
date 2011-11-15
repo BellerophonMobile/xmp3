@@ -2,6 +2,7 @@
  * xmp3 - XMPP Proxy
  * event.{c,h} - Simple event loop
  * Copyright (c) 2011 Drexel University
+ * @file
  */
 
 #include "event.h"
@@ -20,35 +21,41 @@
 
 #include "log.h"
 
-/* Contains data for one callback function */
+/** Contains data for one callback function. */
 struct event_item {
-    /* The file descriptor to monitor */
+    /** The file descriptor to monitor. */
     int fd;
 
-    /* Function to call when the descriptor fires */
+    /** Function to call when the descriptor fires. */
     event_callback func;
 
-    /* Miscelaneous data to send to the callback function */
+    /** Miscelaneous data to send to the callback function. */
     void *data;
 
-    /* Linked-list entries to more event_items */
+    /** @{ Linked-list entries to more event_items. */
     struct event_item *prev;
     struct event_item *next;
+    /** @} */
 };
 
-/* Contains data about the whole event loop */
+/** Contains data about the whole event loop */
 struct event_loop {
-    /* Flag to stop the event loop. */
+    /**
+     * Flag to stop the event loop.
+     *
+     * Use event_stop_loop() to modify this.
+     */
     volatile sig_atomic_t stop_loop;
 
-    /* File descriptors for select */
+    /** File descriptor set for select. */
     fd_set readfds;
 
-    /* For select, highest-numbered file descriptor in readfds plus 1 */
+    /** For select, highest-numbered file descriptor in readfds plus 1. */
     int nfds;
 
-    /* Linked-list of callback functions */
+    /** @{ Linked-list of callback functions. */
     struct event_item *events;
+    /** @} */
 };
 
 struct event_loop* event_new_loop(void) {

@@ -2,6 +2,7 @@
  * xmp3 - XMPP Proxy
  * xmpp_common.{c,h} - Common XMPP functions/data.
  * Copyright (c) 2011 Drexel University
+ * @file
  */
 
 #pragma once
@@ -48,42 +49,74 @@ const char *XMPP_ATTR_TYPE_SET;
 const char *XMPP_ATTR_TYPE_RESULT;
 const char *XMPP_ATTR_TYPE_ERROR;
 
+/** Represents a client ID (local@domain/resource). */
 struct jid {
     char *local;
     char *domain;
     char *resource;
 };
 
+/** Data on a connected client. */
 struct xmpp_client {
+    /** Connected file descriptor for the client. */
     int fd;
+
+    /** The address of the client. */
     struct sockaddr_in caddr;
+
+    /** An Expat parser instance for this client. */
     XML_Parser parser;
+
+    /** A pointer to the server this client is connected to. */
     struct xmpp_server *server;
+
+    /** Whether the client has successfully authenticated or not. */
     bool authenticated;
+
+    /** Whether this client is still connected or not. */
     bool connected;
+
+    /** The JID of this client. */
     struct jid jid;
 
-    // Clients are stored in a doubly-linked list.
+    /** @{ Clients are stored in a doubly-linked list. */
     struct xmpp_client *prev;
     struct xmpp_client *next;
+    /** @} */
 };
 
+/** Represents a top-level XMPP stanza. */
 struct xmpp_stanza {
+    /** The name + namespace string. */
     char *ns_name;
+
+    /** The name of this tag. */
     char *name;
+
+    /** The namespace of this tag. */
     char *namespace;
+
+    /** The "id" attribute of this tag (may be NULL). */
     char *id;
+
+    /** The "to" attribute of this tag (may be NULL). */
     char *to;
+
+    /** The "to" attribute converted to a JID structure. */
     struct jid to_jid;
+
+    /** The "from" attribute of this tag (may be NULL). */
     char *from;
+
+    /** The client structure that this stanza was received from. */
     struct xmpp_client *from_client;
+
+    /** The "type" attribute of this tag (may be NULL). */
     char *type;
+
+    /** Any other attributes attached to this tag. */
     UT_array *other_attrs;
 };
-
-// Callback function definitions
-typedef bool (*xmpp_stanza_handler)(struct xmpp_stanza *stanza,
-                                    const char *name, const char **attrs);
 
 /** Print out an XML start element and its attributes */
 void xmpp_print_start_tag(const char *name, const char **attrs);
@@ -109,6 +142,8 @@ void xmpp_ignore_start(void *data, const char *name, const char **attrs);
 /** Expat callback to ignore data. */
 void xmpp_ignore_data(void *data, const char *s, int len);
 
+/** Sends a "<feature-not-implemented>" stanza to a client. */
 void xmpp_send_feature_not_implemented(struct xmpp_stanza *stanza);
 
+/** Sends a "<service-unavailable>" stanza to a client. */
 void xmpp_send_service_unavailable(struct xmpp_stanza *stanza);

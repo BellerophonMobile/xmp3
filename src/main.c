@@ -2,6 +2,7 @@
  * xmp3 - XMPP Proxy
  * main.c - Main function
  * Copyright (c) 2011 Drexel University
+ * @file
  */
 
 #include <stdbool.h>

@@ -2,6 +2,7 @@
  * xmp3 - XMPP Proxy
  * xmpp_im.{c,h} - Implements the parsing for RFC6121 IM and Presence
  * Copyright (c) 2011 Drexel University
+ * @file
  */
 
 #pragma once
@@ -13,8 +14,10 @@ const char *XMPP_IQ_QUERY_ROSTER;
 const char *XMPP_IQ_DISCO_QUERY_ITEMS;
 const char *XMPP_IQ_DISCO_QUERY_INFO;
 
+/** IQ stanza callback for handling a session IQ. */
 bool xmpp_im_iq_session(struct xmpp_stanza *stanza, void *data);
 
+/** IQ stanza callback for handling a roster query. */
 bool xmpp_im_iq_roster_query(struct xmpp_stanza *stanza, void *data);
 
 /*

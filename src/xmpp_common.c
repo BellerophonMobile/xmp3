@@ -2,6 +2,7 @@
  * xmp3 - XMPP Proxy
  * xmpp_common.{c,h} - Common XMPP functions/data.
  * Copyright (c) 2011 Drexel University
+ * @file
  */
 
 #include "xmpp_common.h"
@@ -105,6 +106,7 @@ void xmpp_send_service_unavailable(struct xmpp_stanza *stanza) {
     send_error(stanza, MSG_SERVICE_UNAVAILABLE);
 }
 
+/** Generic code to send errors. */
 static void send_error(struct xmpp_stanza *stanza, const char *error) {
     struct xmpp_client *client = stanza->from_client;
 

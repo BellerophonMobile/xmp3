@@ -2,6 +2,7 @@
  * xmp3 - XMPP Proxy
  * utils.{c,h} - Miscellaneous utility functions.
  * Copyright (c) 2011 Drexel University
+ * @file
  */
 
 #include "utils.h"
@@ -14,6 +15,7 @@
 #include "log.h"
 
 int sendall(int fd, const char *buffer, int len) {
+    // Keep track of how much we've sent so far
     ssize_t numsent = 0;
     do {
         ssize_t newsent = send(fd, buffer + numsent, len - numsent, 0);
@@ -58,6 +60,7 @@ char* jid_to_str(struct jid *jid) {
 }
 
 void str_to_jid(const char *str, struct jid *jid) {
+    // If there is an '@' sign, then everything before it is the local part
     char *at_delim = strchr(str, '@');
     int local_len = 0;
     if (at_delim != NULL) {
@@ -68,6 +71,7 @@ void str_to_jid(const char *str, struct jid *jid) {
         debug("Setting local to '%s'", jid->local);
     }
 
+    // If there is a '/', then everything after it is the resource part
     char *slash_delim = strchr(str, '/');
     int resource_len = 0;
     if (slash_delim != NULL) {
@@ -78,6 +82,7 @@ void str_to_jid(const char *str, struct jid *jid) {
         debug("Setting resource to '%s'", jid->resource);
     }
 
+    // Anything left is the domain part
     int domain_len = strlen(str) - local_len - resource_len;
     jid->domain = calloc(domain_len, sizeof(*jid->domain));
     check_mem(jid->domain);
