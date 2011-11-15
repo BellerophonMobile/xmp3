@@ -1,0 +1,310 @@
+# Doxyfile 1.7.5.1
+
+# This file describes the settings to be used by the documentation system
+# doxygen (www.doxygen.org) for a project
+#
+# All text after a hash (#) is considered a comment and will be ignored
+# The format is:
+#       TAG = value [value, ...]
+# For lists items can also be appended using:
+#       TAG += value [value, ...]
+# Values that contain spaces should be placed between quotes (" ")
+
+#---------------------------------------------------------------------------
+# Project related configuration options
+#---------------------------------------------------------------------------
+
+# This tag specifies the encoding used for all characters in the config file
+# that follow. The default is UTF-8 which is also the encoding used for all
+# text before the first occurrence of this tag. Doxygen uses libiconv (or the
+# iconv built into libc) for the transcoding. See
+# http://www.gnu.org/software/libiconv for the list of possible encodings.
+
+DOXYFILE_ENCODING      = UTF-8
+
+# The PROJECT_NAME tag is a single word (or sequence of words) that should
+# identify the project. Note that if you do not use Doxywizard you need
+# to put quotes around the project name if it contains spaces.
+
+PROJECT_NAME           = XMP3
+
+# Using the PROJECT_BRIEF tag one can provide an optional one line description
+# for a project that appears at the top of each page and should give viewer
+# a quick idea about the purpose of the project. Keep the description short.
+
+PROJECT_BRIEF          = "XMPP Proxy for the SWAT middleware."
+
+# The OUTPUT_DIRECTORY tag is used to specify the (relative or absolute)
+# base path where the generated documentation will be put.
+# If a relative path is entered, it will be relative to the location
+# where doxygen was started. If left blank the current directory will be used.
+
+OUTPUT_DIRECTORY       = doc
+
+# If the BRIEF_MEMBER_DESC tag is set to YES (the default) Doxygen will
+# include brief member descriptions after the members that are listed in
+# the file and class documentation (similar to JavaDoc).
+# Set to NO to disable this.
+
+BRIEF_MEMBER_DESC      = YES
+
+# If the JAVADOC_AUTOBRIEF tag is set to YES then Doxygen
+# will interpret the first line (until the first dot) of a JavaDoc-style
+# comment as the brief description. If set to NO, the JavaDoc
+# comments will behave just like regular Qt-style comments
+# (thus requiring an explicit @brief command for a brief description.)
+
+JAVADOC_AUTOBRIEF      = YES
+
+# The TAB_SIZE tag can be used to set the number of spaces in a tab.
+# Doxygen uses this value to replace tabs by spaces in code fragments.
+
+TAB_SIZE               = 4
+
+# Set the OPTIMIZE_OUTPUT_FOR_C tag to YES if your project consists of C
+# sources only. Doxygen will then generate output that is more tailored for C.
+# For instance, some of the names that are used will be different. The list
+# of all members will be omitted, etc.
+
+OPTIMIZE_OUTPUT_FOR_C  = YES
+
+# When the INLINE_SIMPLE_STRUCTS tag is set to YES, structs, classes, and
+# unions with only public data fields will be shown inline in the documentation
+# of the scope in which they are defined (i.e. file, namespace, or group
+# documentation), provided this scope is documented. If set to NO (the default),
+# structs, classes, and unions are shown on a separate page (for HTML and Man
+# pages) or section (for LaTeX and RTF).
+
+INLINE_SIMPLE_STRUCTS  = YES
+
+#---------------------------------------------------------------------------
+# Build related configuration options
+#---------------------------------------------------------------------------
+
+# If the EXTRACT_ALL tag is set to YES doxygen will assume all entities in
+# documentation are documented, even if no documentation was available.
+# Private class members and static file members will be hidden unless
+# the EXTRACT_PRIVATE and EXTRACT_STATIC tags are set to YES
+
+EXTRACT_ALL            = YES
+
+# If the EXTRACT_STATIC tag is set to YES all static members of a file
+# will be included in the documentation.
+
+EXTRACT_STATIC         = YES
+
+#---------------------------------------------------------------------------
+# configuration options related to the input files
+#---------------------------------------------------------------------------
+
+# The INPUT tag can be used to specify the files and/or directories that contain
+# documented source files. You may enter file names like "myfile.cpp" or
+# directories like "/usr/src/myproject". Separate the files or directories
+# with spaces.
+
+INPUT                  = src
+
+#---------------------------------------------------------------------------
+# configuration options related to source browsing
+#---------------------------------------------------------------------------
+
+# If the SOURCE_BROWSER tag is set to YES then a list of source files will
+# be generated. Documented entities will be cross-referenced with these sources.
+# Note: To get rid of all source code in the generated output, make sure also
+# VERBATIM_HEADERS is set to NO.
+
+SOURCE_BROWSER         = YES
+
+#---------------------------------------------------------------------------
+# configuration options related to the alphabetical class index
+#---------------------------------------------------------------------------
+
+# If the ALPHABETICAL_INDEX tag is set to YES, an alphabetical index
+# of all compounds will be generated. Enable this if the project
+# contains a lot of classes, structs, unions or interfaces.
+
+ALPHABETICAL_INDEX     = YES
+
+#---------------------------------------------------------------------------
+# configuration options related to the HTML output
+#---------------------------------------------------------------------------
+
+# If the GENERATE_HTML tag is set to YES (the default) Doxygen will
+# generate HTML output.
+
+GENERATE_HTML          = YES
+
+# If the HTML_TIMESTAMP tag is set to YES then the footer of each generated HTML
+# page will contain the date and time when the page was generated. Setting
+# this to NO can help when comparing the output of multiple runs.
+
+HTML_TIMESTAMP         = YES
+
+# If the HTML_ALIGN_MEMBERS tag is set to YES, the members of classes,
+# files or namespaces will be aligned in HTML using tables. If set to
+# NO a bullet list will be used.
+
+HTML_ALIGN_MEMBERS     = YES
+
+# If the HTML_DYNAMIC_SECTIONS tag is set to YES then the generated HTML
+# documentation will contain sections that can be hidden and shown after the
+# page has loaded. For this to work a browser that supports
+# JavaScript and DHTML is required (for instance Mozilla 1.0+, Firefox
+# Netscape 6.0+, Internet explorer 5.0+, Konqueror, or Safari).
+
+HTML_DYNAMIC_SECTIONS  = YES
+
+#---------------------------------------------------------------------------
+# configuration options related to the LaTeX output
+#---------------------------------------------------------------------------
+
+# If the GENERATE_LATEX tag is set to YES (the default) Doxygen will
+# generate Latex output.
+
+GENERATE_LATEX         = NO
+
+# The LATEX_OUTPUT tag is used to specify where the LaTeX docs will be put.
+# If a relative path is entered the value of OUTPUT_DIRECTORY will be
+# put in front of it. If left blank `latex' will be used as the default path.
+
+LATEX_OUTPUT           = latex
+#
+# If the PDF_HYPERLINKS tag is set to YES, the LaTeX that is generated
+# is prepared for conversion to pdf (using ps2pdf). The pdf file will
+# contain links (just like the HTML output) instead of page references
+# This makes the output suitable for online browsing using a pdf viewer.
+
+PDF_HYPERLINKS         = YES
+
+# If the USE_PDFLATEX tag is set to YES, pdflatex will be used instead of
+# plain latex in the generated Makefile. Set this option to YES to get a
+# higher quality PDF documentation.
+
+USE_PDFLATEX           = YES
+
+# If the LATEX_BATCHMODE tag is set to YES, doxygen will add the \\batchmode.
+# command to the generated LaTeX files. This will instruct LaTeX to keep
+# running if errors occur, instead of asking the user for help.
+# This option is also used when generating formulas in HTML.
+
+LATEX_BATCHMODE        = NO
+
+#---------------------------------------------------------------------------
+# Configuration options related to the preprocessor
+#---------------------------------------------------------------------------
+
+# If the ENABLE_PREPROCESSING tag is set to YES (the default) Doxygen will
+# evaluate all C-preprocessor directives found in the sources and include
+# files.
+
+ENABLE_PREPROCESSING   = YES
+
+#---------------------------------------------------------------------------
+# Configuration options related to the dot tool
+#---------------------------------------------------------------------------
+
+# If the CLASS_DIAGRAMS tag is set to YES (the default) Doxygen will
+# generate a inheritance diagram (in HTML, RTF and LaTeX) for classes with base
+# or super classes. Setting the tag to NO turns the diagrams off. Note that
+# this option also works with HAVE_DOT disabled, but it is recommended to
+# install and use dot, since it yields more powerful graphs.
+
+CLASS_DIAGRAMS         = NO
+
+# If you set the HAVE_DOT tag to YES then doxygen will assume the dot tool is
+# available from the path. This tool is part of Graphviz, a graph visualization
+# toolkit from AT&T and Lucent Bell Labs. The other options in this section
+# have no effect if this option is set to NO (the default)
+
+HAVE_DOT               = YES
+
+# If the CLASS_GRAPH and HAVE_DOT tags are set to YES then doxygen
+# will generate a graph for each documented class showing the direct and
+# indirect inheritance relations. Setting this tag to YES will force the
+# the CLASS_DIAGRAMS tag to NO.
+
+CLASS_GRAPH            = YES
+
+# If the COLLABORATION_GRAPH and HAVE_DOT tags are set to YES then doxygen
+# will generate a graph for each documented class showing the direct and
+# indirect implementation dependencies (inheritance, containment, and
+# class references variables) of the class with other documented classes.
+
+COLLABORATION_GRAPH    = YES
+
+# If the GROUP_GRAPHS and HAVE_DOT tags are set to YES then doxygen
+# will generate a graph for groups, showing the direct groups dependencies
+
+GROUP_GRAPHS           = YES
+
+# If the UML_LOOK tag is set to YES doxygen will generate inheritance and
+# collaboration diagrams in a style similar to the OMG's Unified Modeling
+# Language.
+
+UML_LOOK               = NO
+
+# If the ENABLE_PREPROCESSING, SEARCH_INCLUDES, INCLUDE_GRAPH, and HAVE_DOT
+# tags are set to YES then doxygen will generate a graph for each documented
+# file showing the direct and indirect include dependencies of the file with
+# other documented files.
+
+INCLUDE_GRAPH          = YES
+
+# If the ENABLE_PREPROCESSING, SEARCH_INCLUDES, INCLUDED_BY_GRAPH, and
+# HAVE_DOT tags are set to YES then doxygen will generate a graph for each
+# documented header file showing the documented files that directly or
+# indirectly include this file.
+
+INCLUDED_BY_GRAPH      = YES
+
+# If the CALL_GRAPH and HAVE_DOT options are set to YES then
+# doxygen will generate a call dependency graph for every global function
+# or class method. Note that enabling this option will significantly increase
+# the time of a run. So in most cases it will be better to enable call graphs
+# for selected functions only using the \callgraph command.
+
+CALL_GRAPH             = YES
+
+# If the CALLER_GRAPH and HAVE_DOT tags are set to YES then
+# doxygen will generate a caller dependency graph for every global function
+# or class method. Note that enabling this option will significantly increase
+# the time of a run. So in most cases it will be better to enable caller
+# graphs for selected functions only using the \callergraph command.
+
+CALLER_GRAPH           = YES
+
+# If the GRAPHICAL_HIERARCHY and HAVE_DOT tags are set to YES then doxygen
+# will generate a graphical hierarchy of all classes instead of a textual one.
+
+GRAPHICAL_HIERARCHY    = YES
+
+# If the DIRECTORY_GRAPH, SHOW_DIRECTORIES and HAVE_DOT tags are set to YES
+# then doxygen will show the dependencies a directory has on other directories
+# in a graphical way. The dependency relations are determined by the #include
+# relations between the files in the directories.
+
+DIRECTORY_GRAPH        = YES
+
+# The DOT_IMAGE_FORMAT tag can be used to set the image format of the images
+# generated by dot. Possible values are svg, png, jpg, or gif.
+# If left blank png will be used. If you choose svg you need to set
+# HTML_FILE_EXTENSION to xhtml in order to make the SVG files
+# visible in IE 9+ (other browsers do not have this requirement).
+
+DOT_IMAGE_FORMAT       = svg
+
+# If DOT_IMAGE_FORMAT is set to svg, then this option can be set to YES to
+# enable generation of interactive SVG images that allow zooming and panning.
+# Note that this requires a modern browser other than Internet Explorer.
+# Tested and working are Firefox, Chrome, Safari, and Opera. For IE 9+ you
+# need to set HTML_FILE_EXTENSION to xhtml in order to make the SVG files
+# visible. Older versions of IE do not have SVG support.
+
+INTERACTIVE_SVG        = YES
+
+# Set the DOT_MULTI_TARGETS tag to YES allow dot to generate multiple output
+# files in one run (i.e. multiple -o and -T options on the command line). This
+# makes dot run faster, but since only newer versions of dot (>1.8.10)
+# support this, this feature is disabled by default.
+
+DOT_MULTI_TARGETS      = YES
