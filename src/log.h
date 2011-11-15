@@ -2,6 +2,7 @@
  * xmp3 - XMPP Proxy
  * log.h - Debugging and logging functions/macros.  From: http://c.learncodethehardway.org/book/learn-c-the-hard-waych21.html
  * Copyright (c) 2011 Drexel University
+ * @file
  */
 
 #pragma once
