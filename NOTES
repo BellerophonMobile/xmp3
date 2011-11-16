@@ -8,3 +8,9 @@
 * Clean up header includes
 * Use ut* macros for strings
 * Recheck all memory allocations
+
+* To generate OpenSSL cert:
+    * Private Key:
+        openssl genrsa -out server.pem 2048
+    * Certificate
+        openssl req -new -x509 -key server.pem -out server.cert -days 99999
