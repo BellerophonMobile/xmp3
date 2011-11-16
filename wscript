@@ -10,31 +10,40 @@ import waflib
 # So you don't need to do ./waf configure if you are just using the defaults
 waflib.Configure.autoconfig = True
 
-def options(opt):
-    opt.load('compiler_c')
+def options(ctx):
+    ctx.load('compiler_c')
 
-def configure(conf):
-    conf.load('compiler_c')
-    conf.load('doxygen')
+    grp = ctx.add_option_group('xmp3 options')
+
+    grp.add_option('--build-docs', action='store_true', default=False,
+                   help='Build doxygen documentation (use during configure)')
+
+def configure(ctx):
+    ctx.env.BUILD_DOCS = ctx.options.build_docs
+
+    ctx.load('compiler_c')
+
+    if ctx.env.BUILD_DOCS:
+        ctx.load('doxygen')
 
     # To compile for android...
     # grab libexpat.so from an android phone, and copy expat.h and
     # expat_external.h and put them in the root directory.
     # and comment out the next two lines (with the right paths)
-    #conf.env.INCLUDES += ['/home/tom/code/xmp3']
-    #conf.env.LIBPATH += ['/home/tom/code/xmp3']
+    #ctx.env.INCLUDES += ['/home/tom/code/xmp3']
+    #ctx.env.LIBPATH += ['/home/tom/code/xmp3']
 
     # Then run
     # CC="/opt/android-ndk/toolchains/arm-linux-androideabi-4.4.3/prebuilt/linux-x86/bin/arm-linux-androideabi-gcc --sysroot=/opt/android-ndk/platforms/android-9/arch-arm/" ./waf configure
 
-    conf.check_cc(lib='expat')
-    conf.check_cc(lib='ssl')
+    ctx.check_cc(lib='expat')
+    ctx.check_cc(lib='ssl')
 
-    conf.env.CFLAGS += ['-std=gnu99', '-Wall']
-    conf.env.CFLAGS += ['-O0', '-ggdb']
+    ctx.env.CFLAGS += ['-std=gnu99', '-Wall']
+    ctx.env.CFLAGS += ['-O0', '-ggdb']
 
-def build(bld):
-    bld.program(
+def build(ctx):
+    ctx.program(
         target = 'xmp3',
         source = [
             'src/client_socket.c',
@@ -50,7 +59,9 @@ def build(bld):
         use = ['EXPAT', 'SSL'],
     )
 
-    bld(
+    ctx(
         features = 'doxygen',
+        name = 'doxygen',
         doxyfile = 'doxyfile',
+        posted = not ctx.env.BUILD_DOCS,
     )
