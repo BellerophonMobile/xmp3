@@ -19,39 +19,27 @@
 
 #include "log.h"
 
+#include "xmp3_options.h"
 #include "event.h"
 #include "xmpp.h"
 
-// Default address is loopback
-static const struct in_addr DEFAULT_CLIENT_ADDR = { 0x0100007f };
-static const uint16_t DEFAULT_CLIENT_PORT = 5222;
-
 static struct option long_options[] = {
-    {"client-addr", required_argument, NULL, 'a'},
-    {"client-port", required_argument, NULL, 'p'},
-    {"help",        no_argument,       NULL, 'h'},
+    {"addr", required_argument, NULL, 'a'},
+    {"port", required_argument, NULL, 'p'},
+    {"help", no_argument,       NULL, 'h'},
     { NULL },
 };
 
 static void print_usage() {
     printf("./xmp3 [OPTIONS]\nOptions:\n");
 
-    printf("  -a, --client-addr     Address to listen for incoming XMPP\n"
+    printf("  -a, --addr     Address to listen for incoming XMPP\n"
            "                        client connections (Default: %s)\n",
-           inet_ntoa(DEFAULT_CLIENT_ADDR));
-    printf("  -p, --client-port     Port to listen for incoming XMPP client\n"
+           inet_ntoa(DEFAULT_ADDR));
+    printf("  -p, --port     Port to listen for incoming XMPP client\n"
            "                        connections (Default: %d)\n",
-           DEFAULT_CLIENT_PORT);
+           DEFAULT_PORT);
     printf("  -h, --help            This help output\n");
-}
-
-static bool read_port(const char *arg, uint16_t *output) {
-    // Clear errno so we can check if strtol fails.
-    errno = 0;
-
-    char *endptr;
-    *output = strtol(optarg, &endptr, 10);
-    return (errno != ERANGE) && (*endptr == '\0');
 }
 
 // File-global event loop handle, so we can stop it from the signal handler.
@@ -62,8 +50,7 @@ static void signal_handler(int signal) {
 }
 
 int main(int argc, char *argv[]) {
-    struct in_addr client_addr = DEFAULT_CLIENT_ADDR;
-    uint16_t client_port = DEFAULT_CLIENT_PORT;
+    struct xmp3_options *options = xmp3_options_new();
 
     int c = 0;
     while (true) {
@@ -75,12 +62,12 @@ int main(int argc, char *argv[]) {
 
         switch (c) {
             case 'a':
-                check(inet_aton(optarg, &client_addr) != 0,
+                check(xmp3_options_set_addr_str(options, optarg),
                       "Invalid client address \"%s\"", optarg);
                 break;
 
             case 'p':
-                check(read_port(optarg, &client_port),
+                check(xmp3_options_set_port_str(options, optarg),
                       "Invalid client port \"%s\"", optarg);
                 break;
 
@@ -110,7 +97,7 @@ int main(int argc, char *argv[]) {
     SSL_load_error_strings();
     SSL_library_init();
 
-    struct xmpp_server *server = xmpp_init(loop, client_addr, client_port);
+    struct xmpp_server *server = xmpp_init(loop, options);
     check(server != NULL, "XMPP server initialization failed");
 
     log_info("Starting event loop...");

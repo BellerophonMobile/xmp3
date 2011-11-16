@@ -50,6 +50,7 @@ def build(ctx):
             'src/event.c',
             'src/main.c',
             'src/utils.c',
+            'src/xmp3_options.c',
             'src/xmpp_auth.c',
             'src/xmpp.c',
             'src/xmpp_common.c',

@@ -12,6 +12,7 @@
 #include <netinet/in.h>
 
 #include "event.h"
+#include "xmp3_options.h"
 #include "xmpp_common.h"
 
 /**
@@ -50,12 +51,11 @@ struct xmpp_server;
  * Initializes the XMPP server and listens for new connections.
  *
  * @param loop An event loop instance that the server can register callbacks.
- * @param addr Address to bind to.
- * @param port Port to bind to.
+ * @param options An XMP3 options instance to read for configuration.
  * @return A pointer to the XMPP server instance.
  */
-struct xmpp_server* xmpp_init(struct event_loop *loop, struct in_addr addr,
-                              uint16_t port);
+struct xmpp_server* xmpp_init(struct event_loop *loop,
+                              const struct xmp3_options *options);
 
 /**
  * Return a new OpenSSL SSL connection structure.

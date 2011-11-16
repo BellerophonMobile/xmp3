@@ -108,8 +108,8 @@ static void remove_connection(struct xmpp_server *server,
 static struct message_route* find_message_route(
         const struct xmpp_server *server, const struct jid *jid);
 
-struct xmpp_server* xmpp_init(struct event_loop *loop, struct in_addr addr,
-                              uint16_t port) {
+struct xmpp_server* xmpp_init(struct event_loop *loop,
+                              const struct xmp3_options *options) {
     int fd = socket(AF_INET, SOCK_STREAM, 0);
     struct xmpp_server *server = NULL;
     check(fd != -1, "Error creating XMPP server socket");
@@ -122,15 +122,17 @@ struct xmpp_server* xmpp_init(struct event_loop *loop, struct in_addr addr,
     // Convert to network byte order
     struct sockaddr_in saddr = {
         .sin_family = AF_INET,
-        .sin_port = htons(port),
-        .sin_addr = addr,
+        .sin_port = htons(xmp3_options_get_port(options)),
+        .sin_addr = xmp3_options_get_addr(options),
     };
 
     check(bind(fd, (struct sockaddr*)&saddr, sizeof(saddr)) != -1,
           "XMPP server socket bind error");
     check(listen(fd, SERVER_BACKLOG) != -1, "XMPP server socket listen error");
 
-    log_info("Listening for XMPP connections on %s:%d", inet_ntoa(addr), port);
+    log_info("Listening for XMPP connections on %s:%d",
+             inet_ntoa(xmp3_options_get_addr(options)),
+             xmp3_options_get_port(options));
 
     server = new_server(fd);
 
