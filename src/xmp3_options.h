@@ -14,6 +14,8 @@
 
 extern const struct in_addr DEFAULT_ADDR;
 extern const uint16_t DEFAULT_PORT;
+extern const char *DEFAULT_KEYFILE;
+extern const char *DEFAULT_CERTFILE;
 
 /** Opaque pointer maintaining the options for XMP3. */
 struct xmp3_options;

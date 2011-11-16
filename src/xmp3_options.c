@@ -15,6 +15,8 @@
 // Default address is loopback
 const struct in_addr DEFAULT_ADDR = { 0x0100007f };
 const uint16_t DEFAULT_PORT = 5222;
+const char *DEFAULT_KEYFILE = "server.pem";
+const char *DEFAULT_CERTFILE = "server.crt";
 
 /** Hold all the options used to configure the XMP3 server. */
 struct xmp3_options {

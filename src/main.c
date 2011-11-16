@@ -24,9 +24,11 @@
 #include "xmpp.h"
 
 static struct option long_options[] = {
-    {"addr", required_argument, NULL, 'a'},
-    {"port", required_argument, NULL, 'p'},
-    {"help", no_argument,       NULL, 'h'},
+    {"addr",     required_argument, NULL, 'a'},
+    {"port",     required_argument, NULL, 'p'},
+    {"ssl-key",  required_argument, NULL, 'k'},
+    {"ssl-cert", required_argument, NULL, 'c'},
+    {"help",     no_argument,       NULL, 'h'},
     { NULL },
 };
 
@@ -39,7 +41,11 @@ static void print_usage() {
     printf("  -p, --port     Port to listen for incoming XMPP client\n"
            "                        connections (Default: %d)\n",
            DEFAULT_PORT);
-    printf("  -h, --help            This help output\n");
+    printf("  -k, --ssl-key  Path to the SSL private key to use"
+           " (Default: %s)\n", DEFAULT_KEYFILE);
+    printf("  -k, --ssl-cert Path to the SSL certificate to use"
+           " (Default: %s)\n", DEFAULT_CERTFILE);
+    printf("  -h, --help     This help output\n");
 }
 
 // File-global event loop handle, so we can stop it from the signal handler.
