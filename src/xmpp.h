@@ -58,6 +58,16 @@ struct xmpp_server* xmpp_init(struct event_loop *loop, struct in_addr addr,
                               uint16_t port);
 
 /**
+ * Return a new OpenSSL SSL connection structure.
+ *
+ * Since the internals of the xmpp_server struct are hidden, we need this
+ * function.
+ *
+ * @param client An XMPP client to switch to SSL
+ */
+void xmpp_new_ssl_connection(struct xmpp_client *client);
+
+/**
  * Register a callback to deliver message stanzas.
  *
  * @param server An XMPP server instance.

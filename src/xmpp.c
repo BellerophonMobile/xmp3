@@ -17,6 +17,9 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+
 #include <expat.h>
 
 #include "utlist.h"
@@ -78,6 +81,9 @@ struct xmpp_server {
     /** The bound and listening file descriptor. */
     int fd;
 
+    /** The OpenSSL context. */
+    SSL_CTX *ssl_context;
+
     /** Linked list of connected clients. */
     struct xmpp_client *clients;
 
@@ -126,7 +132,7 @@ struct xmpp_server* xmpp_init(struct event_loop *loop, struct in_addr addr,
 
     log_info("Listening for XMPP connections on %s:%d", inet_ntoa(addr), port);
 
-    server = new_server();
+    server = new_server(fd);
 
     // Register IQ handlers
     xmpp_register_iq_namespace(server, XMPP_IQ_SESSION, xmpp_im_iq_session,
@@ -143,6 +149,16 @@ error:
         del_server(server);
     }
     return NULL;
+}
+
+void xmpp_new_ssl_connection(struct xmpp_client *client) {
+    struct xmpp_server *server = client->server;
+
+    struct client_socket *ssl_socket = client_socket_ssl_new(
+            server->ssl_context, client->socket);
+
+    client_socket_del(client->socket);
+    client->socket = ssl_socket;
 }
 
 void xmpp_register_message_route(struct xmpp_server *server, struct jid *jid,
@@ -224,9 +240,37 @@ bool xmpp_route_iq(const char *ns, struct xmpp_stanza *stanza) {
     return route->func(stanza, route->data);
 }
 
-static struct xmpp_server* new_server() {
+static struct xmpp_server* new_server(int fd) {
     struct xmpp_server *server = calloc(1, sizeof(*server));
     check_mem(server);
+
+    server->fd = fd;
+
+    // Initialize OpenSSL context
+    server->ssl_context = SSL_CTX_new(SSLv23_server_method());
+    if (server->ssl_context == NULL) {
+        ERR_print_errors_fp(stderr);
+        exit(1);
+    }
+
+    if (SSL_CTX_use_certificate_chain_file(
+                server->ssl_context, "/home/tom/code/xmp3/server.crt") != 1) {
+        ERR_print_errors_fp(stderr);
+        exit(1);
+    }
+
+    if (SSL_CTX_use_PrivateKey_file(
+                server->ssl_context, "/home/tom/code/xmp3/server.pem",
+                SSL_FILETYPE_PEM) != 1) {
+        ERR_print_errors_fp(stderr);
+        exit(1);
+    }
+
+    if (SSL_CTX_check_private_key(server->ssl_context) != 1) {
+        ERR_print_errors_fp(stderr);
+        exit(1);
+    }
+
     return server;
 }
 
@@ -243,6 +287,8 @@ static void del_server(struct xmpp_server *server) {
         free(route);
     }
     free(server);
+
+    SSL_CTX_free(server->ssl_context);
 }
 
 static struct xmpp_client* new_client(struct xmpp_server *server) {
@@ -268,11 +314,9 @@ static void del_client(struct xmpp_client *client) {
     if (client == NULL) {
         return;
     }
-    if (client->fd != -1) {
-        if (close(client->fd) != 0) {
-            log_err("Error closing file descriptor");
-        }
-    }
+    xmpp_deregister_message_route(client->server, &client->jid);
+    client_socket_close(client->socket);
+    client_socket_del(client->socket);
     XML_ParserFree(client->parser);
     free(client->jid.local);
     free(client->jid.resource);
@@ -290,7 +334,8 @@ static void read_client(struct event_loop *loop, int fd, void *data) {
     struct xmpp_client *client = (struct xmpp_client*)data;
     struct xmpp_server *server = client->server;
 
-    ssize_t numrecv = recv(fd, MSG_BUFFER, sizeof(MSG_BUFFER), 0);
+    ssize_t numrecv = client_socket_recv(client->socket, MSG_BUFFER,
+                                         sizeof(MSG_BUFFER));
 
     if (numrecv == 0 || numrecv == -1) {
         switch (numrecv) {
@@ -335,8 +380,10 @@ static void add_connection(struct event_loop *loop, int fd, void *data) {
     struct xmpp_client *client = new_client(server);
 
     socklen_t addrlen = sizeof(client->caddr);
-    client->fd = accept(fd, (struct sockaddr*)&client->caddr, &addrlen);
-    check(client->fd != -1, "Error accepting client connection");
+    int client_fd = accept(fd, (struct sockaddr*)&client->caddr, &addrlen);
+    check(client_fd != -1, "Error accepting client connection");
+
+    client->socket = client_socket_new(client_fd);
 
     /* The first Expat callback should be to handle the start of the XML
      * stream, and begin authentication. */
@@ -349,7 +396,7 @@ static void add_connection(struct event_loop *loop, int fd, void *data) {
              inet_ntoa(client->caddr.sin_addr), client->caddr.sin_port);
 
     DL_APPEND(server->clients, client);
-    event_register_callback(loop, client->fd, read_client, client);
+    event_register_callback(loop, client_fd, read_client, client);
     return;
 
 error:

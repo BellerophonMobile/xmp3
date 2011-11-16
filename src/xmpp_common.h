@@ -10,6 +10,8 @@
 #include <stdbool.h>
 #include <netinet/in.h>
 
+#include <openssl/ssl.h>
+
 #include <expat.h>
 
 #include "utarray.h"
@@ -58,8 +60,8 @@ struct jid {
 
 /** Data on a connected client. */
 struct xmpp_client {
-    /** Connected file descriptor for the client. */
-    int fd;
+    /** The connected client_socket structure. */
+    struct client_socket* socket;
 
     /** The address of the client. */
     struct sockaddr_in caddr;

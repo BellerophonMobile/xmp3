@@ -15,6 +15,8 @@
 #include <getopt.h>
 #include <arpa/inet.h>
 
+#include <openssl/ssl.h>
+
 #include "log.h"
 
 #include "event.h"
@@ -103,6 +105,10 @@ int main(int argc, char *argv[]) {
     check(sigaction(SIGINT, &sa, NULL) != -1, "Cannot set signal handler.");
 
     loop = event_new_loop();
+
+    // Initialize OpenSSL
+    SSL_load_error_strings();
+    SSL_library_init();
 
     struct xmpp_server *server = xmpp_init(loop, client_addr, client_port);
     check(server != NULL, "XMPP server initialization failed");

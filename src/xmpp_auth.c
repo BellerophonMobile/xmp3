@@ -13,6 +13,9 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+
 #include <expat.h>
 
 #include "log.h"
@@ -31,7 +34,10 @@
 // Maximum size of the "resourcepart" in resource binding
 #define RESOURCEPART_BUFFER_SIZE 1024
 
+#define XMPP_NS_TLS "urn:ietf:params:xml:ns:xmpp-tls"
+
 // XML string constants
+static const char *XMPP_STARTTLS = XMPP_NS_TLS XMPP_NS_SEPARATOR "starttls";
 static const char *XMPP_AUTH_MECHANISM = "mechanism";
 static const char *XMPP_AUTH_MECHANISM_PLAIN = "PLAIN";
 
@@ -47,15 +53,19 @@ static const char *MSG_STREAM_HEADER =
         "xmlns:stream='http://etherx.jabber.org/streams'>";
 
 #if 0
+    "<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'>"
+        "<required/>"
+    "</starttls>"
+#endif
+
 static const char *MSG_STREAM_FEATURES_TLS =
     "<stream:features>"
         "<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'>"
             "<required/>"
         "</starttls>"
     "</stream:features>";
-#endif
 
-static const char *MSG_STREAM_FEATURES_PLAIN =
+static const char *MSG_STREAM_FEATURES_SASL =
     "<stream:features>"
         "<mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"
             "<mechanism>PLAIN</mechanism>"
@@ -67,6 +77,9 @@ static const char *MSG_STREAM_FEATURES_BIND =
         "<bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'/>"
         "<session xmlns='urn:ietf:params:xml:ns:xmpp-session'/>"
     "</stream:features>";
+
+static const char *MSG_TLS_PROCEED =
+    "<proceed xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>";
 
 static const char *MSG_SASL_SUCCESS =
     "<success xmlns='urn:ietf:params:xml:ns:xmpp-sasl'/>";
@@ -111,9 +124,18 @@ struct resource_bind_tmp {
 // Forward declarations
 /* Inital authentication handlers
  * See: http://tools.ietf.org/html/rfc6120#section-9.1 */
-static void auth_plain_start(void *data, const char *name, const char **attrs);
-static void auth_plain_data(void *data, const char *s, int len);
-static void auth_plain_end(void *data, const char *name);
+
+static void stream_sasl_start(void *data, const char *name,
+                              const char **attrs);
+static void stream_bind_start(void *data, const char *name,
+                              const char **attrs);
+
+static void tls_start(void *data, const char *name, const char **attrs);
+static void tls_end(void *data, const char *name);
+
+static void sasl_plain_start(void *data, const char *name, const char **attrs);
+static void sasl_plain_data(void *data, const char *s, int len);
+static void sasl_plain_end(void *data, const char *name);
 
 static void bind_iq_start(void *data, const char *name, const char **attrs);
 static void bind_iq_end(void *data, const char *name);
@@ -140,32 +162,108 @@ void xmpp_auth_stream_start(void *data, const char *name, const char **attrs) {
     check(strcmp(name, XMPP_STREAM) == 0, "Unexpected stanza");
 
     // Step 2: Server responds by sending a response stream header to client
-    check(sendall(client->fd, MSG_STREAM_HEADER,
+    check(sendall(client->socket, MSG_STREAM_HEADER,
                   strlen(MSG_STREAM_HEADER)) > 0,
           "Error sending stream header to client");
 
-    /* If we already authenticated, then we get ready for resource binding,
-     * else we need to authenticate. */
-    if (!client->authenticated) {
-        /* Step 3: Server sends stream features to client (only the STARTTLS
-         * extension at this point, which is mandatory-to-negotiate) */
-        check(sendall(client->fd, MSG_STREAM_FEATURES_PLAIN,
-                      strlen(MSG_STREAM_FEATURES_PLAIN)) > 0,
-              "Error sending plain stream features to client");
-        XML_SetElementHandler(client->parser, auth_plain_start,
-                              auth_plain_end);
-        XML_SetCharacterDataHandler(client->parser, auth_plain_data);
-    } else {
-        /* Step 14: Server responds by sending a stream header to client along
-         * with supported features (in this case, resource binding) */
-        check(sendall(client->fd, MSG_STREAM_FEATURES_BIND,
-                      strlen(MSG_STREAM_FEATURES_BIND)) > 0,
-              "Error sending bind stream features to client");
-        XML_SetStartElementHandler(client->parser, bind_iq_start);
-        XML_SetCharacterDataHandler(client->parser, xmpp_error_data);
-    }
+    /* Step 3: Server sends stream features to client (only the STARTTLS
+     * extension at this point, which is mandatory-to-negotiate) */
+    check(sendall(client->socket, MSG_STREAM_FEATURES_TLS,
+                  strlen(MSG_STREAM_FEATURES_TLS)) > 0,
+          "Error sending TLS stream features to client");
 
-    log_info("Sent stream features to client");
+    // We expect to see a <starttls> tag from the client.
+    XML_SetElementHandler(client->parser, tls_start, tls_end);
+    XML_SetCharacterDataHandler(client->parser, xmpp_error_data);
+
+    return;
+
+error:
+    XML_StopParser(client->parser, false);
+}
+
+static void stream_sasl_start(void *data, const char *name, const char **attrs)
+{
+    struct xmpp_client *client = (struct xmpp_client*)data;
+
+    log_info("Starting SASL stream");
+
+    /* Step 7: If TLS negotiation is successful, client initiates a new stream
+     * to server over the TLS-protected TCP connection. */
+    check(strcmp(name, XMPP_STREAM) == 0, "Unexpected stanza");
+
+    /* Step 8: Server responds by sending a stream header to client along with
+     * any available stream features. */
+    check(sendall(client->socket, MSG_STREAM_HEADER,
+                  strlen(MSG_STREAM_HEADER)) > 0,
+          "Error sending stream header to client");
+    check(sendall(client->socket, MSG_STREAM_FEATURES_SASL,
+                  strlen(MSG_STREAM_FEATURES_SASL)) > 0,
+          "Error sending SASL stream features to client");
+
+    // We expect to see a SASL PLAIN <auth> tag next.
+    XML_SetElementHandler(client->parser, sasl_plain_start, sasl_plain_end);
+    XML_SetCharacterDataHandler(client->parser, sasl_plain_data);
+    return;
+
+error:
+    XML_StopParser(client->parser, false);
+}
+
+static void stream_bind_start(void *data, const char *name, const char **attrs)
+{
+    struct xmpp_client *client = (struct xmpp_client*)data;
+
+    log_info("Starting resource bind stream");
+
+    /* Step 14: Server responds by sending a stream header to client along
+     * with supported features (in this case, resource binding) */
+    check(sendall(client->socket, MSG_STREAM_HEADER,
+                  strlen(MSG_STREAM_HEADER)) > 0,
+          "Error sending stream header to client");
+    check(sendall(client->socket, MSG_STREAM_FEATURES_BIND,
+                  strlen(MSG_STREAM_FEATURES_BIND)) > 0,
+          "Error sending bind stream features to client");
+
+    // We expect to see the resouce binding IQ stanza next.
+    XML_SetStartElementHandler(client->parser, bind_iq_start);
+    XML_SetCharacterDataHandler(client->parser, xmpp_error_data);
+    return;
+
+error:
+    XML_StopParser(client->parser, false);
+}
+
+/**
+ * Handles the start <starttls> event.
+ *
+ * Begins TLS authentication.
+ */
+static void tls_start(void *data, const char *name, const char **attrs) {
+    log_info("Starting TLS...");
+}
+
+/**
+ * Handles the end <starttls> event.
+ *
+ * Confirms to the client that TLS is ok.
+ */
+static void tls_end(void *data, const char *name) {
+    struct xmpp_client *client = (struct xmpp_client*)data;
+
+    log_info("Initiating SSL connection...");
+
+    check(strcmp(name, XMPP_STARTTLS) == 0, "Unexpected stanza");
+    check(sendall(client->socket, MSG_TLS_PROCEED,
+                  strlen(MSG_TLS_PROCEED)) > 0,
+          "Error sending TLS proceed to client");
+
+    xmpp_new_ssl_connection(client);
+
+    // We expect a new stream from the client
+    XML_SetElementHandler(client->parser, stream_sasl_start, xmpp_error_end);
+    XML_SetCharacterDataHandler(client->parser, xmpp_error_data);
+
     return;
 
 error:
@@ -177,7 +275,7 @@ error:
  *
  * Handles the starting <auth> tag.
  */
-static void auth_plain_start(void *data, const char *name, const char **attrs)
+static void sasl_plain_start(void *data, const char *name, const char **attrs)
 {
     struct xmpp_client *client = (struct xmpp_client*)data;
     log_info("Starting SASL plain...");
@@ -200,7 +298,9 @@ static void auth_plain_start(void *data, const char *name, const char **attrs)
     check_mem(auth_data);
     auth_data->client = client;
     base64_init_decodestate(&auth_data->state);
+
     XML_SetUserData(client->parser, auth_data);
+    XML_SetElementHandler(client->parser, xmpp_error_start, sasl_plain_end);
     return;
 
 error:
@@ -212,7 +312,7 @@ error:
  *
  * Handles the data between <auth> tags.
  */
-static void auth_plain_data(void *data, const char *s, int len) {
+static void sasl_plain_data(void *data, const char *s, int len) {
     struct auth_plain_tmp *auth_data = (struct auth_plain_tmp*)data;
     struct xmpp_client *client = auth_data->client;
 
@@ -242,7 +342,7 @@ error:
  * When we receive this, we've received the username/password from the client
  * and can authenticate.
  */
-static void auth_plain_end(void *data, const char *name) {
+static void sasl_plain_end(void *data, const char *name) {
     struct auth_plain_tmp *auth_data = (struct auth_plain_tmp*)data;
     struct xmpp_client *client = auth_data->client;
 
@@ -271,14 +371,14 @@ static void auth_plain_end(void *data, const char *name) {
     // TODO: If we wanted to do any authentication, do it here.
 
     // Sucess!
-    check(sendall(client->fd, MSG_SASL_SUCCESS, strlen(MSG_SASL_SUCCESS)) > 0,
+    check(sendall(client->socket, MSG_SASL_SUCCESS,
+                  strlen(MSG_SASL_SUCCESS)) > 0,
           "Error sending SASL success to client");
 
     client->authenticated = true;
 
     // Go to step 7, the client needs to send us a new stream header.
-    XML_SetElementHandler(client->parser, xmpp_auth_stream_start,
-                          xmpp_error_end);
+    XML_SetElementHandler(client->parser, stream_bind_start, xmpp_error_end);
     XML_SetCharacterDataHandler(client->parser, xmpp_error_data);
 
     // Clean up our temp auth_data structure.
@@ -363,7 +463,7 @@ static void bind_iq_end(void *data, const char *name) {
 
     /* Step 16: Server accepts submitted resourcepart and informs client of
      * successful resource binding */
-    check(sendall(client->fd, success_msg, strlen(success_msg)) > 0,
+    check(sendall(client->socket, success_msg, strlen(success_msg)) > 0,
           "Error sending resource binding success message.");
 
     /* Resource binding, and thus authentication, is complete!  Continue to

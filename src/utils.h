@@ -9,6 +9,7 @@
 
 #include <expat.h>
 
+#include "client_socket.h"
 #include "xmpp_common.h"
 
 /**
@@ -22,7 +23,7 @@
  * @param len    Length of the buffer to send.
  * @return Number of bytes sent, or -1 on error.
  */
-int sendall(int fd, const char *buffer, int len);
+int sendall(struct client_socket *socket, const char *buffer, int len);
 
 /**
  * Send the raw text of the current Expat parse event to a client.
@@ -30,7 +31,7 @@ int sendall(int fd, const char *buffer, int len);
  * @param parser An Expat parser instance.
  * @param fd     The file descriptor to send to.
  */
-int sendxml(XML_Parser parser, int fd);
+int sendxml(XML_Parser parser, struct client_socket *socket);
 
 /**
  * Allocates and returns a string version of a jid.

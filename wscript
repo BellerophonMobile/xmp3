@@ -28,6 +28,7 @@ def configure(conf):
     # CC="/opt/android-ndk/toolchains/arm-linux-androideabi-4.4.3/prebuilt/linux-x86/bin/arm-linux-androideabi-gcc --sysroot=/opt/android-ndk/platforms/android-9/arch-arm/" ./waf configure
 
     conf.check_cc(lib='expat')
+    conf.check_cc(lib='ssl')
 
     conf.env.CFLAGS += ['-std=gnu99', '-Wall']
     conf.env.CFLAGS += ['-O0', '-ggdb']
@@ -36,6 +37,7 @@ def build(bld):
     bld.program(
         target = 'xmp3',
         source = [
+            'src/client_socket.c',
             'src/event.c',
             'src/main.c',
             'src/utils.c',
@@ -45,7 +47,7 @@ def build(bld):
             'src/xmpp_core.c',
             'src/xmpp_im.c',
         ],
-        use = ['EXPAT'],
+        use = ['EXPAT', 'SSL'],
     )
 
     bld(

@@ -71,7 +71,7 @@ static void session_end(void *data, const char *name) {
     check(strcmp(name, XMPP_IQ_SESSION) == 0, "Unexpected stanza");
 
     snprintf(msg, sizeof(msg), MSG_STREAM_SUCCESS, stanza->id);
-    check(sendall(client->fd, msg, strlen(msg)) > 0,
+    check(sendall(client->socket, msg, strlen(msg)) > 0,
           "Error sending stream success message");
 
     // We expect to see the </iq> tag next
@@ -114,7 +114,7 @@ static void roster_query_end(void *data, const char *name) {
 
     // TODO: Actually manage the user's roster.
     snprintf(msg, sizeof(msg), MSG_ROSTER, stanza->id);
-    check(sendall(client->fd, msg, strlen(msg)) > 0,
+    check(sendall(client->socket, msg, strlen(msg)) > 0,
           "Error sending roster message");
 
     // We expect to see the </iq> tag next.

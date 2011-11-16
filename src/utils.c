@@ -14,11 +14,12 @@
 
 #include "log.h"
 
-int sendall(int fd, const char *buffer, int len) {
+int sendall(struct client_socket *socket, const char *buffer, int len) {
     // Keep track of how much we've sent so far
     ssize_t numsent = 0;
     do {
-        ssize_t newsent = send(fd, buffer + numsent, len - numsent, 0);
+        ssize_t newsent = client_socket_send(socket, buffer + numsent,
+                                             len - numsent);
         check(newsent != -1, "Error sending data");
         numsent += newsent;
     } while (numsent < len);
@@ -28,7 +29,7 @@ error:
     return -1;
 }
 
-int sendxml(XML_Parser parser, int fd) {
+int sendxml(XML_Parser parser, struct client_socket *socket) {
     int offset, size;
     // Gets us Expat's buffer
     const char *buffer = XML_GetInputContext(parser, &offset, &size);
@@ -36,7 +37,7 @@ int sendxml(XML_Parser parser, int fd) {
     // Returns how much of the buffer is about the current event
     int count = XML_GetCurrentByteCount(parser);
 
-    return sendall(fd, buffer + offset, count);
+    return sendall(socket, buffer + offset, count);
 }
 
 char* jid_to_str(struct jid *jid) {

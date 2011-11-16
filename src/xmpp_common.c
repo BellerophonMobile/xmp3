@@ -143,7 +143,7 @@ static void send_error(struct xmpp_stanza *stanza, const char *error) {
 
     /* TODO: If this fails, we should probably close the connection or
      * something. */
-    check(sendall(client->fd, utstring_body(msg), utstring_len(msg)) > 0,
+    check(sendall(client->socket, utstring_body(msg), utstring_len(msg)) > 0,
           "Error sending not supported error items");
 
     // Explicit fallthrough
