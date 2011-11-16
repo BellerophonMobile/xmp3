@@ -30,26 +30,26 @@
 #define XMPP_NS_DISCO_INFO "http://jabber.org/protocol/disco#info"
 #define XMPP_NS_ROSTER "jabber:iq:roster"
 
-const char *SERVER_DOMAIN;
+extern const char *SERVER_DOMAIN;
 
-const char *XMPP_STREAM;
-const char *XMPP_AUTH;
-const char *XMPP_BIND;
-const char *XMPP_BIND_RESOURCE;
+extern const char *XMPP_STREAM;
+extern const char *XMPP_AUTH;
+extern const char *XMPP_BIND;
+extern const char *XMPP_BIND_RESOURCE;
 
-const char *XMPP_MESSAGE;
-const char *XMPP_MESSAGE_BODY;
-const char *XMPP_PRESENCE;
-const char *XMPP_IQ;
+extern const char *XMPP_MESSAGE;
+extern const char *XMPP_MESSAGE_BODY;
+extern const char *XMPP_PRESENCE;
+extern const char *XMPP_IQ;
 
-const char *XMPP_ATTR_TO;
-const char *XMPP_ATTR_FROM;
-const char *XMPP_ATTR_ID;
-const char *XMPP_ATTR_TYPE;
-const char *XMPP_ATTR_TYPE_GET;
-const char *XMPP_ATTR_TYPE_SET;
-const char *XMPP_ATTR_TYPE_RESULT;
-const char *XMPP_ATTR_TYPE_ERROR;
+extern const char *XMPP_ATTR_TO;
+extern const char *XMPP_ATTR_FROM;
+extern const char *XMPP_ATTR_ID;
+extern const char *XMPP_ATTR_TYPE;
+extern const char *XMPP_ATTR_TYPE_GET;
+extern const char *XMPP_ATTR_TYPE_SET;
+extern const char *XMPP_ATTR_TYPE_RESULT;
+extern const char *XMPP_ATTR_TYPE_ERROR;
 
 /** Represents a client ID (local@domain/resource). */
 struct jid {
