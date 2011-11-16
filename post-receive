@@ -14,8 +14,8 @@ function clean() {
 }
 
 echo "Checking for new post-receive hook..."
-git archive --prefix="$TMP_GIT_PREFIX/" --remote="$GIT_REPO" HEAD | tar xf - -C "$TMP_DIR" || echo "Failed!"; exit 1
-cd "$TMP_DIR/xmp3-docs"
+git archive --prefix="$TMP_GIT_PREFIX/" --remote="$GIT_REPO" HEAD | tar xf - -C "$TMP_DIR" || exit 1
+cd "$TMP_DIR/$TMP_GIT_PREFIX"
 
 # If the post-receive hook has been updated, run that one instead
 if [ "$(check $GIT_REPO/hooks/post-receive)" != $(check post-receive)" ]
@@ -37,7 +37,7 @@ fi
 
 echo "Building documentation"
 ./waf --build-docs --targets="doxygen" > /dev/null
-rsync -r --delete docs/html/ /srv/http/docs/xmp3/ > /dev/null
+rsync -r --delete doc/html/ /srv/http/docs/xmp3/ > /dev/null 2>&1 || echo Failed
 echo "Done"
 
 clean
