@@ -18,7 +18,7 @@ git archive --prefix="$TMP_GIT_PREFIX/" --remote="$GIT_REPO" HEAD | tar xf - -C 
 cd "$TMP_DIR/$TMP_GIT_PREFIX"
 
 # If the post-receive hook has been updated, run that one instead
-if [ "$(check $GIT_REPO/hooks/post-receive)" != $(check post-receive)" ]
+if [ "$(check $GIT_REPO/hooks/post-receive)" != "$(check post-receive)" ]
 then
     echo "post-receive script updated..."
     cp post-receive "$GIT_REPO/hooks/post-receive"
@@ -37,7 +37,7 @@ fi
 
 echo "Building documentation"
 ./waf --build-docs --targets="doxygen" > /dev/null
-rsync -r --delete doc/html/ /srv/http/docs/xmp3/ > /dev/null 2>&1 || echo Failed
+rsync -r --delete doc/html/ /srv/http/docs/xmp3/ > /dev/null || echo Failed
 echo "Done"
 
 clean
