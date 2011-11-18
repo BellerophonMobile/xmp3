@@ -13,4 +13,4 @@
     * Private Key:
         openssl genrsa -out server.pem 2048
     * Certificate
-        openssl req -new -x509 -key server.pem -out server.cert -days 99999
+        openssl req -new -x509 -key server.pem -out server.crt -days 99999
