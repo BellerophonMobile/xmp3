@@ -355,7 +355,7 @@ static void read_client(struct event_loop *loop, int fd, void *data) {
         goto error;
     }
 
-    log_info("%s:%d - Read %ld bytes", inet_ntoa(client->caddr.sin_addr),
+    log_info("%s:%d - Read %zd bytes", inet_ntoa(client->caddr.sin_addr),
              client->caddr.sin_port, numrecv);
     xmpp_print_data(MSG_BUFFER, numrecv);
     enum XML_Status status = XML_Parse(client->parser, MSG_BUFFER,
