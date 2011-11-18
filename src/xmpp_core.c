@@ -149,12 +149,12 @@ static struct xmpp_stanza* new_stanza(struct xmpp_client *client,
         ALLOC_COPY_STRING(stanza->name, name);
     } else {
         int ns_len = ns_delim - name;
-        stanza->namespace = calloc(ns_len, sizeof(*stanza->namespace));
+        stanza->namespace = calloc(ns_len + 1, sizeof(*stanza->namespace));
         check_mem(stanza->namespace);
         strncpy(stanza->namespace, name, ns_len);
 
         int name_len = strlen(name) - ns_len - 1;
-        stanza->name= calloc(name_len, sizeof(*stanza->name));
+        stanza->name = calloc(name_len + 1, sizeof(*stanza->name));
         check_mem(stanza->name);
         strncpy(stanza->name, name + ns_len + 1, name_len);
     }
