@@ -43,7 +43,7 @@ static void print_usage() {
            DEFAULT_PORT);
     printf("  -k, --ssl-key  Path to the SSL private key to use"
            " (Default: %s)\n", DEFAULT_KEYFILE);
-    printf("  -k, --ssl-cert Path to the SSL certificate to use"
+    printf("  -c, --ssl-cert Path to the SSL certificate to use"
            " (Default: %s)\n", DEFAULT_CERTFILE);
     printf("  -h, --help     This help output\n");
 }
@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
 
     int c = 0;
     while (true) {
-        c = getopt_long(argc, argv, "a:p:h", long_options, NULL);
+        c = getopt_long(argc, argv, "a:p:k:c:h", long_options, NULL);
 
         if (c < 0) {
             break;
@@ -75,6 +75,16 @@ int main(int argc, char *argv[]) {
             case 'p':
                 check(xmp3_options_set_port_str(options, optarg),
                       "Invalid client port \"%s\"", optarg);
+                break;
+
+            case 'k':
+                check(xmp3_options_set_keyfile(options, optarg),
+                      "Invalid keyfile \"%s\"", optarg);
+                break;
+
+            case 'c':
+                check(xmp3_options_set_certificate(options, optarg),
+                      "Invalid certificate \"%s\"", optarg);
                 break;
 
             case 'h':

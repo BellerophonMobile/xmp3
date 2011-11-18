@@ -57,3 +57,17 @@ bool xmp3_options_set_port_str(struct xmp3_options *options, const char *port);
 
 /** Get the port that the server will bind to. */
 uint16_t xmp3_options_get_port(const struct xmp3_options *options);
+
+/** Set the path to the OpenSSL private key file to use. */
+bool xmp3_options_set_keyfile(struct xmp3_options *options,
+                              const char *keyfile);
+
+/** Return the path to the OpenSSL private key file. */
+const char* xmp3_options_get_keyfile(const struct xmp3_options *options);
+
+/** Set the path to the OpenSSL certificate file. */
+bool xmp3_options_set_certificate(struct xmp3_options *options,
+                                  const char *certfile);
+
+/** Get the path to the OpenSSL certificate file. */
+const char* xmp3_options_get_certificate(const struct xmp3_options *options);

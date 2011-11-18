@@ -95,7 +95,8 @@ struct xmpp_server {
 };
 
 // Forward declarations
-static struct xmpp_server* new_server();
+static struct xmpp_server* new_server(
+        int fd, const struct xmp3_options *options);
 static void del_server(struct xmpp_server *server);
 static struct xmpp_client* new_client(struct xmpp_server *server);
 static void del_client(struct xmpp_client *client);
@@ -134,7 +135,7 @@ struct xmpp_server* xmpp_init(struct event_loop *loop,
              inet_ntoa(xmp3_options_get_addr(options)),
              xmp3_options_get_port(options));
 
-    server = new_server(fd);
+    server = new_server(fd, options);
 
     // Register IQ handlers
     xmpp_register_iq_namespace(server, XMPP_IQ_SESSION, xmpp_im_iq_session,
@@ -242,7 +243,8 @@ bool xmpp_route_iq(const char *ns, struct xmpp_stanza *stanza) {
     return route->func(stanza, route->data);
 }
 
-static struct xmpp_server* new_server(int fd) {
+static struct xmpp_server* new_server(
+        int fd, const struct xmp3_options *options) {
     struct xmpp_server *server = calloc(1, sizeof(*server));
     check_mem(server);
 
@@ -255,15 +257,14 @@ static struct xmpp_server* new_server(int fd) {
         exit(1);
     }
 
-    if (SSL_CTX_use_certificate_chain_file(
-                server->ssl_context, "/home/tom/code/xmp3/server.crt") != 1) {
+    if (SSL_CTX_use_certificate_chain_file(server->ssl_context,
+                xmp3_options_get_certificate(options)) != 1) {
         ERR_print_errors_fp(stderr);
         exit(1);
     }
 
-    if (SSL_CTX_use_PrivateKey_file(
-                server->ssl_context, "/home/tom/code/xmp3/server.pem",
-                SSL_FILETYPE_PEM) != 1) {
+    if (SSL_CTX_use_PrivateKey_file(server->ssl_context,
+                xmp3_options_get_keyfile(options), SSL_FILETYPE_PEM) != 1) {
         ERR_print_errors_fp(stderr);
         exit(1);
     }
