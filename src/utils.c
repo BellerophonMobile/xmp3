@@ -85,9 +85,9 @@ void str_to_jid(const char *str, struct jid *jid) {
 
     // Anything left is the domain part
     int domain_len = strlen(str) - local_len - resource_len;
-    jid->domain = calloc(domain_len, sizeof(*jid->domain));
+    jid->domain = calloc(domain_len + 1, sizeof(*jid->domain));
     check_mem(jid->domain);
-    strncpy(jid->domain, str + local_len + 1, domain_len - 1);
+    strncpy(jid->domain, str + local_len, domain_len);
     debug("Setting domain to '%s'", jid->domain);
 }
 
