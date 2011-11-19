@@ -97,7 +97,6 @@ struct xmpp_server {
 // Forward declarations
 static struct xmpp_server* new_server(
         int fd, const struct xmp3_options *options);
-static void del_server(struct xmpp_server *server);
 static struct xmpp_client* new_client(struct xmpp_server *server);
 static void del_client(struct xmpp_client *client);
 static void read_client(struct event_loop *loop, int fd, void *data);
@@ -151,9 +150,36 @@ struct xmpp_server* xmpp_init(struct event_loop *loop,
 error:
     close(fd);
     if (server != NULL) {
-        del_server(server);
+        xmpp_shutdown(server);
     }
     return NULL;
+}
+
+void xmpp_shutdown(struct xmpp_server *server) {
+    SSL_CTX_free(server->ssl_context);
+
+    struct xmpp_client *client;
+    struct xmpp_client *client_tmp;
+    DL_FOREACH_SAFE(server->clients, client, client_tmp) {
+        DL_DELETE(server->clients, client);
+        del_client(client);
+    }
+
+    struct message_route *route;
+    struct message_route *route_tmp;
+    DL_FOREACH_SAFE(server->message_routes, route, route_tmp) {
+        DL_DELETE(server->message_routes, route);
+        free(route);
+    }
+
+    struct iq_route *iq_route;
+    struct iq_route *iq_route_tmp;
+    HASH_ITER(hh, server->iq_routes, iq_route, iq_route_tmp) {
+        HASH_DEL(server->iq_routes, iq_route);
+        free(iq_route);
+    }
+
+    free(server);
 }
 
 void xmpp_new_ssl_connection(struct xmpp_client *client) {
@@ -279,23 +305,6 @@ static struct xmpp_server* new_server(
     return server;
 }
 
-static void del_server(struct xmpp_server *server) {
-    struct xmpp_client *client;
-    struct xmpp_client *client_tmp;
-    DL_FOREACH_SAFE(server->clients, client, client_tmp) {
-        del_client(client);
-    }
-
-    struct message_route *route;
-    struct message_route *route_tmp;
-    DL_FOREACH_SAFE(server->message_routes, route, route_tmp) {
-        free(route);
-    }
-    free(server);
-
-    SSL_CTX_free(server->ssl_context);
-}
-
 static struct xmpp_client* new_client(struct xmpp_server *server) {
     struct xmpp_client *client = calloc(1, sizeof(*client));
     check_mem(client);
@@ -369,7 +378,6 @@ static void read_client(struct event_loop *loop, int fd, void *data) {
     /* If an error occurred which caused the client to disconnect, clean up
      * after it. */
     if (!client->connected) {
-        XML_Parse(client->parser, NULL, 0, true);
         goto error;
     }
 

@@ -118,7 +118,9 @@ int main(int argc, char *argv[]) {
 
     log_info("Starting event loop...");
     event_loop_start(loop);
+    log_info("Event loop exited");
 
+    xmpp_shutdown(server);
     event_del_loop(loop);
 
     return EXIT_SUCCESS;

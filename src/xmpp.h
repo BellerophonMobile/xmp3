@@ -58,6 +58,13 @@ struct xmpp_server* xmpp_init(struct event_loop *loop,
                               const struct xmp3_options *options);
 
 /**
+ * Cleans up and frees an XMPP server.
+ *
+ * @param server The XMPP server instance to shut down.
+ */
+void xmpp_shutdown(struct xmpp_server *server);
+
+/**
  * Return a new OpenSSL SSL connection structure.
  *
  * Since the internals of the xmpp_server struct are hidden, we need this
