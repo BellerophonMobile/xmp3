@@ -184,12 +184,16 @@ static struct xmpp_stanza* new_stanza(struct xmpp_client *client,
 
 /** Cleans up and frees an XMPP stanza struct. */
 static void del_stanza(struct xmpp_stanza *stanza) {
+    free(stanza->ns_name);
     free(stanza->name);
+    free(stanza->namespace);
     free(stanza->id);
+    free(stanza->to);
+    free(stanza->from);
+    free(stanza->type);
     free(stanza->to_jid.local);
     free(stanza->to_jid.domain);
     free(stanza->to_jid.resource);
-    free(stanza->type);
 
     char **p = NULL;
     while ((p = (char**)utarray_next(stanza->other_attrs, p)) != NULL) {

@@ -122,6 +122,7 @@ int main(int argc, char *argv[]) {
 
     xmpp_shutdown(server);
     event_del_loop(loop);
+    xmp3_options_del(options);
 
     return EXIT_SUCCESS;
 

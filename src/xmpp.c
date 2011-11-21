@@ -333,6 +333,7 @@ static void del_client(struct xmpp_client *client) {
     client_socket_del(client->socket);
     XML_ParserFree(client->parser);
     free(client->jid.local);
+    free(client->jid.domain);
     free(client->jid.resource);
     free(client);
 }
