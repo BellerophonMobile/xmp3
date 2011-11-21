@@ -130,8 +130,6 @@ void event_loop_start(struct event_loop *loop) {
     sigemptyset(&blockset);
     sigaddset(&blockset, SIGINT);
 
-    struct event_item *item;
-
     while (true) {
         /* Block SIGINT.  We do this so that we can avoid a race condition
          * between when we check the stop_loop flag, and enter pselect.
@@ -161,7 +159,9 @@ void event_loop_start(struct event_loop *loop) {
             continue;
         }
 
-        DL_FOREACH(loop->events, item) {
+        struct event_item *item;
+        struct event_item *item_tmp;
+        DL_FOREACH_SAFE(loop->events, item, item_tmp) {
             if (FD_ISSET(item->fd, &loop->readfds)) {
                 item->func(loop, item->fd, item->data);
             }
@@ -171,6 +171,7 @@ void event_loop_start(struct event_loop *loop) {
     /* Close all of the sockets before exiting the event loop.  Next, there
      * should be a callback before shutdown, so you could send a close message
      * or something. */
+    struct event_item *item;
     DL_FOREACH(loop->events, item) {
         int rv = close(item->fd);
         if (rv == -1) {
