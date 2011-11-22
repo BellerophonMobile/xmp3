@@ -27,7 +27,7 @@ then
 fi
 
 echo "Scheduling Jenkins build"
-curl "http://localhost:8080/job/XMP3/build?token=SCRIPT_TOKEN" > /dev/null
+curl "http://localhost:8080/jenkins/job/XMP3/build?token=SCRIPT_TOKEN" > /dev/null
 if [ "$?" -eq 0 ]
 then
     echo "Done"
