@@ -33,13 +33,25 @@ static const char *MSG_ROSTER =
         "</query>"
     "</iq>";
 
+static const char *MSG_DISCO_QUERY_INFO =
+    "<iq id='%s' type='result'>"
+        "<query xmlns='http://jabber.org/protocol/disco#info'>"
+            "<feature var='http://jabber.org/protocol/disco#info'/>"
+            "<feature var='http://jabber.org/protocol/disco#items'/>"
+        "</query>"
+    "</iq>";
+
+static const char *MSG_DISCO_QUERY_ITEMS =
+    "<iq id='%s' type='result'>"
+        "<query xmlns='http://jabber.org/protocol/disco#items'>"
+        "</query>"
+    "</iq>";
+
 // Forward declarations
 static void session_end(void *data, const char *name);
 static void roster_query_end(void *data, const char *name);
-/*
 static void disco_query_info_end(void *data, const char *name);
 static void disco_query_items_end(void *data, const char *name);
-*/
 
 bool xmpp_im_iq_session(struct xmpp_stanza *stanza, void *data) {
     struct xmpp_client *client = stanza->from_client;
@@ -120,39 +132,16 @@ static void roster_query_end(void *data, const char *name) {
     // We expect to see the </iq> tag next.
     XML_SetElementHandler(client->parser, xmpp_error_start,
                           xmpp_core_stanza_end);
-    XML_SetCharacterDataHandler(client->parser, xmpp_error_data);
     return;
 
 error:
-    /* TODO: Get rid of this error label.  We shouldn't stop the whole client
-     * connection unless there is something really really wrong.  This also
-     * will leak memory. */
     XML_StopParser(client->parser, false);
-}
-
-/*
-bool xmpp_im_iq_disco_query_items(struct xmpp_stanza *stanza, void *data) {
-    struct xmpp_client *client = stanza->from_client;
-
-    log_info("Items Query IQ Start");
-
-    XML_SetEndElementHandler(client->parser, disco_query_items_end);
-    return true;
-}
-
-static void disco_query_items_end(void *data, const char *name) {
-    struct xmpp_stanza *stanza = (struct xmpp_stanza*)data;
-    struct xmpp_client *client = stanza->from_client;
-    xmpp_send_service_unavailable(stanza);
-    XML_SetEndElementHandler(client->parser, xmpp_core_stanza_end);
-    return;
 }
 
 bool xmpp_im_iq_disco_query_info(struct xmpp_stanza *stanza, void *data) {
     struct xmpp_client *client = stanza->from_client;
 
     log_info("Info Query IQ Start");
-
     XML_SetEndElementHandler(client->parser, disco_query_info_end);
     return true;
 }
@@ -160,8 +149,49 @@ bool xmpp_im_iq_disco_query_info(struct xmpp_stanza *stanza, void *data) {
 static void disco_query_info_end(void *data, const char *name) {
     struct xmpp_stanza *stanza = (struct xmpp_stanza*)data;
     struct xmpp_client *client = stanza->from_client;
-    xmpp_send_service_unavailable(stanza);
-    XML_SetEndElementHandler(client->parser, xmpp_core_stanza_end);
+
+    char msg[strlen(MSG_DISCO_QUERY_INFO) + strlen(stanza->id)];
+
+    log_info("Info Query IQ End");
+    check(strcmp(name, XMPP_IQ_DISCO_QUERY_INFO) == 0, "Unexpected stanza");
+
+    snprintf(msg, sizeof(msg), MSG_DISCO_QUERY_INFO, stanza->id);
+    check(sendall(client->socket, msg, strlen(msg)) > 0,
+          "Error sending info query IQ message");
+
+    XML_SetElementHandler(client->parser, xmpp_error_start,
+                          xmpp_core_stanza_end);
     return;
+
+error:
+    XML_StopParser(client->parser, false);
 }
-*/
+
+bool xmpp_im_iq_disco_query_items(struct xmpp_stanza *stanza, void *data) {
+    struct xmpp_client *client = stanza->from_client;
+
+    log_info("Items Query IQ Start");
+    XML_SetEndElementHandler(client->parser, disco_query_items_end);
+    return true;
+}
+
+static void disco_query_items_end(void *data, const char *name) {
+    struct xmpp_stanza *stanza = (struct xmpp_stanza*)data;
+    struct xmpp_client *client = stanza->from_client;
+
+    char msg[strlen(MSG_DISCO_QUERY_ITEMS) + strlen(stanza->id)];
+
+    log_info("Items Query IQ End");
+    check(strcmp(name, XMPP_IQ_DISCO_QUERY_ITEMS) == 0, "Unexpected stanza");
+
+    snprintf(msg, sizeof(msg), MSG_DISCO_QUERY_ITEMS, stanza->id);
+    check(sendall(client->socket, msg, strlen(msg)) > 0,
+          "Error sending items query IQ message");
+
+    XML_SetElementHandler(client->parser, xmpp_error_start,
+                          xmpp_core_stanza_end);
+    return;
+
+error:
+    XML_StopParser(client->parser, false);
+}

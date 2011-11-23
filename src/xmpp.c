@@ -141,6 +141,10 @@ struct xmpp_server* xmpp_init(struct event_loop *loop,
                                NULL);
     xmpp_register_iq_namespace(server, XMPP_IQ_QUERY_ROSTER,
                                xmpp_im_iq_roster_query, NULL);
+    xmpp_register_iq_namespace(server, XMPP_IQ_DISCO_QUERY_INFO,
+                               xmpp_im_iq_disco_query_info, NULL);
+    xmpp_register_iq_namespace(server, XMPP_IQ_DISCO_QUERY_ITEMS,
+                               xmpp_im_iq_disco_query_items, NULL);
 
     /* Register the event callback so we can be notified of when the client
      * sends more data. */
