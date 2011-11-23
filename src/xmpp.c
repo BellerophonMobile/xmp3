@@ -31,6 +31,7 @@
 
 #include "xmpp_common.h"
 #include "xmpp_auth.h"
+#include "xmpp_core.h"
 #include "xmpp_im.h"
 
 #define BUFFER_SIZE 2000
@@ -39,20 +40,20 @@ static const int SERVER_BACKLOG = 3;
 
 static char MSG_BUFFER[BUFFER_SIZE];
 
-/** Holds data on how to send a message stanza to a particular JID. */
-struct message_route {
+/** Holds data on how to send a stanza to a particular JID. */
+struct stanza_route {
     /** The JID to send to. */
-    struct jid *jid;
+    const struct jid *jid;
 
-    /** The function that will deliver the message. */
-    xmpp_message_callback func;
+    /** The function that will deliver the stanza. */
+    xmpp_stanza_callback func;
 
     /** Arbitrary data. */
     void *data;
 
     /** @{ These are kept in a doubly-linked list. */
-    struct message_route *prev;
-    struct message_route *next;
+    struct stanza_route *prev;
+    struct stanza_route *next;
     /** @} */
 };
 
@@ -87,8 +88,8 @@ struct xmpp_server {
     /** Linked list of connected clients. */
     struct xmpp_client *clients;
 
-    /** Linked list of message routes. */
-    struct message_route *message_routes;
+    /** Linked list of stanza routes. */
+    struct stanza_route *stanza_routes;
 
     /** Hash table of iq routes. */
     struct iq_route *iq_routes;
@@ -105,7 +106,7 @@ static void add_connection(struct event_loop *loop, int fd, void *data);
 static void remove_connection(struct xmpp_server *server,
                               const struct xmpp_client *client);
 
-static struct message_route* find_message_route(
+static struct stanza_route* find_stanza_route(
         const struct xmpp_server *server, const struct jid *jid);
 
 struct xmpp_server* xmpp_init(struct event_loop *loop,
@@ -136,9 +137,12 @@ struct xmpp_server* xmpp_init(struct event_loop *loop,
 
     server = new_server(fd, options);
 
-    // Register IQ handlers
-    xmpp_register_iq_namespace(server, XMPP_IQ_SESSION, xmpp_im_iq_session,
-                               NULL);
+    // Register initial routes and callbacks
+    xmpp_register_stanza_route(server, &SERVER_JID,
+                               xmpp_core_stanza_handler, NULL);
+
+    xmpp_register_iq_namespace(server, XMPP_IQ_SESSION,
+                               xmpp_im_iq_session, NULL);
     xmpp_register_iq_namespace(server, XMPP_IQ_QUERY_ROSTER,
                                xmpp_im_iq_roster_query, NULL);
     xmpp_register_iq_namespace(server, XMPP_IQ_DISCO_QUERY_INFO,
@@ -169,10 +173,10 @@ void xmpp_shutdown(struct xmpp_server *server) {
         del_client(client);
     }
 
-    struct message_route *route;
-    struct message_route *route_tmp;
-    DL_FOREACH_SAFE(server->message_routes, route, route_tmp) {
-        DL_DELETE(server->message_routes, route);
+    struct stanza_route *route;
+    struct stanza_route *route_tmp;
+    DL_FOREACH_SAFE(server->stanza_routes, route, route_tmp) {
+        DL_DELETE(server->stanza_routes, route);
         free(route);
     }
 
@@ -196,12 +200,12 @@ void xmpp_new_ssl_connection(struct xmpp_client *client) {
     client->socket = ssl_socket;
 }
 
-void xmpp_register_message_route(struct xmpp_server *server, struct jid *jid,
-                                 xmpp_message_callback func,
-                                 void *data) {
-    struct message_route *route = find_message_route(server, jid);
+void xmpp_register_stanza_route(struct xmpp_server *server,
+                                const struct jid *jid,
+                                xmpp_stanza_callback func, void *data) {
+    struct stanza_route *route = find_stanza_route(server, jid);
     if (route != NULL) {
-        log_warn("Attempted to insert duplicate message route");
+        log_warn("Attempted to insert duplicate stanza route");
         return;
     }
 
@@ -211,25 +215,25 @@ void xmpp_register_message_route(struct xmpp_server *server, struct jid *jid,
     route->func = func;
     route->data = data;
 
-    DL_APPEND(server->message_routes, route);
+    DL_APPEND(server->stanza_routes, route);
 }
 
-void xmpp_deregister_message_route(struct xmpp_server *server,
-                                   struct jid *jid) {
-    struct message_route *route = find_message_route(server, jid);
+void xmpp_deregister_stanza_route(struct xmpp_server *server,
+                                  const struct jid *jid) {
+    struct stanza_route *route = find_stanza_route(server, jid);
     if (route == NULL) {
-        log_warn("Attempted to remove non-existent message route");
+        log_warn("Attempted to remove non-existent stanza route");
         return;
     }
-    DL_DELETE(server->message_routes, route);
+    DL_DELETE(server->stanza_routes, route);
     free(route);
 }
 
-bool xmpp_route_message(struct xmpp_stanza *stanza) {
+bool xmpp_route_stanza(struct xmpp_stanza *stanza) {
     struct xmpp_server *server = stanza->from_client->server;
-    struct message_route *route = find_message_route(server, &stanza->to_jid);
+    struct stanza_route *route = find_stanza_route(server, &stanza->to_jid);
     if (route == NULL) {
-        log_info("No message route for destination");
+        log_info("No route for destination");
         return false;
     }
     return route->func(stanza, route->data);
@@ -317,7 +321,7 @@ static struct xmpp_client* new_client(struct xmpp_server *server) {
     client->connected = true;
     client->server = server;
 
-    // Create the XML parser we'll use to parse messages from the client.
+    // Create the XML parser we'll use to parse stanzas from the client.
     client->parser = XML_ParserCreateNS(NULL, *XMPP_NS_SEPARATOR);
     check(client->parser != NULL, "Error creating XML parser");
 
@@ -332,7 +336,7 @@ static void del_client(struct xmpp_client *client) {
     if (client == NULL) {
         return;
     }
-    xmpp_deregister_message_route(client->server, &client->jid);
+    xmpp_deregister_stanza_route(client->server, &client->jid);
     client_socket_close(client->socket);
     client_socket_del(client->socket);
     XML_ParserFree(client->parser);
@@ -440,13 +444,12 @@ static void remove_connection(struct xmpp_server *server,
  *
  * @param server XMPP server instance to search on.
  * @param jid    Full or bare JID to search for.
- * @return The route to send this message to.
+ * @return The route to send this stanza to.
  */
-static struct message_route* find_message_route(
+static struct stanza_route* find_stanza_route(
         const struct xmpp_server *server, const struct jid *jid) {
-    struct message_route *route;
-    DL_FOREACH(server->message_routes, route) {
-
+    struct stanza_route *route;
+    DL_FOREACH(server->stanza_routes, route) {
         // If one domain is NULL and the other isn't, this can't be a match.
         if ((jid->domain == NULL) != (route->jid->domain == NULL)) {
             continue;

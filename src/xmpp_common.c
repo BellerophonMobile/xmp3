@@ -14,6 +14,7 @@
 #include "utils.h"
 
 const char *SERVER_DOMAIN = "localhost";
+const struct jid SERVER_JID = {NULL, "localhost", NULL};
 
 const char *XMPP_STREAM = XMPP_NS_STREAM XMPP_NS_SEPARATOR "stream";
 const char *XMPP_AUTH = XMPP_NS_SASL XMPP_NS_SEPARATOR "auth";

@@ -1,5 +1,5 @@
 /**
- * xmp3 - XMPP Proxy
+ * xmp3 - XMsrc/xmpp.h
  * xmpp.{c,h} - Implements the server part of a normal XMPP server.
  * Copyright (c) 2011 Drexel University
  * @file
@@ -22,8 +22,8 @@
  * @param data        Data from when this callback was registered.
  * @return True if message was handled, false if not.
  */
-typedef bool (*xmpp_message_callback)(struct xmpp_stanza *from_stanza,
-                                      void *data);
+typedef bool (*xmpp_stanza_callback)(struct xmpp_stanza *from_stanza,
+                                     void *data);
 
 /**
  * Callback to deliver a presence stanza.
@@ -75,33 +75,34 @@ void xmpp_shutdown(struct xmpp_server *server);
 void xmpp_new_ssl_connection(struct xmpp_client *client);
 
 /**
- * Register a callback to deliver message stanzas.
+ * Register a callback to deliver stanzas.
  *
  * @param server An XMPP server instance.
- * @param jid    The JID to receive messages for.
- * @param cb     The callback to call when the server receives a message stanza
- *               for this JID.
+ * @param jid    The JID to receive stanzas for.
+ * @param cb     The callback to call when the server receives a stanza for
+ *               this JID.
  * @param data   Arbitrary data to be passed to the callback function.
  */
-void xmpp_register_message_route(struct xmpp_server *server, struct jid *jid,
-                                 xmpp_message_callback cb, void *data);
+void xmpp_register_stanza_route(struct xmpp_server *server,
+                                const struct jid *jid,
+                                xmpp_stanza_callback cb, void *data);
 
 /**
- * Remove a callback for message stanzas.
+ * Remove a callback for a stanza.
  *
  * @param server An XMPP server instance.
  * @param jid    The JID to deregister callbacks for.
  */
-void xmpp_deregister_message_route(struct xmpp_server *server,
-                                   struct jid *jid);
+void xmpp_deregister_stanza_route(struct xmpp_server *server,
+                                  const struct jid *jid);
 
 /**
- * Deliver a message stanza to a registered callback function.
+ * Deliver a stanza to a registered callback function.
  *
  * @param stanza The XMPP stanza to route.
  * @return True if successfully handled, false if not.
  */
-bool xmpp_route_message(struct xmpp_stanza *stanza);
+bool xmpp_route_stanza(struct xmpp_stanza *stanza);
 
 /**
  * Register a callback to handle IQ stanza to a particular namespace+tag name.

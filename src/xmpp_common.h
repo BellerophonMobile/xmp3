@@ -58,6 +58,8 @@ struct jid {
     char *resource;
 };
 
+extern const struct jid SERVER_JID;
+
 /** Data on a connected client. */
 struct xmpp_client {
     /** The connected client_socket structure. */

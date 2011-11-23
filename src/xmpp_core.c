@@ -59,18 +59,8 @@ void xmpp_core_stanza_start(void *data, const char *name, const char **attrs) {
                           xmpp_core_stanza_end);
     XML_SetCharacterDataHandler(client->parser, xmpp_ignore_data);
 
-    if (strcmp(name, XMPP_MESSAGE) == 0) {
-        log_info("Message stanza start");
-        xmpp_route_message(stanza);
-    } else if (strcmp(name, XMPP_PRESENCE) == 0) {
-        // TODO: Handle presence stanzas.
-        log_info("Presence stanza start");
-        //handle_presence(stanza, attrs);
-    } else if (strcmp(name, XMPP_IQ) == 0) {
-        log_info("IQ stanza start");
-        XML_SetStartElementHandler(client->parser, iq_start);
-    } else {
-        log_warn("Unknown stanza");
+    if (!xmpp_route_stanza(stanza)) {
+        log_warn("Unhandled stanza");
     }
 }
 
@@ -104,9 +94,31 @@ error:
     XML_StopParser(client->parser, false);
 }
 
+bool xmpp_core_stanza_handler(struct xmpp_stanza *stanza, void *data) {
+    if (strcmp(stanza->ns_name, XMPP_MESSAGE) == 0) {
+        log_warn("Message addressed to server?");
+    } else if (strcmp(stanza->ns_name, XMPP_PRESENCE) == 0) {
+        // TODO: Handle presence stanzas.
+        log_info("Presence stanza");
+        //handle_presence(stanza, attrs);
+        return true;
+    } else if (strcmp(stanza->ns_name, XMPP_IQ) == 0) {
+        log_info("IQ stanza start");
+        XML_SetStartElementHandler(stanza->from_client->parser, iq_start);
+        return true;
+    } else {
+        log_warn("Unknown stanza");
+    }
+    return false;
+}
+
 bool xmpp_core_message_handler(struct xmpp_stanza *from_stanza, void *data) {
     struct xmpp_client *to_client = (struct xmpp_client*)data;
     struct xmpp_client *from_client = from_stanza->from_client;
+
+    if (strcmp(from_stanza->ns_name, XMPP_MESSAGE) != 0) {
+        return false;
+    }
 
     // Set the XML handlers to expect the rest of the message stanza.
     XML_SetElementHandler(from_client->parser, message_client_start,
@@ -179,6 +191,23 @@ static struct xmpp_stanza* new_stanza(struct xmpp_client *client,
             ALLOC_PUSH_BACK(stanza->other_attrs, attrs[i + 1]);
         }
     }
+
+    /* RFC6120 Section 10.3 specifies where a stanza should be delivered if it
+     * has no "to" address. */
+    if (stanza->to == NULL) {
+        debug("TO = NULL");
+        if (strcmp(stanza->ns_name, XMPP_MESSAGE) == 0) {
+            // Addressed to bare JID of the sending entity
+            ALLOC_COPY_STRING(stanza->to_jid.local, client->jid.local);
+            ALLOC_COPY_STRING(stanza->to_jid.domain, client->jid.domain);
+        } else {
+            // Otherwise, its addressed to the server itself.
+            str_to_jid(SERVER_DOMAIN, &stanza->to_jid);
+        }
+        stanza->to = jid_to_str(&stanza->to_jid);
+        debug("TO = \"%s\"", stanza->to);
+    }
+
     return stanza;
 }
 

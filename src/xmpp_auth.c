@@ -478,8 +478,8 @@ static void bind_iq_end(void *data, const char *name) {
                           xmpp_core_stream_end);
     XML_SetCharacterDataHandler(client->parser, xmpp_ignore_data);
     XML_SetUserData(client->parser, client);
-    xmpp_register_message_route(server, &client->jid,
-                                xmpp_core_message_handler, client);
+    xmpp_register_stanza_route(server, &client->jid,
+                               xmpp_core_message_handler, client);
 
     free(bind_data);
     return;
