@@ -39,7 +39,7 @@ int sendxml(XML_Parser parser, struct client_socket *socket);
  * @param jid JID structure to convert.
  * @return The JID converted to a string.
  */
-char* jid_to_str(struct jid *jid);
+char* jid_to_str(const struct jid *jid);
 
 /**
  * Fills in a previously allocated jid structure from a string.
