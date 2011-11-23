@@ -95,14 +95,12 @@ struct client_socket* client_socket_ssl_new(
     check_mem(ssl_data);
 
     ssl_data->fd = fd_data->fd;
-    debug("Creating SSL connection");
     ssl_data->ssl = SSL_new(ssl_context);
     if (ssl_data->ssl == NULL) {
         ERR_print_errors_fp(stderr);
         // TODO: This should not exit, but return NULL.
         exit(1);
     }
-    debug("Setting SSL fd");
     if (SSL_set_fd(ssl_data->ssl, ssl_data->fd) == 0) {
         ERR_print_errors_fp(stderr);
         // TODO: This should not exit, but return NULL.
@@ -110,7 +108,6 @@ struct client_socket* client_socket_ssl_new(
     }
 
     // TODO: This should be done elsewhere, since it could block for awhile.
-    debug("Running SSL accept");
     if (SSL_accept(ssl_data->ssl) != 1) {
         ERR_print_errors_fp(stderr);
         // TODO: This should not exit, but return NULL.
