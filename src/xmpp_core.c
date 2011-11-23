@@ -14,20 +14,6 @@
 #include "utils.h"
 #include "xmpp.h"
 
-/* This should probably go in the utils module, if I use it outside of here,
- * I will. */
-#define ALLOC_COPY_STRING(a, b) do { \
-    a = calloc(strlen(b) + 1, sizeof(char)); \
-    check_mem(a); \
-    strcpy(a, b); \
-} while (0)
-
-#define ALLOC_PUSH_BACK(a, b) do { \
-    char *tmp = calloc(strlen(b), sizeof(*tmp)); \
-    check_mem(tmp); \
-    utarray_push_back(a, tmp); \
-} while (0)
-
 /** Temporary structure for reading a message stanza. */
 struct message_tmp {
     struct xmpp_client *to_client;
@@ -101,7 +87,7 @@ bool xmpp_core_stanza_handler(struct xmpp_stanza *stanza, void *data) {
         // TODO: Handle presence stanzas.
         log_info("Presence stanza");
         //handle_presence(stanza, attrs);
-        return true;
+        return false;
     } else if (strcmp(stanza->ns_name, XMPP_IQ) == 0) {
         log_info("IQ stanza start");
         XML_SetStartElementHandler(stanza->from_client->parser, iq_start);
@@ -195,7 +181,6 @@ static struct xmpp_stanza* new_stanza(struct xmpp_client *client,
     /* RFC6120 Section 10.3 specifies where a stanza should be delivered if it
      * has no "to" address. */
     if (stanza->to == NULL) {
-        debug("TO = NULL");
         if (strcmp(stanza->ns_name, XMPP_MESSAGE) == 0) {
             // Addressed to bare JID of the sending entity
             ALLOC_COPY_STRING(stanza->to_jid.local, client->jid.local);
@@ -205,7 +190,6 @@ static struct xmpp_stanza* new_stanza(struct xmpp_client *client,
             str_to_jid(SERVER_DOMAIN, &stanza->to_jid);
         }
         stanza->to = jid_to_str(&stanza->to_jid);
-        debug("TO = \"%s\"", stanza->to);
     }
 
     return stanza;

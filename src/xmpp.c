@@ -34,6 +34,8 @@
 #include "xmpp_core.h"
 #include "xmpp_im.h"
 
+#include "xep_muc.h"
+
 #define BUFFER_SIZE 2000
 
 static const int SERVER_BACKLOG = 3;
@@ -84,6 +86,9 @@ struct xmpp_server {
 
     /** The OpenSSL context. */
     SSL_CTX *ssl_context;
+
+    /** Multi-User Chat component. */
+    struct xep_muc *muc;
 
     /** Linked list of connected clients. */
     struct xmpp_client *clients;
@@ -141,6 +146,11 @@ struct xmpp_server* xmpp_init(struct event_loop *loop,
     xmpp_register_stanza_route(server, &SERVER_JID,
                                xmpp_core_stanza_handler, NULL);
 
+
+    server->muc = xep_muc_new();
+    xmpp_register_stanza_route(server, &MUC_JID,
+                               xep_muc_stanza_handler, server->muc);
+
     xmpp_register_iq_namespace(server, XMPP_IQ_SESSION,
                                xmpp_im_iq_session, NULL);
     xmpp_register_iq_namespace(server, XMPP_IQ_QUERY_ROSTER,
@@ -165,6 +175,8 @@ error:
 
 void xmpp_shutdown(struct xmpp_server *server) {
     SSL_CTX_free(server->ssl_context);
+
+    xep_muc_del(server->muc);
 
     struct xmpp_client *client;
     struct xmpp_client *client_tmp;
@@ -449,36 +461,38 @@ static void remove_connection(struct xmpp_server *server,
 static struct stanza_route* find_stanza_route(
         const struct xmpp_server *server, const struct jid *jid) {
     struct stanza_route *route;
+
+    if (jid->domain == NULL) {
+        log_err("Tried to find a route for a jid with no domain");
+        return NULL;
+    }
+
+    char *strjid = jid_to_str(jid);
+    debug("Looking for route to \"%s\"", strjid);
+    free(strjid);
+
     DL_FOREACH(server->stanza_routes, route) {
-        // If one domain is NULL and the other isn't, this can't be a match.
-        if ((jid->domain == NULL) != (route->jid->domain == NULL)) {
-            continue;
-        }
+        strjid = jid_to_str(route->jid);
+        debug("Checking \"%s\"", strjid);
+        free(strjid);
 
-        /* If the domains are not the same, this is not a match (check for null
-         * first) */
-        if (jid->domain != NULL &&
+        // First, match the domain parts
+        if (strcmp(route->jid->domain, "*") != 0 &&
             strcmp(jid->domain, route->jid->domain) != 0) {
+            debug("A");
             continue;
         }
-
-        // Same for local and resource
-        if ((jid->local == NULL) != (route->jid->local == NULL)) {
+        // Next, match the local part
+        if (jid->local != NULL && (route->jid->local == NULL
+            || (strcmp(route->jid->local, "*") != 0
+                && strcmp(jid->local, route->jid->local) != 0))) {
+            debug("B");
             continue;
         }
-        if (jid->local != NULL && strcmp(jid->local, route->jid->local) != 0) {
-            continue;
-        }
-
-        /* If we made it this far, and we don't have a resource to search for,
-         * just use this route. */
-        if (jid->resource == NULL) {
-            return route;
-        }
-        if (route->jid->resource == NULL) {
-            continue;
-        }
-        if (strcmp(jid->resource, route->jid->resource) != 0) {
+        if (jid->resource != NULL && (route->jid->resource == NULL
+            || (strcmp(route->jid->resource, "*") != 0
+                && strcmp(jid->resource, route->jid->resource) != 0))) {
+            debug("C");
             continue;
         }
         return route;

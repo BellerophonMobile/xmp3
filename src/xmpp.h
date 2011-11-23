@@ -78,7 +78,8 @@ void xmpp_new_ssl_connection(struct xmpp_client *client);
  * Register a callback to deliver stanzas.
  *
  * @param server An XMPP server instance.
- * @param jid    The JID to receive stanzas for.
+ * @param jid    The JID to receive stanzas for.  "*" strings serve as
+ *               wildcards for any field.
  * @param cb     The callback to call when the server receives a stanza for
  *               this JID.
  * @param data   Arbitrary data to be passed to the callback function.

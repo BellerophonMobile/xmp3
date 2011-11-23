@@ -13,6 +13,31 @@
 #include "xmpp_common.h"
 
 /**
+ * Allocate and copy a string.
+ *
+ * @param a Destination pointer.
+ * @param b Source string.
+ */
+#define ALLOC_COPY_STRING(a, b) do { \
+    a = calloc(strlen(b) + 1, sizeof(char)); \
+    check_mem(a); \
+    strcpy(a, b); \
+} while (0)
+
+/**
+ * Allocate and push a string into an array.
+ *
+ * @param a Destination array.
+ * @param b Source string.
+ */
+#define ALLOC_PUSH_BACK(a, b) do { \
+    char *tmp = calloc(strlen(b), sizeof(*tmp)); \
+    check_mem(tmp); \
+    utarray_push_back(a, tmp); \
+} while (0)
+
+
+/**
  * Send all data in a buffer to the connected socket.
  *
  * This will keep trying until all data is sent.  This should later be
