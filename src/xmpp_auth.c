@@ -240,7 +240,13 @@ error:
  * Begins TLS authentication.
  */
 static void tls_start(void *data, const char *name, const char **attrs) {
+    struct xmpp_client *client = (struct xmpp_client*)data;
     log_info("Starting TLS...");
+    check(strcmp(name, XMPP_STARTTLS) == 0, "Unexpected stanza");
+    return;
+
+error:
+    XML_StopParser(client->parser, false);
 }
 
 /**
