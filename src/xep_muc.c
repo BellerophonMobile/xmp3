@@ -69,6 +69,7 @@ static const char *MSG_PRESENCE_EXIT_ITEM_SELF =
     "</presence>";
 
 static const char *PRESENCE_TYPE_UNAVAILABLE = "unavailable";
+static const char *MESSAGE_TYPE_GROUPCHAT = "groupchat";
 
 /** Represents a particular client in a chat room. */
 struct room_client {
@@ -104,6 +105,7 @@ struct room {
 struct muc_tmp {
     struct xmpp_stanza *stanza;
     struct xep_muc *muc;
+    struct room *room;
 };
 
 struct xep_muc {
@@ -112,6 +114,12 @@ struct xep_muc {
 
 // Forward declarations
 static void muc_stanza_end(void *data, const char *name);
+
+static void handle_message(struct xmpp_stanza *stanza, struct xep_muc *muc);
+static void message_client_start(void *data, const char *name,
+                                 const char **attrs);
+static void message_client_end(void *data, const char *name);
+static void message_client_data(void *data, const char *s, int len);
 
 static void handle_presence(struct xmpp_stanza *stanza, struct xep_muc *muc);
 static void enter_room(char *search_room, struct xmpp_stanza *stanza,
@@ -137,7 +145,7 @@ bool xep_muc_stanza_handler(struct xmpp_stanza *stanza, void *data) {
     struct xep_muc *muc = (struct xep_muc*)data;
     struct xmpp_client *client = stanza->from_client;
 
-    log_info("MUC Message");
+    log_info("MUC stanza");
 
     struct muc_tmp *muc_tmp = calloc(1, sizeof(*muc_tmp));
     check_mem(muc_tmp);
@@ -149,6 +157,8 @@ bool xep_muc_stanza_handler(struct xmpp_stanza *stanza, void *data) {
 
     if (strcmp(stanza->ns_name, XMPP_MESSAGE) == 0) {
         log_info("MUC Message");
+        handle_message(stanza, muc);
+        return true;
     } else if (strcmp(stanza->ns_name, XMPP_PRESENCE) == 0) {
         log_info("MUC Presence");
         handle_presence(stanza, muc);
@@ -178,6 +188,110 @@ static void muc_stanza_end(void *data, const char *name) {
     free(muc_tmp);
 
     xmpp_core_stanza_end(stanza, name);
+}
+
+static void handle_message(struct xmpp_stanza *stanza, struct xep_muc *muc) {
+    struct xmpp_client *from_client = stanza->from_client;
+
+    if (stanza->type == NULL
+        || strcmp(stanza->type, MESSAGE_TYPE_GROUPCHAT) != 0) {
+        log_warn("MUC message stanza type other than groupchat, ignoring.");
+        return;
+    }
+
+    struct room *room = NULL;
+    HASH_FIND_STR(muc->rooms, stanza->to_jid.local, room);
+    if (room == NULL) {
+        log_warn("MUC message to non-existent room, ignoring.");
+        return;
+    }
+
+    struct room_client *room_client;
+    DL_FOREACH(room->clients, room_client) {
+        if (room_client->client == from_client) {
+            break;
+        }
+    }
+    if (room_client == NULL) {
+        // TODO: Force presence into room
+        log_warn("MUC message to unjoined room, ignoring.");
+        return;
+    }
+
+    XML_SetElementHandler(from_client->parser, message_client_start,
+                          message_client_end);
+    XML_SetCharacterDataHandler(from_client->parser, message_client_data);
+
+    /* We need the "from" field of the stanza we send to be from the nickname
+     * of the user who sent it. */
+    char *fromstr = stanza->from;
+    room->jid.resource = room_client->nickname;
+    stanza->from = jid_to_str(&room->jid);
+    char* msg = create_start_tag(stanza);
+    free(stanza->from);
+    stanza->from = fromstr;
+    room->jid.resource = NULL;
+
+    DL_FOREACH(room->clients, room_client) {
+        if (sendall(room_client->client->socket, msg, strlen(msg)) <= 0) {
+            log_err("Error sending MUC message start tag to destination.");
+        }
+    }
+
+    struct muc_tmp *muc_tmp = XML_GetUserData(from_client->parser);
+    muc_tmp->room = room;
+}
+
+static void message_client_start(void *data, const char *name,
+                                 const char **attrs) {
+    struct muc_tmp *muc_tmp = (struct muc_tmp*)data;
+    struct xmpp_stanza *stanza = muc_tmp->stanza;
+    struct room *room = muc_tmp->room;
+
+    struct room_client *room_client;
+    DL_FOREACH(room->clients, room_client) {
+        if (sendxml(stanza->from_client->parser,
+                    room_client->client->socket) <= 0) {
+            log_err("Error sending MUC message to destination.");
+        }
+    }
+}
+
+static void message_client_end(void *data, const char *name) {
+    struct muc_tmp *muc_tmp = (struct muc_tmp*)data;
+    struct xmpp_stanza *stanza = muc_tmp->stanza;
+    struct room *room = muc_tmp->room;
+
+    /* For self-closing tags "<foo/>" we get an end event without any data to
+     * send.  We already sent the end tag with the start tag. */
+    if (XML_GetCurrentByteCount(stanza->from_client->parser) > 0) {
+        struct room_client *room_client;
+        DL_FOREACH(room->clients, room_client) {
+            if (sendxml(stanza->from_client->parser,
+                        room_client->client->socket) <= 0) {
+                log_err("Error sending message to destination.");
+            }
+        }
+    }
+
+    // If we received a </message> tag, we are done parsing this stanza.
+    if (strcmp(name, XMPP_MESSAGE) == 0) {
+        muc_stanza_end(data, name);
+    }
+}
+
+static void message_client_data(void *data, const char *s, int len) {
+    struct muc_tmp *muc_tmp = (struct muc_tmp*)data;
+    struct xmpp_stanza *stanza = muc_tmp->stanza;
+    struct room *room = muc_tmp->room;
+
+    struct room_client *room_client;
+    DL_FOREACH(room->clients, room_client) {
+        if (sendxml(stanza->from_client->parser,
+                    room_client->client->socket) <= 0) {
+            log_err("Error sending message to destination.");
+        }
+    }
 }
 
 static void handle_presence(struct xmpp_stanza *stanza, struct xep_muc *muc) {

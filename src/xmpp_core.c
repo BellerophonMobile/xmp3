@@ -251,7 +251,6 @@ static void message_client_end(void *data, const char *name) {
         xmpp_core_stanza_end(tmp->from_stanza, name);
         free(tmp);
     }
-    return;
 }
 
 /** Handles character data inside of a <message> stanza. */
