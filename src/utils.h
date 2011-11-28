@@ -15,27 +15,29 @@
 /**
  * Allocate and copy a string.
  *
- * @param a Destination pointer.
- * @param b Source string.
+ * This makes sure the final string is null-terminated.
+ *
+ * @param[out] dst Pointer to store the string in.
+ * @param[in] src Source string to copy.
  */
-#define ALLOC_COPY_STRING(a, b) do { \
-    a = calloc(strlen(b) + 1, sizeof(char)); \
-    check_mem(a); \
-    strcpy(a, b); \
+#define STRDUP_CHECK(dst, src) do { \
+    dst = strdup(src); \
+    check_mem(dst); \
 } while (0)
 
 /**
- * Allocate and push a string into an array.
+ * Allocate and copy a string, up to size n.
  *
- * @param a Destination array.
- * @param b Source string.
+ * This makes sure the final string is null-terminated.
+ *
+ * @param[out] dst Pointer to store the string in.
+ * @param[in] src  Source string to copy.
+ * @param[in] n    Number of characters to copy.
  */
-#define ALLOC_PUSH_BACK(a, b) do { \
-    char *tmp = calloc(strlen(b), sizeof(*tmp)); \
-    check_mem(tmp); \
-    utarray_push_back(a, tmp); \
-} while (0)
-
+#define STRNDUP_CHECK(dst, src, n) do { \
+    dst = strndup(src, n); \
+    check_mem(dst); \
+} while(0)
 
 /**
  * Send all data in a buffer to the connected socket.

@@ -141,20 +141,17 @@ static struct xmpp_stanza* new_stanza(struct xmpp_client *client,
 
     utarray_new(stanza->other_attrs, &ut_str_icd);
 
-    ALLOC_COPY_STRING(stanza->ns_name, name);
+    STRDUP_CHECK(stanza->ns_name, name);
+
     char *ns_delim = strrchr(name, *XMPP_NS_SEPARATOR);
     if (ns_delim == NULL) {
-        ALLOC_COPY_STRING(stanza->name, name);
+        STRDUP_CHECK(stanza->name, name);
     } else {
         int ns_len = ns_delim - name;
-        stanza->namespace = calloc(ns_len + 1, sizeof(*stanza->namespace));
-        check_mem(stanza->namespace);
-        strncpy(stanza->namespace, name, ns_len);
+        STRNDUP_CHECK(stanza->namespace, name, ns_len);
 
         int name_len = strlen(name) - ns_len - 1;
-        stanza->name = calloc(name_len + 1, sizeof(*stanza->name));
-        check_mem(stanza->name);
-        strncpy(stanza->name, name + ns_len + 1, name_len);
+        STRNDUP_CHECK(stanza->name, name + ns_len + 1, name_len);
     }
 
     /* RFC6120 Section 8.1.2.1 states that the server is to basically ignore
@@ -164,17 +161,20 @@ static struct xmpp_stanza* new_stanza(struct xmpp_client *client,
 
     for (int i = 0; attrs[i] != NULL; i += 2) {
         if (strcmp(attrs[i], XMPP_ATTR_ID) == 0) {
-            ALLOC_COPY_STRING(stanza->id, attrs[i + 1]);
+            STRDUP_CHECK(stanza->id, attrs[i + 1]);
         } else if (strcmp(attrs[i], XMPP_ATTR_TO) == 0) {
-            ALLOC_COPY_STRING(stanza->to, attrs[i + 1]);
+            STRDUP_CHECK(stanza->to, attrs[i + 1]);
             str_to_jid(attrs[i + 1], &stanza->to_jid);
         } else if (strcmp(attrs[i], XMPP_ATTR_FROM) == 0) {
-            ALLOC_COPY_STRING(stanza->from, attrs[i + 1]);
+            STRDUP_CHECK(stanza->from, attrs[i + 1]);
         } else if (strcmp(attrs[i], XMPP_ATTR_TYPE) == 0) {
-            ALLOC_COPY_STRING(stanza->type, attrs[i + 1]);
+            STRDUP_CHECK(stanza->type, attrs[i + 1]);
         } else {
-            ALLOC_PUSH_BACK(stanza->other_attrs, attrs[i]);
-            ALLOC_PUSH_BACK(stanza->other_attrs, attrs[i + 1]);
+            char *tmp;
+            STRDUP_CHECK(tmp, attrs[i]);
+            utarray_push_back(stanza->other_attrs, tmp);
+            STRDUP_CHECK(tmp, attrs[i + 1]);
+            utarray_push_back(stanza->other_attrs, tmp);
         }
     }
 
@@ -183,8 +183,8 @@ static struct xmpp_stanza* new_stanza(struct xmpp_client *client,
     if (stanza->to == NULL) {
         if (strcmp(stanza->ns_name, XMPP_MESSAGE) == 0) {
             // Addressed to bare JID of the sending entity
-            ALLOC_COPY_STRING(stanza->to_jid.local, client->jid.local);
-            ALLOC_COPY_STRING(stanza->to_jid.domain, client->jid.domain);
+            STRDUP_CHECK(stanza->to_jid.local, client->jid.local);
+            STRDUP_CHECK(stanza->to_jid.domain, client->jid.domain);
         } else {
             // Otherwise, its addressed to the server itself.
             str_to_jid(SERVER_DOMAIN, &stanza->to_jid);

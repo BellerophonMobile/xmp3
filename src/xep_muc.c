@@ -323,8 +323,8 @@ static void enter_room(char *search_room, struct xmpp_stanza *stanza,
         debug("New room, creating");
         room = calloc(1, sizeof(*room));
         check_mem(room);
-        ALLOC_COPY_STRING(room->jid.local, search_room);
-        ALLOC_COPY_STRING(room->jid.domain, MUC_JID.domain);
+        STRDUP_CHECK(room->jid.local, search_room);
+        STRDUP_CHECK(room->jid.domain, MUC_JID.domain);
         HASH_ADD_KEYPTR(hh, muc->rooms, room->jid.local,
                         strlen(room->jid.local), room);
     }
@@ -353,7 +353,7 @@ static void enter_room(char *search_room, struct xmpp_stanza *stanza,
 
     struct room_client *new_client = calloc(1, sizeof(*new_client));
     check_mem(new_client);
-    ALLOC_COPY_STRING(new_client->nickname, stanza->to_jid.resource);
+    STRDUP_CHECK(new_client->nickname, stanza->to_jid.resource);
     new_client->client = stanza->from_client;
     DL_APPEND(room->clients, new_client);
 
