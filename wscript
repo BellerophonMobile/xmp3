@@ -37,6 +37,7 @@ def configure(ctx):
     # CC="/opt/android-ndk/toolchains/arm-linux-androideabi-4.4.3/prebuilt/linux-x86/bin/arm-linux-androideabi-gcc --sysroot=/opt/android-ndk/platforms/android-9/arch-arm/" ./waf configure
 
     ctx.check_cc(lib='expat')
+    ctx.check_cc(lib='crypto')
     ctx.check_cc(lib='ssl')
 
     ctx.env.CFLAGS += ['-std=gnu99', '-Wall']
@@ -58,7 +59,7 @@ def build(ctx):
             'src/xmpp_core.c',
             'src/xmpp_im.c',
         ],
-        use = ['EXPAT', 'SSL'],
+        use = ['EXPAT', 'CRYPTO', 'SSL'],
     )
 
     ctx(
