@@ -42,10 +42,6 @@ extern const char *XMPP_MESSAGE_BODY;
 extern const char *XMPP_PRESENCE;
 extern const char *XMPP_IQ;
 
-extern const char *XMPP_ATTR_TO;
-extern const char *XMPP_ATTR_FROM;
-extern const char *XMPP_ATTR_ID;
-extern const char *XMPP_ATTR_TYPE;
 extern const char *XMPP_ATTR_TYPE_GET;
 extern const char *XMPP_ATTR_TYPE_SET;
 extern const char *XMPP_ATTR_TYPE_RESULT;

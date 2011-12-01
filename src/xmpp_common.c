@@ -26,10 +26,6 @@ const char *XMPP_MESSAGE_BODY = XMPP_NS_CLIENT XMPP_NS_SEPARATOR "body";
 const char *XMPP_PRESENCE = XMPP_NS_CLIENT XMPP_NS_SEPARATOR "presence";
 const char *XMPP_IQ = XMPP_NS_CLIENT XMPP_NS_SEPARATOR "iq";
 
-const char *XMPP_ATTR_TO = "to";
-const char *XMPP_ATTR_FROM = "from";
-const char *XMPP_ATTR_ID = "id";
-const char *XMPP_ATTR_TYPE = "type";
 const char *XMPP_ATTR_TYPE_GET = "get";
 const char *XMPP_ATTR_TYPE_SET = "set";
 const char *XMPP_ATTR_TYPE_RESULT = "result";
