@@ -51,13 +51,6 @@ extern const char *XMPP_ATTR_TYPE_SET;
 extern const char *XMPP_ATTR_TYPE_RESULT;
 extern const char *XMPP_ATTR_TYPE_ERROR;
 
-/** Represents a client ID (local@domain/resource). */
-struct jid {
-    char *local;
-    char *domain;
-    char *resource;
-};
-
 extern const struct jid SERVER_JID;
 
 /** Data on a connected client. */

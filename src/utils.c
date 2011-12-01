@@ -40,67 +40,6 @@ int sendxml(XML_Parser parser, struct client_socket *socket) {
     return sendall(socket, buffer + offset, count);
 }
 
-char* jid_to_str(const struct jid *jid) {
-    UT_string strjid;
-    utstring_init(&strjid);
-
-    // Domain part is required
-    if (jid->domain != NULL) {
-        if (jid->local == NULL) {
-            utstring_printf(&strjid, jid->domain);
-        } else {
-            utstring_printf(&strjid, "%s@%s", jid->local, jid->domain);
-        }
-
-        if (jid->resource != NULL) {
-            utstring_printf(&strjid, "/%s", jid->resource);
-        }
-    }
-
-    return utstring_body(&strjid);
-}
-
-void str_to_jid(const char *str, struct jid *jid) {
-    int domain_len = strlen(str);
-
-    // If there is an '@' sign, then everything before it is the local part
-    const char *at_delim = strchr(str, '@');
-    int local_len = 0;
-    if (at_delim != NULL) {
-        local_len = at_delim - str;
-        // -1 for the @ character
-        domain_len -= local_len + 1;
-        jid->local = calloc(local_len, sizeof(*jid->local));
-        check_mem(jid->local);
-        strncpy(jid->local, str, local_len);
-    }
-
-    // If there is a '/', then everything after it is the resource part
-    const char *slash_delim = strchr(str, '/');
-    int resource_len = 0;
-    if (slash_delim != NULL) {
-        resource_len = strchr(str, '\0') - slash_delim - 1;
-        // -1 for the / character
-        domain_len -= resource_len + 1;
-        jid->resource = calloc(resource_len, sizeof(*jid->resource));
-        check_mem(jid->resource);
-        strncpy(jid->resource, slash_delim + 1, resource_len);
-    }
-
-    // Anything left is the domain part
-    jid->domain = calloc(domain_len + 1, sizeof(*jid->domain));
-    check_mem(jid->domain);
-
-    // Figure out where the domain part starts
-    if (at_delim == NULL) {
-        at_delim = str;
-    } else {
-        at_delim++;
-    }
-
-    strncpy(jid->domain, at_delim, domain_len);
-}
-
 ssize_t jid_len(struct jid *jid) {
     ssize_t len = 1; // For '@'
     if (jid->local != NULL) {

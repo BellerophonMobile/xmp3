@@ -61,33 +61,6 @@ int sendall(struct client_socket *socket, const char *buffer, int len);
 int sendxml(XML_Parser parser, struct client_socket *socket);
 
 /**
- * Allocates and returns a string version of a jid.
- *
- * @param jid JID structure to convert.
- * @return The JID converted to a string.
- */
-char* jid_to_str(const struct jid *jid);
-
-/**
- * Fills in a previously allocated jid structure from a string.
- *
- * @param[in] str String JID to convert.
- * @param[out] jid Empty (but allocated) JID structure to fill in.
- */
-void str_to_jid(const char *str, struct jid *jid);
-
-/**
- * Gets the string length of a jid.
- *
- * Doesn't allocate any memory, just gets the length of the JID struct if it
- * were a string.
- *
- * @param jid JID struct to find the length of.
- * @return The number of bytes used to contain the JID as a string.
- */
-ssize_t jid_len(struct jid *jid);
-
-/**
  * Takes a stanza struct and recreates the string tag.
  *
  * @param stanza Stanza structure to create a tag for.
