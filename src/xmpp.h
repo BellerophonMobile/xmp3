@@ -1,5 +1,5 @@
 /**
- * xmp3 - XMsrc/xmpp.h
+ * xmp3 - XMPP Proxy
  * xmpp.{c,h} - Implements the server part of a normal XMPP server.
  * Copyright (c) 2011 Drexel University
  * @file
