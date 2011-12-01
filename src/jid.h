@@ -28,6 +28,16 @@ void jid_del(struct jid *jid);
 struct jid* jid_new_from_str(const char *jidstr);
 
 /**
+ * Allocate and initialize a new JID from an existing JID structure.
+ *
+ * This copies a JID structure.
+ *
+ * @param jid The JID to copy.
+ * @returns A new JID structure.
+ */
+struct jid* jid_new_from_jid(const struct *jid);
+
+/**
  * Converts a JID to a newly allocated string.
  *
  * String is of the form "localpart@domainpart/resourcepart".

@@ -14,6 +14,9 @@
 
 #define MAX_JIDSTR_LEN 3071
 
+// Forward declarations
+static void copy_jid_field(char *jidfield, char *arg);
+
 /** Represents a JID (local@domain/resource). */
 struct jid {
     char *local;
@@ -65,6 +68,13 @@ struct jid* jid_new_from_str(const char *jidstr) {
     return jid;
 }
 
+struct jid* jid_new_from_jid(const struct *jid) {
+    struct jid *newjid = jid_new();
+    jid_set_local(newjid, jid_local(jid));
+    jid_set_domain(newjid, jid_local(jid));
+    jid_set_resource(newjid, jid_local(jid));
+}
+
 char* jid_to_str(const struct jid *jid) {
     // Domain part is required
     if (jid->domain == NULL) {
@@ -92,8 +102,7 @@ const char* jid_local(const struct jid *jid) {
 }
 
 void jid_set_local(struct jid *jid, const char *localpart) {
-    free(jid->local);
-    STRNDUP_CHECK(jid->local, localpart, MAX_JIDSTR_LEN);
+    copy_jid_field(jid->local, localpart);
 }
 
 const char* jid_domain(const struct jid *jid) {
@@ -101,8 +110,7 @@ const char* jid_domain(const struct jid *jid) {
 }
 
 void jid_set_domain(struct jid *jid, const char *domainpart) {
-    free(jid->domain);
-    STRNDUP_CHECK(jid->domain, domainpart, MAX_JIDSTR_LEN);
+    copy_jid_field(jid->domain, domainpart);
 }
 
 const char* jid_resource(const struct jid *jid) {
@@ -110,6 +118,14 @@ const char* jid_resource(const struct jid *jid) {
 }
 
 void jid_set_resource(struct jid *jid, const char *domainpart) {
-    free(jid->domain);
-    STRNDUP_CHECK(jid->domain, domainpart, MAX_JIDSTR_LEN);
+    copy_jid_field(jid->resource, resourcepart);
+}
+
+static void copy_jid_field(char *jidfield, char *arg) {
+    free(jidfield);
+    if (arg == NULL) {
+        jidfield = NULL;
+    } else {
+        STRNDUP_CHECK(jidfield, arg, MAX_JIDSTR_LEN);
+    }
 }
