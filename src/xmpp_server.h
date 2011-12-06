@@ -20,10 +20,19 @@ struct xmpp_server;
  * Callback to deliver an XMPP stanza.
  *
  * @param stanza The message stanza to be delivered.
- * @param data        Data from when this callback was registered.
+ * @param data   Data from when this callback was registered.
  * @return True if message was handled, false if not.
  */
 typedef bool (*xmpp_server_stanza_callback)(struct xmpp_stanza *stanza,
+                                            void *data);
+
+/**
+ * Callback to notify components of a client disconnecting.
+ *
+ * @param client The client that is about to/has been disconnected.
+ * @param data   Data from when this callback was registered.
+ */
+typedef void (*xmpp_server_client_callback)(struct xmpp_client *client,
                                             void *data);
 
 /**
@@ -44,22 +53,36 @@ struct xmpp_server* xmpp_server_new(struct event_loop *loop,
 void xmpp_server_del(struct xmpp_server *server);
 
 /**
- * Causes an XMPP server instance to begin accepting new connections.
+ * Attempt to cleanly disconnect a client, and clean up its resources.
  *
- * @param server The server instance to start.
- * @return true if successful, false on error.
+ * This can be called by any callbacks in order to disconnect a client if some
+ * sort of error occurs.
  */
-bool xmpp_server_start(struct xmpp_server *server);
+bool xmpp_server_disconnect_client(struct xmpp_server *server,
+                                   struct xmpp_client *client);
 
 /**
- * Shuts down a running XMPP server instance.
+ * Add a callback to be notified when a client disconnects.
  *
- * This will cleanly disconnect all connected clients, etc.
+ * This should be used in components in order to clean up after a client.  You
+ * can use this to attempt to send some sort of final message to a client,
+ * but its socket is not guaranteed to still be connected.
  *
- * @param server The server instance to stop.
- * @return true if successful, false on error.
+ * @param server An XMPP server instance.
+ * @param client The client to register notifications for.
+ * @param cb     The callback function to call.
+ * @param data   Arbitrary data to be passed to the callback function.
  */
-bool xmpp_server_stop(struct xmpp_server *server);
+void xmpp_server_add_client_listener(struct xmpp_server *server,
+                                     struct xmpp_client *client,
+                                     xmpp_server_client_callback cb,
+                                     void *data);
+
+/** Remove a callback from the list of disconnect notifications. */
+void xmpp_server_del_client_listener(struct xmpp_server *server,
+                                     struct xmpp_client *client,
+                                     xmpp_server_client_callback cb,
+                                     void *data);
 
 /**
  * Add a callback to the list of routes for stanza delivery.
@@ -144,5 +167,5 @@ void xmpp_server_del_iq_route(struct xmpp_server *server, const char *ns,
  * @param stanza The stanza to deliver.
  * @return True if successfully handled, false if not.
  */
-bool xmpp_route_iq(const struct xmpp_server *server,
-                   struct xmpp_stanza *stanza);
+bool xmpp_server_route_iq(const struct xmpp_server *server,
+                          struct xmpp_stanza *stanza);
