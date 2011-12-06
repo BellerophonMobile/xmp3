@@ -97,6 +97,41 @@ char* jid_to_str(const struct jid *jid) {
     return utstring_body(&strjid);
 }
 
+int jid_cmp(const struct jid *a, const struct jid *b) {
+    // If one has a local part, and the other doesn't then no match.
+    if ((a->local == NULL) != (b->local == NULL)) {
+        return a->local == NULL ? -1 : 1;
+    }
+
+    if (a->local != NULL && b->local != NULL) {
+        int rv = strcmp(a->local, b->local);
+        if (rv != 0) {
+            return rv;
+        }
+    }
+
+    if ((a->domain == NULL) != (b->domain == NULL)) {
+        return a->domain == NULL ? -1 : 1;
+    }
+
+    if (a->domain != NULL && b->domain != NULL) {
+        int rv = strcmp(a->domain, b->domain);
+        if (rv != 0) {
+            return rv;
+        }
+    }
+
+    if ((a->resource == NULL) != (b->resource == NULL)) {
+        return a->domain == NULL ? -1 : 1;
+    }
+
+    if (a->domain != NULL && b->domain != NULL) {
+        return strcmp(a->resource, b->resource);
+    }
+
+    return 0;
+}
+
 const char* jid_local(const struct jid *jid) {
     return jid->local;
 }

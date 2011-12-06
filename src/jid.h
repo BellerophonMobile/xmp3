@@ -49,6 +49,14 @@ struct jid* jid_new_from_jid(const struct *jid);
 char* jid_to_str(const struct jid *jid);
 
 /**
+ * Compare two JIDs exactly.
+ *
+ * @returns 0 if exact match, -1 if a is before b in lexographically sorted
+ *          order, -1 otherwise.
+ */
+int jid_cmp(const struct jid *a, const struct jid *b);
+
+/**
  * Returns the localpart of a JID.
  *
  * The string returned is owned by the JID object, and should not be freed.
