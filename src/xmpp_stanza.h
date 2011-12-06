@@ -64,26 +64,26 @@ const char* xmpp_stanza_namespace(const struct xmpp_stanza *stanza);
 const char* xmpp_stanza_name_namespace(const struct xmpp_stanza *stanza);
 
 /**
- * Returns a new JID structure from the string JID attribute "from".
+ * Returns the JID structure from the string JID attribute "from".
  *
- * The JID returned is owned by the caller, and should be freed when done.
+ * The JID returned is owned by the stanza, and should not be freed.
  *
  * @param stanza The stanza structure.
  * @returns A new JID structure based on the "from" attribute of the stanza.
  *          If not present, NULL is returned.
  */
-struct jid* xmpp_stanza_jid_from(const struct xmpp_stanza *stanza);
+const struct jid* xmpp_stanza_jid_from(const struct xmpp_stanza *stanza);
 
 /**
- * Returns a new JID structure from the string JID attribute "to".
+ * Returns the JID structure from the string JID attribute "to".
  *
- * The JID returned is owned by the caller, and should be freed when done.
+ * The JID returned is owned by the stanza, and should not be freed.
  *
  * @param stanza The stanza structure.
  * @returns A new JID structure based on the "from" attribute of the stanza.
  *          If not present, NULL is returned.
  */
-struct jid* xmpp_stanza_jid_to(const struct xmpp_stanza *stanza);
+const struct jid* xmpp_stanza_jid_to(const struct xmpp_stanza *stanza);
 
 /**
  * Returns the value of an attribute of this stanza.

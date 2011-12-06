@@ -18,7 +18,7 @@ const char *XMPP_STANZA_ATTR_ID = "id";
 const char *XMPP_STANZA_ATTR_TYPE = "type";
 
 // Forward declarations
-static const struct jid* copy_attr_jid(const struct xmpp_stanza *stanza,
+static struct jid* copy_attr_jid(const struct xmpp_stanza *stanza,
                                        const char *name);
 
 struct attribute {
@@ -41,6 +41,12 @@ struct xmpp_stanza {
 
     /** The namespace of this tag. */
     char *namespace;
+
+    /** The value of the "to" attribute, as a JID structure. */
+    struct jid *to_jid;
+
+    /** The value of the "from" attribute, as a JID structure. */
+    struct jid *from_jid;
 
     /** A hash table of stanza attributes. */
     struct attribute *attributes;
@@ -71,6 +77,47 @@ struct xmpp_stanza* xmpp_stanza_new(struct xmpp_client *client,
         HASH_ADD_KEYPTR(hh, stanza->attributes, attr->name, strlen(attr->name),
                         attr);
     }
+
+    // If there is no "from" attribute, add one.
+    const char *from = xmpp_stanza_attr(stanza, XMPP_STANZA_FROM);
+    if (from == NULL) {
+        struct attribute *attr = calloc(1, sizeof(*attr));
+        STRDUP_CHECK(attr->name, XMPP_STANZA_FROM);
+        attr->value = jid_to_str(xmpp_client_jid(client));
+        check_mem(attr->value);
+        HASH_ADD_KEYPTR(hh, stanza->attributes, attr->name, strlen(attr->name),
+                        attr);
+    }
+
+    // If there is no "to" attribute, add one.
+    const char *to = xmpp_stanza_attr(stanza, XMPP_STANZA_TO);
+    if (to == NULL) {
+        struct attribute *attr = calloc(1, sizeof(*attr));
+        STRDUP_CHECK(attr->name, XMPP_STANZA_FROM);
+
+        if (strcmp(stanza->ns_name, XMPP_MESSAGE) == 0) {
+            /* If there is no "to" in a message, it is addressed to the bare
+             * JID of the sender. */
+            struct jid *jid = jid_new_from_jid(xmpp_client_jid(client));
+            check_mem(jid);
+            jid_set_resource(jid, NULL);
+            attr->value = jid_to_str(jid);
+            check_mem(attr->value);
+            free(jid);
+
+        } else {
+            /* Else it is addressed to the server. */
+            attr->value = jid_to_str(xmpp_server_jid(
+                                     xmpp_client_server(client)));
+            check_mem(attr->value);
+        }
+        HASH_ADD_KEYPTR(hh, stanza->attributes, attr->name, strlen(attr->name),
+                        attr);
+    }
+
+    // Create JID structures from the "to" and "from" attributes
+    stanza->to_jid = copy_attr_jid(stanza, XMPP_STANZA_TO);
+    stanza->from_jid = copy_attr_jid(stanza, XMPP_STANZA_FROM);
 }
 
 void xmpp_stanza_del(struct xmpp_stanza *stanza) {
@@ -104,11 +151,11 @@ const char* xmpp_stanza_name_namespace(const struct xmpp_stanza *stanza) {
 }
 
 struct jid* xmpp_stanza_jid_from(const struct xmpp_stanza *stanza) {
-    return copy_attr_jid(stanza, XMPP_STANZA_FROM);
+    return stanza->from_jid;
 }
 
 struct jid* xmpp_stanza_jid_to(const struct xmpp_stanza *stanza) {
-    return copy_attr_jid(stanza, XMPP_STANZA_TO);
+    return stanza->to_jid;
 }
 
 const char* xmpp_stanza_attr(const struct xmpp_stanza *stanza,
@@ -122,7 +169,7 @@ const char* xmpp_stanza_attr(const struct xmpp_stanza *stanza,
     }
 }
 
-static const struct jid* copy_attr_jid(const struct xmpp_stanza *stanza,
+static struct jid* copy_attr_jid(const struct xmpp_stanza *stanza,
                                        const char *name) {
     struct attribute *attr;
     HASH_FIND_STR(stanza->attributes, name, attr);
