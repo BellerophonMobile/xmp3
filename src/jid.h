@@ -57,6 +57,14 @@ char* jid_to_str(const struct jid *jid);
 int jid_cmp(const struct jid *a, const struct jid *b);
 
 /**
+ * Compare two JIDs with wildcard matches.
+ *
+ * @returns 0 if exact match, -1 if a is before b in lexographically sorted
+ *          order, -1 otherwise.
+ */
+int jid_cmp_wildcards(const struct jid *a, const struct jid *b);
+
+/**
  * Returns the localpart of a JID.
  *
  * The string returned is owned by the JID object, and should not be freed.

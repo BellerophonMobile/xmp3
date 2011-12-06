@@ -42,42 +42,6 @@ static const int SERVER_BACKLOG = 3;
 
 static char MSG_BUFFER[BUFFER_SIZE];
 
-/** Holds data on how to send a stanza to a particular JID. */
-struct stanza_route {
-    /** The JID to send to. */
-    const struct jid *jid;
-
-    /** The function that will deliver the stanza. */
-    xmpp_stanza_callback func;
-
-    /** Arbitrary data. */
-    void *data;
-
-    /** @{ These are kept in a doubly-linked list. */
-    struct stanza_route *prev;
-    struct stanza_route *next;
-    /** @} */
-};
-
-/**
- * Holds data on how to handle a particular iq stanza.
- *
- * This is determined by the namespace + tag name of the first child element
- * (the spec says there can only be one child).
- */
-struct iq_route {
-    /** The namespace + name of the tag to match. */
-    const char *ns;
-
-    /** The function that will deliver the stanza. */
-    xmpp_iq_callback func;
-
-    /** Arbitrary data that callbacks can use. */
-    void *data;
-
-    /** These are kept in a hash table. */
-    UT_hash_handle hh;
-};
 
 /** Holds data for a XMPP server instance. */
 struct xmpp_server {
@@ -113,65 +77,6 @@ static void remove_connection(struct xmpp_server *server,
 
 static struct stanza_route* find_stanza_route(
         const struct xmpp_server *server, const struct jid *jid);
-
-struct xmpp_server* xmpp_init(struct event_loop *loop,
-                              const struct xmp3_options *options) {
-    int fd = socket(AF_INET, SOCK_STREAM, 0);
-    struct xmpp_server *server = NULL;
-    check(fd != -1, "Error creating XMPP server socket");
-
-    // Allow address reuse when in the TIME_WAIT state.
-    static const int on = 1;
-    check(setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) != -1,
-          "Error setting SO_REUSEADDR on server socket");
-
-    // Convert to network byte order
-    struct sockaddr_in saddr = {
-        .sin_family = AF_INET,
-        .sin_port = htons(xmp3_options_get_port(options)),
-        .sin_addr = xmp3_options_get_addr(options),
-    };
-
-    check(bind(fd, (struct sockaddr*)&saddr, sizeof(saddr)) != -1,
-          "XMPP server socket bind error");
-    check(listen(fd, SERVER_BACKLOG) != -1, "XMPP server socket listen error");
-
-    log_info("Listening for XMPP connections on %s:%d",
-             inet_ntoa(xmp3_options_get_addr(options)),
-             xmp3_options_get_port(options));
-
-    server = new_server(fd, options);
-
-    // Register initial routes and callbacks
-    xmpp_register_stanza_route(server, &SERVER_JID,
-                               xmpp_core_stanza_handler, NULL);
-
-
-    server->muc = xep_muc_new();
-    xmpp_register_stanza_route(server, &MUC_JID,
-                               xep_muc_stanza_handler, server->muc);
-
-    xmpp_register_iq_namespace(server, XMPP_IQ_SESSION,
-                               xmpp_im_iq_session, NULL);
-    xmpp_register_iq_namespace(server, XMPP_IQ_QUERY_ROSTER,
-                               xmpp_im_iq_roster_query, NULL);
-    xmpp_register_iq_namespace(server, XMPP_IQ_DISCO_QUERY_INFO,
-                               xmpp_im_iq_disco_query_info, NULL);
-    xmpp_register_iq_namespace(server, XMPP_IQ_DISCO_QUERY_ITEMS,
-                               xmpp_im_iq_disco_query_items, NULL);
-
-    /* Register the event callback so we can be notified of when the client
-     * sends more data. */
-    event_register_callback(loop, fd, add_connection, server);
-    return server;
-
-error:
-    close(fd);
-    if (server != NULL) {
-        xmpp_shutdown(server);
-    }
-    return NULL;
-}
 
 void xmpp_shutdown(struct xmpp_server *server) {
     SSL_CTX_free(server->ssl_context);
