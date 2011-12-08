@@ -1,6 +1,6 @@
 /**
  * xmp3 - XMPP Proxy
- * server.{c,h} - Main XMPP server data/functions
+ * xmpp_server.{c,h} - Main XMPP server data/functions
  * Copyright (c) 2011 Drexel University
  * @file
  */
@@ -9,12 +9,14 @@
 
 #include <stdbool.h>
 
-#include "xmp3_options.h"
-#include "jid.h"
-#include "xmpp_client.h"
-#include "xmpp_stanza.h"
+#include <openssl/ssl.h>
 
+// Forward declarations
+struct event_loop;
+struct xmp3_options;
+struct xmpp_client;
 struct xmpp_server;
+struct xmpp_stanza;
 
 /**
  * Callback to deliver an XMPP stanza.
@@ -52,14 +54,14 @@ struct xmpp_server* xmpp_server_new(struct event_loop *loop,
  */
 void xmpp_server_del(struct xmpp_server *server);
 
-/**
- * Attempt to cleanly disconnect a client, and clean up its resources.
- *
- * This can be called by any callbacks in order to disconnect a client if some
- * sort of error occurs.
- */
-bool xmpp_server_disconnect_client(struct xmpp_server *server,
-                                   struct xmpp_client *client);
+/** Gets the event loop instance this server is using. */
+struct event_loop* xmpp_server_loop(const struct xmpp_server *server);
+
+/** Gets the JID of this server. */
+const struct jid* xmpp_server_jid(const struct xmpp_server *server);
+
+/** Gets the SSL context if there is one, else NULL. */
+SSL_CTX* xmpp_server_ssl_context(const struct xmpp_server *server);
 
 /**
  * Add a callback to be notified when a client disconnects.
@@ -73,16 +75,22 @@ bool xmpp_server_disconnect_client(struct xmpp_server *server,
  * @param cb     The callback function to call.
  * @param data   Arbitrary data to be passed to the callback function.
  */
-void xmpp_server_add_client_listener(struct xmpp_server *server,
-                                     struct xmpp_client *client,
+void xmpp_server_add_client_listener(struct xmpp_client *client,
                                      xmpp_server_client_callback cb,
                                      void *data);
 
 /** Remove a callback from the list of disconnect notifications. */
-void xmpp_server_del_client_listener(struct xmpp_server *server,
-                                     struct xmpp_client *client,
+void xmpp_server_del_client_listener(struct xmpp_client *client,
                                      xmpp_server_client_callback cb,
                                      void *data);
+
+/**
+ * Attempt to cleanly disconnect a client, and clean up its resources.
+ *
+ * This can be called by any callbacks in order to disconnect a client if some
+ * sort of error occurs.
+ */
+void xmpp_server_disconnect_client(struct xmpp_client *client);
 
 /**
  * Add a callback to the list of routes for stanza delivery.
@@ -132,8 +140,7 @@ void xmpp_server_del_stanza_route(struct xmpp_server *server,
  * @param stanza The XMPP stanza to route.
  * @return True if successfully handled, false if not.
  */
-bool xmpp_server_route_stanza(const struct xmpp_server *server,
-                              struct xmpp_stanza *stanza);
+bool xmpp_server_route_stanza(struct xmpp_stanza *stanza);
 
 /**
  * Add a callback to handle IQ stanza to a particular namespace+tag name.
@@ -163,9 +170,7 @@ void xmpp_server_del_iq_route(struct xmpp_server *server, const char *ns,
 /**
  * Deliver an IQ stanza to a registered callback function.
  *
- * @param ns     The namespace + name string to deliver the stanza to.
  * @param stanza The stanza to deliver.
  * @return True if successfully handled, false if not.
  */
-bool xmpp_server_route_iq(const struct xmpp_server *server,
-                          struct xmpp_stanza *stanza);
+bool xmpp_server_route_iq(struct xmpp_stanza *stanza);

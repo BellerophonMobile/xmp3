@@ -1,14 +1,33 @@
 /**
  * xmp3 - XMPP Proxy
- * server.{c,h} - Main XMPP server data/functions
+ * xmpp_server.{c,h} - Main XMPP server data/functions
  * Copyright (c) 2011 Drexel University
  * @file
  */
 
-#include "xmpp_server.h"
+#include <arpa/inet.h>
+#include <unistd.h>
+
+#include <openssl/ssl.h>
+#include <openssl/err.h>
 
 #include "uthash.h"
 #include "utlist.h"
+
+#include "log.h"
+
+#include "client_socket.h"
+#include "event.h"
+#include "jid.h"
+#include "xep_muc.h"
+#include "xmp3_options.h"
+#include "xmpp_client.h"
+#include "xmpp_core.h"
+#include "xmpp_common.h"
+#include "xmpp_im.h"
+#include "xmpp_stanza.h"
+
+#include "xmpp_server.h"
 
 /**
  * Generic shortcut to add a callback to one of the server's lists.
@@ -60,13 +79,22 @@
     DL_FOREACH_SAFE(list, a, a_tmp) { \
         DL_DELETE(list, a); \
         type ## _del(a); \
-    }
+    } \
 } while (0)
+
+struct c_client {
+    struct xmpp_client *client;
+
+    /** @{ Clients are stored in a doubly-linked list. */
+    struct c_client *prev;
+    struct c_client *next;
+    /** @} */
+};
 
 /** Holds data on how to send a stanza to a particular JID. */
 struct stanza_route {
     /** The JID to send to. */
-    const struct jid *jid;
+    struct jid *jid;
 
     /** The function that will deliver the stanza. */
     xmpp_server_stanza_callback cb;
@@ -88,7 +116,7 @@ struct stanza_route {
  */
 struct iq_route {
     /** The namespace + name of the tag to match. */
-    const char *ns;
+    char *ns;
 
     /** The function that will deliver the stanza. */
     xmpp_server_stanza_callback cb;
@@ -127,6 +155,11 @@ struct xmpp_server {
     /** Buffer used to store incoming data. */
     char *buffer;
 
+    /** The size of the server's receive buffer. */
+    size_t buffer_size;
+
+    int backlog;
+
     /** The event loop this server is registered on. */
     struct event_loop *loop;
 
@@ -137,7 +170,7 @@ struct xmpp_server {
     struct jid *jid;
 
     /** Linked list of connected clients. */
-    struct xmpp_client *clients;
+    struct c_client *clients;
 
     /** Linked list of stanza routes. */
     struct stanza_route *stanza_routes;
@@ -163,9 +196,11 @@ static bool init_ssl(struct xmpp_server *server,
 static bool init_components(struct xmpp_server *server,
                             const struct xmp3_options *options);
 
-static struct client_listener* client_listener_new(
-        const struct xmpp_client *client, xmpp_server_client_callback cb,
-        void *data);
+static void connect_client(struct event_loop *loop, int fd, void *data);
+static void read_client(struct event_loop *loop, int fd, void *data);
+
+static struct client_listener* client_listener_new(struct xmpp_client *client,
+        xmpp_server_client_callback cb, void *data);
 static void client_listener_del(struct client_listener *listener);
 static int client_listener_cmp(const struct client_listener *a,
                                const struct client_listener *b);
@@ -186,9 +221,11 @@ struct xmpp_server* xmpp_server_new(struct event_loop *loop,
     struct xmpp_server *server = calloc(1, sizeof(*server));
     check_mem(server);
 
-    server->buffer = calloc(xmp3_options_get_buffer_size(options),
-                            sizeof(*server->buffer));
+    server->buffer_size = xmp3_options_get_buffer_size(options);
+    server->buffer = calloc(server->buffer_size, sizeof(*server->buffer));
     check_mem(server->buffer);
+
+    server->backlog = xmp3_options_get_backlog(options);
 
     server->loop = loop;
     server->jid = jid_new_from_str(xmp3_options_get_server_name(options));
@@ -203,7 +240,7 @@ struct xmpp_server* xmpp_server_new(struct event_loop *loop,
           "Unable to initialize components.");
 
     // Register the event handler so we can get notified of new connections.
-    event_register_callback(loop, fd, add_connection, server);
+    event_register_callback(loop, server->fd, connect_client, server);
 
     log_info("Listening for XMPP connections on %s:%d",
              inet_ntoa(xmp3_options_get_addr(options)),
@@ -222,7 +259,14 @@ void xmpp_server_del(struct xmpp_server *server) {
     DELETE_LIST(stanza_route, server->stanza_routes);
     DELETE_LIST(iq_route, server->iq_routes);
     DELETE_LIST(client_listener, server->client_listeners);
-    DELETE_LIST(xmpp_client, server->clients);
+
+    struct c_client *connected_client = NULL;
+    struct c_client *connected_client_tmp = NULL;
+    DL_FOREACH_SAFE(server->clients, connected_client, connected_client_tmp) {
+        DL_DELETE(server->clients, connected_client);
+        xmpp_client_del(connected_client->client);
+        free(connected_client);
+    }
 
     if (server->fd != -1) {
         close(server->fd);
@@ -236,22 +280,60 @@ void xmpp_server_del(struct xmpp_server *server) {
     free(server);
 }
 
-void xmpp_server_add_client_listener(struct xmpp_server *server,
-                                     const struct xmpp_client *client,
+struct event_loop* xmpp_server_loop(const struct xmpp_server *server) {
+    return server->loop;
+}
+
+const struct jid* xmpp_server_jid(const struct xmpp_server *server) {
+    return server->jid;
+}
+
+SSL_CTX* xmpp_server_ssl_context(const struct xmpp_server *server) {
+    return server->ssl_context;
+}
+
+void xmpp_server_add_client_listener(struct xmpp_client *client,
                                      xmpp_server_client_callback cb,
                                      void *data) {
+    struct xmpp_server *server = xmpp_client_server(client);
     ADD_CALLBACK(client_listener, server->client_listeners, client, cb, data);
 }
 
-void xmpp_server_del_client_disconnect_cb(struct xmpp_server *server,
-                                          const struct xmpp_client *client,
+void xmpp_server_del_client_disconnect_cb(struct xmpp_client *client,
                                           xmpp_server_client_callback cb,
                                           void *data) {
+    struct xmpp_server *server = xmpp_client_server(client);
     DEL_CALLBACK(client_listener, server->client_listeners, client, cb, data);
 }
 
-bool xmpp_server_disconnect_client(struct xmpp_server *server,
-                                   struct xmpp_client *client) {
+void xmpp_server_disconnect_client(struct xmpp_client *client) {
+    struct xmpp_server *server = xmpp_client_server(client);
+
+    // Sanity check that the client is registered with the server
+    struct c_client *search = NULL;
+    DL_FOREACH(server->clients, search) {
+        if (client == search->client) {
+            break;
+        }
+    }
+    if (search == NULL) {
+        log_warn("Attempted to disconnect non-registered client.");
+        return;
+    }
+
+    struct client_listener *listener = NULL;
+    struct client_listener *tmp = NULL;
+    DL_FOREACH_SAFE(server->client_listeners, listener, tmp) {
+        if (listener->client == client) {
+            listener->cb(client, listener->data);
+        }
+        DL_DELETE(server->client_listeners, listener);
+        free(listener);
+    }
+
+    DL_DELETE(server->clients, search);
+    xmpp_client_del(client);
+    free(search);
 }
 
 void xmpp_server_add_stanza_route(struct xmpp_server *server,
@@ -266,19 +348,23 @@ void xmpp_server_del_stanza_route(struct xmpp_server *server,
     DEL_CALLBACK(stanza_route, server->stanza_routes, jid, cb, data);
 }
 
-bool xmpp_server_route_stanza(const struct xmpp_server *server,
-                              struct xmpp_stanza *stanza) {
-    const struct jid *jid = xmpp_stanza_jid_from(stanza);
+bool xmpp_server_route_stanza(struct xmpp_stanza *stanza) {
+    struct xmpp_client *client = xmpp_stanza_client(stanza);
+    struct xmpp_server *server = xmpp_client_server(client);
+    const struct jid *search_jid = xmpp_stanza_jid_from(stanza);
+
+    bool was_handled = false;
 
     struct stanza_route *route = NULL;
     DL_FOREACH(server->stanza_routes, route) {
-        // CONTINUE HERE
+        if (jid_cmp_wildcards(search_jid, route->jid) == 0) {
+            was_handled = route->cb(stanza, route->data);
+        }
     }
-    if (route == NULL) {
+    if (!was_handled) {
         log_info("No route for destination");
-        return false;
     }
-    return route->func(stanza, route->data);
+    return was_handled;
 }
 
 void xmpp_server_add_iq_route(struct xmpp_server *server, const char *ns,
@@ -291,8 +377,22 @@ void xmpp_server_del_iq_route(struct xmpp_server *server, const char *ns,
     DEL_CALLBACK(iq_route, server->iq_routes, ns, cb, data);
 }
 
-bool xmpp_server_route_iq(const struct xmpp_server *server,
-                          struct xmpp_stanza *stanza) {
+bool xmpp_server_route_iq(struct xmpp_stanza *stanza) {
+    struct xmpp_client *client = xmpp_stanza_client(stanza);
+    struct xmpp_server *server = xmpp_client_server(client);
+
+    bool was_handled = false;
+
+    struct iq_route *route = NULL;
+    DL_FOREACH(server->iq_routes, route) {
+        if (strcmp(xmpp_stanza_ns_name(stanza), route->ns) == 0) {
+            was_handled = route->cb(stanza, route->data);
+        }
+    }
+    if (!was_handled) {
+        log_info("No route for destination");
+    }
+    return was_handled;
 }
 
 static bool init_socket(struct xmpp_server *server,
@@ -302,18 +402,20 @@ static bool init_socket(struct xmpp_server *server,
 
     // Allow address reuse when in the TIME_WAIT state.
     static const int on = 1;
-    check(setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) != -1,
+    check(setsockopt(server->fd, SOL_SOCKET, SO_REUSEADDR, &on,
+                     sizeof(on)) != -1,
           "Error setting SO_REUSEADDR on server socket");
 
-    struct sockaddr saddr = {
+    struct sockaddr_in saddr = {
         .sin_family = AF_INET,
         .sin_port = htons(xmp3_options_get_port(options)),
         .sin_addr = xmp3_options_get_addr(options),
     };
 
-    check(bind(fd, (struct sockaddr*)&saddr, sizeof(saddr)) != -1,
+    check(bind(server->fd, (struct sockaddr*)&saddr, sizeof(saddr)) != -1,
           "XMPP server socket bind error");
-    check(listen(fd, SERVER_BACKLOG) != -1, "XMPP server socket listen error");
+    check(listen(server->fd, server->backlog) != -1,
+          "XMPP server socket listen error");
 
     return true;
 error:
@@ -348,23 +450,103 @@ static bool init_components(struct xmpp_server *server,
     xmpp_server_add_stanza_route(server, server->jid,
                                  xmpp_core_stanza_handler, NULL);
 
-    server->muc = xep_muc_new();
-    xmpp_register_stanza_route(server, server->muc->jid,
-                               xep_muc_stanza_handler, server->muc);
+    server->muc = xep_muc_new(server);
+    check_mem(server->muc);
 
-    xmpp_register_iq_namespace(server, XMPP_IQ_SESSION,
-                               xmpp_im_iq_session, NULL);
-    xmpp_register_iq_namespace(server, XMPP_IQ_QUERY_ROSTER,
-                               xmpp_im_iq_roster_query, NULL);
-    xmpp_register_iq_namespace(server, XMPP_IQ_DISCO_QUERY_INFO,
-                               xmpp_im_iq_disco_query_info, NULL);
-    xmpp_register_iq_namespace(server, XMPP_IQ_DISCO_QUERY_ITEMS,
-                               xmpp_im_iq_disco_query_items, NULL);
+    xmpp_server_add_iq_route(server, XMPP_IQ_SESSION,
+                             xmpp_im_iq_session, NULL);
+    xmpp_server_add_iq_route(server, XMPP_IQ_QUERY_ROSTER,
+                             xmpp_im_iq_roster_query, NULL);
+    xmpp_server_add_iq_route(server, XMPP_IQ_DISCO_QUERY_INFO,
+                             xmpp_im_iq_disco_query_info, NULL);
+    xmpp_server_add_iq_route(server, XMPP_IQ_DISCO_QUERY_ITEMS,
+                             xmpp_im_iq_disco_query_items, NULL);
+    return true;
 }
 
-static struct client_listener* client_listener_new(
-        const struct xmpp_client *client, xmpp_server_client_callback cb,
-        void *data) {
+static void connect_client(struct event_loop *loop, int fd, void *data) {
+    struct xmpp_server *server = (struct xmpp_server*)data;
+
+    struct sockaddr_in caddr;
+    socklen_t caddrlen = sizeof(caddr);
+
+    int client_fd = accept(fd, (struct sockaddr*)&caddr, &caddrlen);
+    check(client_fd != -1, "Error accepting new client connection");
+
+    struct client_socket *socket = client_socket_new(client_fd, caddr);
+    check_mem(socket);
+
+    struct xmpp_client *client = xmpp_client_new(server, socket);
+    check_mem(client);
+
+    event_register_callback(loop, client_fd, read_client, client);
+
+    struct c_client *connected_client = calloc(1, sizeof(*connected_client));
+    connected_client->client = client;
+
+    log_info("New connection from %s:%d", inet_ntoa(caddr.sin_addr),
+             caddr.sin_port);
+
+    DL_APPEND(server->clients, connected_client);
+    return;
+
+error:
+    if (connected_client) {
+        free(connected_client);
+    }
+    if (client) {
+        xmpp_client_del(client);
+    }
+    if (socket) {
+        client_socket_del(socket);
+    }
+    if (client_fd != -1) {
+        close(client_fd);
+    }
+}
+
+static void read_client(struct event_loop *loop, int fd, void *data) {
+    struct xmpp_client *client = (struct xmpp_client*)data;
+    struct xmpp_server *server = xmpp_client_server(client);
+
+    ssize_t numrecv = client_socket_recv(xmpp_client_socket(client),
+                                         server->buffer, server->buffer_size);
+
+    if (numrecv == 0 || numrecv == -1) {
+        char *addrstr = client_socket_addr_str(
+                xmpp_client_socket(client));
+        check_mem(addrstr);
+        switch (numrecv) {
+            case 0:
+                log_info("%s disconnected", addrstr);
+                break;
+            case -1:
+                log_err("Error reading from %s %s", addrstr, strerror(errno));
+                break;
+        }
+        free(addrstr);
+        goto error;
+    }
+
+    char *addrstr = client_socket_addr_str(xmpp_client_socket(client));
+    check_mem(addrstr);
+    log_info("%s - Read %zd bytes", addrstr, numrecv);
+    free(addrstr);
+    xmpp_print_data(server->buffer, numrecv);
+
+    enum XML_Status status = XML_Parse(
+            xmpp_client_parser(client), server->buffer, numrecv, false);
+    check(status != XML_STATUS_ERROR, "Error parsing XML: %s",
+          XML_ErrorString(XML_GetErrorCode(xmpp_client_parser(client))));
+
+    return;
+
+error:
+    xmpp_server_disconnect_client(client);
+}
+
+static struct client_listener* client_listener_new(struct xmpp_client *client,
+        xmpp_server_client_callback cb, void *data) {
     struct client_listener *listener = calloc(1, sizeof(*listener));
     check_mem(listener);
 
@@ -382,7 +564,7 @@ static void client_listener_del(struct client_listener *listener) {
 static int client_listener_cmp(const struct client_listener *a,
                                const struct client_listener *b) {
     if (a->client != b->client) {
-        return a->client - b->client;
+        return a - b;
     }
     if (a->cb != b->cb) {
         return a->cb - b->cb;

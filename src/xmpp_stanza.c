@@ -5,17 +5,31 @@
  * @file
  */
 
-#include "xmpp_stanza.h"
-
 #include <stdlib.h>
 
 #include "uthash.h"
+#include "utstring.h"
+
+#include "log.h"
 #include "utils.h"
+
+#include "jid.h"
+#include "xmpp_client.h"
+#include "xmpp_common.h"
+#include "xmpp_server.h"
+
+#include "xmpp_stanza.h"
 
 const char *XMPP_STANZA_ATTR_TO = "to";
 const char *XMPP_STANZA_ATTR_FROM = "from";
 const char *XMPP_STANZA_ATTR_ID = "id";
 const char *XMPP_STANZA_ATTR_TYPE = "type";
+
+const char *XMPP_ATTR_TYPE_GET = "get";
+const char *XMPP_ATTR_TYPE_SET = "set";
+const char *XMPP_ATTR_TYPE_RESULT = "result";
+const char *XMPP_ATTR_TYPE_ERROR = "error";
+
 
 // Forward declarations
 static struct jid* copy_attr_jid(const struct xmpp_stanza *stanza,
@@ -79,10 +93,10 @@ struct xmpp_stanza* xmpp_stanza_new(struct xmpp_client *client,
     }
 
     // If there is no "from" attribute, add one.
-    const char *from = xmpp_stanza_attr(stanza, XMPP_STANZA_FROM);
+    const char *from = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_FROM);
     if (from == NULL) {
         struct attribute *attr = calloc(1, sizeof(*attr));
-        STRDUP_CHECK(attr->name, XMPP_STANZA_FROM);
+        STRDUP_CHECK(attr->name, XMPP_STANZA_ATTR_FROM);
         attr->value = jid_to_str(xmpp_client_jid(client));
         check_mem(attr->value);
         HASH_ADD_KEYPTR(hh, stanza->attributes, attr->name, strlen(attr->name),
@@ -90,10 +104,10 @@ struct xmpp_stanza* xmpp_stanza_new(struct xmpp_client *client,
     }
 
     // If there is no "to" attribute, add one.
-    const char *to = xmpp_stanza_attr(stanza, XMPP_STANZA_TO);
+    const char *to = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_TO);
     if (to == NULL) {
         struct attribute *attr = calloc(1, sizeof(*attr));
-        STRDUP_CHECK(attr->name, XMPP_STANZA_FROM);
+        STRDUP_CHECK(attr->name, XMPP_STANZA_ATTR_FROM);
 
         if (strcmp(stanza->ns_name, XMPP_MESSAGE) == 0) {
             /* If there is no "to" in a message, it is addressed to the bare
@@ -116,8 +130,9 @@ struct xmpp_stanza* xmpp_stanza_new(struct xmpp_client *client,
     }
 
     // Create JID structures from the "to" and "from" attributes
-    stanza->to_jid = copy_attr_jid(stanza, XMPP_STANZA_TO);
-    stanza->from_jid = copy_attr_jid(stanza, XMPP_STANZA_FROM);
+    stanza->to_jid = copy_attr_jid(stanza, XMPP_STANZA_ATTR_TO);
+    stanza->from_jid = copy_attr_jid(stanza, XMPP_STANZA_ATTR_FROM);
+    return stanza;
 }
 
 void xmpp_stanza_del(struct xmpp_stanza *stanza) {
@@ -146,7 +161,7 @@ const char* xmpp_stanza_namespace(const struct xmpp_stanza *stanza) {
     return stanza->namespace;
 }
 
-const char* xmpp_stanza_name_namespace(const struct xmpp_stanza *stanza) {
+const char* xmpp_stanza_ns_name(const struct xmpp_stanza *stanza) {
     return stanza->ns_name;
 }
 
@@ -169,6 +184,32 @@ const char* xmpp_stanza_attr(const struct xmpp_stanza *stanza,
     }
 }
 
+void xmpp_stanza_set_attr(struct xmpp_stanza *stanza, const char *name,
+                          const char *value) {
+    struct attribute *attr;
+    HASH_FIND_STR(stanza->attributes, name, attr);
+
+    if (attr == NULL) {
+        if (value == NULL) {
+            return;
+        }
+        attr = calloc(1, sizeof(*attr));
+        check_mem(attr);
+        attr->name = strdup(name);
+        check_mem(attr->name);
+        HASH_ADD_KEYPTR(hh, stanza->attributes, name, strlen(name), attr);
+    } else {
+        if (value == NULL) {
+            HASH_DEL(stanza->attributes, attr);
+            free(attr);
+            return;
+        }
+        free(attr->value);
+    }
+    attr->value = strdup(value);
+    check_mem(attr->value);
+}
+
 static struct jid* copy_attr_jid(const struct xmpp_stanza *stanza,
                                        const char *name) {
     struct attribute *attr;
@@ -178,4 +219,24 @@ static struct jid* copy_attr_jid(const struct xmpp_stanza *stanza,
     } else {
         return jid_new_from_str(attr->value);
     }
+}
+
+char* xmpp_stanza_create_tag(const struct xmpp_stanza *stanza) {
+    UT_string s;
+    utstring_init(&s);
+
+    utstring_printf(&s, "<%s", stanza->name);
+
+    if (stanza->namespace != NULL) {
+        utstring_printf(&s, " xmlns='%s'", stanza->namespace);
+    }
+
+    struct attribute *attr, *attr_tmp;
+    HASH_ITER(hh, stanza->attributes, attr, attr_tmp) {
+        utstring_printf(&s, " %s='%s'", attr->name, attr->value);
+    }
+
+    utstring_printf(&s, ">");
+
+    return utstring_body(&s);
 }

@@ -5,8 +5,6 @@
  * @file
  */
 
-#include "event.h"
-
 #include <errno.h>
 #include <signal.h>
 #include <stdbool.h>
@@ -20,6 +18,8 @@
 #include "utlist.h"
 
 #include "log.h"
+
+#include "event.h"
 
 /** Contains data for one callback function. */
 struct event_item {

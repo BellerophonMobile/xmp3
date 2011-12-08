@@ -5,8 +5,6 @@
  * @file
  */
 
-#include "xmpp_auth.h"
-
 #include <string.h>
 #include <unistd.h>
 
@@ -21,9 +19,15 @@
 #include "log.h"
 #include "utils.h"
 
+#include "client_socket.h"
+#include "jid.h"
+#include "xmpp_client.h"
 #include "xmpp_common.h"
-#include "xmpp.h"
 #include "xmpp_core.h"
+#include "xmpp_server.h"
+#include "xmpp_stanza.h"
+
+#include "xmpp_auth.h"
 
 // authzid, authcid, passed can be 255 octets, plus 2 NULLs inbetween
 #define PLAIN_AUTH_BUFFER_SIZE (3 * 255 + 2)
@@ -51,12 +55,6 @@ static const char *MSG_STREAM_HEADER =
         "xml:lang='en' "
         "xmlns='jabber:client' "
         "xmlns:stream='http://etherx.jabber.org/streams'>";
-
-#if 0
-    "<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'>"
-        "<required/>"
-    "</starttls>"
-#endif
 
 static const char *MSG_STREAM_FEATURES_TLS =
     "<stream:features>"
@@ -87,7 +85,7 @@ static const char *MSG_SASL_SUCCESS =
 static const char *MSG_BIND_SUCCESS =
     "<iq id='%s' type='result'>"
         "<bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'>"
-            "<jid>%s@localhost/%s</jid>"
+            "<jid>%s</jid>"
         "</bind>"
     "</iq>";
 
@@ -162,24 +160,38 @@ void xmpp_auth_stream_start(void *data, const char *name, const char **attrs) {
     check(strcmp(name, XMPP_STREAM) == 0, "Unexpected stanza");
 
     // Step 2: Server responds by sending a response stream header to client
-    check(sendall(client->socket, MSG_STREAM_HEADER,
-                  strlen(MSG_STREAM_HEADER)) > 0,
+    check(client_socket_sendall(xmpp_client_socket(client),
+                MSG_STREAM_HEADER, strlen(MSG_STREAM_HEADER)) > 0,
           "Error sending stream header to client");
 
     /* Step 3: Server sends stream features to client (only the STARTTLS
      * extension at this point, which is mandatory-to-negotiate) */
-    check(sendall(client->socket, MSG_STREAM_FEATURES_TLS,
-                  strlen(MSG_STREAM_FEATURES_TLS)) > 0,
-          "Error sending TLS stream features to client");
+    if (xmpp_server_ssl_context(xmpp_client_server(client)) != NULL) {
+        check(client_socket_sendall(xmpp_client_socket(client),
+                                    MSG_STREAM_FEATURES_TLS,
+                                    strlen(MSG_STREAM_FEATURES_TLS)) > 0,
+              "Error sending TLS stream features to client");
 
-    // We expect to see a <starttls> tag from the client.
-    XML_SetElementHandler(client->parser, tls_start, tls_end);
-    XML_SetCharacterDataHandler(client->parser, xmpp_error_data);
+        // We expect to see a <starttls> tag from the client.
+        XML_SetElementHandler(xmpp_client_parser(client), tls_start, tls_end);
+        XML_SetCharacterDataHandler(xmpp_client_parser(client), xmpp_error_data);
 
+    } else {
+        // SSL is disabled, skip right to SASL.
+        check(client_socket_sendall(xmpp_client_socket(client),
+                    MSG_STREAM_FEATURES_SASL,
+                    strlen(MSG_STREAM_FEATURES_SASL)) > 0,
+              "Error sending SASL stream features to client");
+
+        // We expect to see a SASL PLAIN <auth> tag next.
+        XML_SetElementHandler(xmpp_client_parser(client), sasl_plain_start,
+                              sasl_plain_end);
+        XML_SetCharacterDataHandler(xmpp_client_parser(client), sasl_plain_data);
+    }
     return;
 
 error:
-    XML_StopParser(client->parser, false);
+    XML_StopParser(xmpp_client_parser(client), false);
 }
 
 static void stream_sasl_start(void *data, const char *name, const char **attrs)
@@ -194,20 +206,22 @@ static void stream_sasl_start(void *data, const char *name, const char **attrs)
 
     /* Step 8: Server responds by sending a stream header to client along with
      * any available stream features. */
-    check(sendall(client->socket, MSG_STREAM_HEADER,
-                  strlen(MSG_STREAM_HEADER)) > 0,
+    check(client_socket_sendall(xmpp_client_socket(client),
+                MSG_STREAM_HEADER, strlen(MSG_STREAM_HEADER)) > 0,
           "Error sending stream header to client");
-    check(sendall(client->socket, MSG_STREAM_FEATURES_SASL,
-                  strlen(MSG_STREAM_FEATURES_SASL)) > 0,
+    check(client_socket_sendall(xmpp_client_socket(client),
+                MSG_STREAM_FEATURES_SASL,
+                strlen(MSG_STREAM_FEATURES_SASL)) > 0,
           "Error sending SASL stream features to client");
 
     // We expect to see a SASL PLAIN <auth> tag next.
-    XML_SetElementHandler(client->parser, sasl_plain_start, sasl_plain_end);
-    XML_SetCharacterDataHandler(client->parser, sasl_plain_data);
+    XML_SetElementHandler(xmpp_client_parser(client), sasl_plain_start,
+                          sasl_plain_end);
+    XML_SetCharacterDataHandler(xmpp_client_parser(client), sasl_plain_data);
     return;
 
 error:
-    XML_StopParser(client->parser, false);
+    XML_StopParser(xmpp_client_parser(client), false);
 }
 
 static void stream_bind_start(void *data, const char *name, const char **attrs)
@@ -218,20 +232,21 @@ static void stream_bind_start(void *data, const char *name, const char **attrs)
 
     /* Step 14: Server responds by sending a stream header to client along
      * with supported features (in this case, resource binding) */
-    check(sendall(client->socket, MSG_STREAM_HEADER,
-                  strlen(MSG_STREAM_HEADER)) > 0,
+    check(client_socket_sendall(xmpp_client_socket(client),
+                MSG_STREAM_HEADER, strlen(MSG_STREAM_HEADER)) > 0,
           "Error sending stream header to client");
-    check(sendall(client->socket, MSG_STREAM_FEATURES_BIND,
-                  strlen(MSG_STREAM_FEATURES_BIND)) > 0,
+    check(client_socket_sendall(xmpp_client_socket(client),
+                    MSG_STREAM_FEATURES_BIND,
+                    strlen(MSG_STREAM_FEATURES_BIND)) > 0,
           "Error sending bind stream features to client");
 
     // We expect to see the resouce binding IQ stanza next.
-    XML_SetStartElementHandler(client->parser, bind_iq_start);
-    XML_SetCharacterDataHandler(client->parser, xmpp_error_data);
+    XML_SetStartElementHandler(xmpp_client_parser(client), bind_iq_start);
+    XML_SetCharacterDataHandler(xmpp_client_parser(client), xmpp_error_data);
     return;
 
 error:
-    XML_StopParser(client->parser, false);
+    XML_StopParser(xmpp_client_parser(client), false);
 }
 
 /**
@@ -246,7 +261,7 @@ static void tls_start(void *data, const char *name, const char **attrs) {
     return;
 
 error:
-    XML_StopParser(client->parser, false);
+    XML_StopParser(xmpp_client_parser(client), false);
 }
 
 /**
@@ -260,20 +275,22 @@ static void tls_end(void *data, const char *name) {
     log_info("Initiating SSL connection...");
 
     check(strcmp(name, XMPP_STARTTLS) == 0, "Unexpected stanza");
-    check(sendall(client->socket, MSG_TLS_PROCEED,
-                  strlen(MSG_TLS_PROCEED)) > 0,
+    check(client_socket_sendall(xmpp_client_socket(client),
+                MSG_TLS_PROCEED, strlen(MSG_TLS_PROCEED)) > 0,
           "Error sending TLS proceed to client");
 
-    xmpp_new_ssl_connection(client);
+    client_socket_set_ssl(xmpp_client_socket(client),
+            xmpp_server_ssl_context(xmpp_client_server(client)));
 
     // We expect a new stream from the client
-    XML_SetElementHandler(client->parser, stream_sasl_start, xmpp_error_end);
-    XML_SetCharacterDataHandler(client->parser, xmpp_error_data);
+    XML_SetElementHandler(xmpp_client_parser(client), stream_sasl_start,
+                          xmpp_error_end);
+    XML_SetCharacterDataHandler(xmpp_client_parser(client), xmpp_error_data);
 
     return;
 
 error:
-    XML_StopParser(client->parser, false);
+    XML_StopParser(xmpp_client_parser(client), false);
 }
 
 /**
@@ -305,12 +322,13 @@ static void sasl_plain_start(void *data, const char *name, const char **attrs)
     auth_data->client = client;
     base64_init_decodestate(&auth_data->state);
 
-    XML_SetUserData(client->parser, auth_data);
-    XML_SetElementHandler(client->parser, xmpp_error_start, sasl_plain_end);
+    XML_SetUserData(xmpp_client_parser(client), auth_data);
+    XML_SetElementHandler(xmpp_client_parser(client), xmpp_error_start,
+                          sasl_plain_end);
     return;
 
 error:
-    XML_StopParser(client->parser, false);
+    XML_StopParser(xmpp_client_parser(client), false);
 }
 
 /**
@@ -337,9 +355,9 @@ static void sasl_plain_data(void *data, const char *s, int len) {
     return;
 
 error:
-    XML_SetUserData(client->parser, client);
+    XML_SetUserData(xmpp_client_parser(client), client);
     free(auth_data);
-    XML_StopParser(client->parser, false);
+    XML_StopParser(xmpp_client_parser(client), false);
 }
 
 /**
@@ -365,30 +383,28 @@ static void sasl_plain_end(void *data, const char *name) {
     debug("authzid = '%s', authcid = '%s', passwd = '%s'",
           authzid, authcid, passwd);
 
-    // Copy the username into the client information structure
-    client->jid.local = calloc(strlen(authcid) + 1, sizeof(char));
-    check_mem(client->jid.local);
-    strcpy(client->jid.local, authcid);
-
-    client->jid.domain = calloc(strlen(SERVER_DOMAIN) + 1, sizeof(char));
-    check_mem(client->jid.domain);
-    strcpy(client->jid.domain, SERVER_DOMAIN);
-
     // TODO: If we wanted to do any authentication, do it here.
 
-    // Sucess!
-    check(sendall(client->socket, MSG_SASL_SUCCESS,
-                  strlen(MSG_SASL_SUCCESS)) > 0,
+    struct jid *jid = jid_new();
+    check_mem(jid);
+
+    jid_set_local(jid, authcid);
+    jid_set_domain(jid,
+            jid_domain(xmpp_server_jid(xmpp_client_server(client))));
+    xmpp_client_set_jid(client, jid);
+
+    // Success!
+    check(client_socket_sendall(xmpp_client_socket(client),
+                MSG_SASL_SUCCESS, strlen(MSG_SASL_SUCCESS)) > 0,
           "Error sending SASL success to client");
 
-    client->authenticated = true;
-
     // Go to step 7, the client needs to send us a new stream header.
-    XML_SetElementHandler(client->parser, stream_bind_start, xmpp_error_end);
-    XML_SetCharacterDataHandler(client->parser, xmpp_error_data);
+    XML_SetElementHandler(xmpp_client_parser(client), stream_bind_start,
+                          xmpp_error_end);
+    XML_SetCharacterDataHandler(xmpp_client_parser(client), xmpp_error_data);
 
     // Clean up our temp auth_data structure.
-    XML_SetUserData(client->parser, client);
+    XML_SetUserData(xmpp_client_parser(client), client);
     free(auth_data);
 
     log_info("User authenticated");
@@ -396,9 +412,9 @@ static void sasl_plain_end(void *data, const char *name) {
     return;
 
 error:
-    XML_SetUserData(client->parser, client);
+    XML_SetUserData(xmpp_client_parser(client), client);
     free(auth_data);
-    XML_StopParser(client->parser, false);
+    XML_StopParser(xmpp_client_parser(client), false);
 }
 
 /**
@@ -417,7 +433,7 @@ static void bind_iq_start(void *data, const char *name, const char **attrs) {
     // Validate the correct attributes set on the start tag
     int i;
     for (i = 0; attrs[i] != NULL; i += 2) {
-        if (strcmp(attrs[i], XMPP_ATTR_TYPE) == 0) {
+        if (strcmp(attrs[i], XMPP_STANZA_ATTR_TYPE) == 0) {
             check(strcmp(attrs[i + 1], XMPP_ATTR_TYPE_SET) == 0,
                     "IQ type must be \"set\"");
             break;
@@ -431,7 +447,7 @@ static void bind_iq_start(void *data, const char *name, const char **attrs) {
     bind_data->client = client;
 
     for (i = 0; attrs[i] != NULL; i += 2) {
-        if (strcmp(attrs[i], XMPP_ATTR_ID) == 0) {
+        if (strcmp(attrs[i], XMPP_STANZA_ATTR_ID) == 0) {
             strcpy(bind_data->id, attrs[i+1]);
             break;
         }
@@ -439,55 +455,58 @@ static void bind_iq_start(void *data, const char *name, const char **attrs) {
     check(attrs[i] != NULL, "Did not find \"id\" attribute");
 
     // Next, we expect to see the <bind> tag
-    XML_SetElementHandler(client->parser, bind_start, bind_end);
-    XML_SetUserData(client->parser, bind_data);
+    XML_SetElementHandler(xmpp_client_parser(client), bind_start, bind_end);
+    XML_SetUserData(xmpp_client_parser(client), bind_data);
     return;
 
 error:
     free(bind_data);
-    XML_StopParser(client->parser, false);
+    XML_StopParser(xmpp_client_parser(client), false);
 }
 
 /** Handles the resouce binding ending <iq> tag. */
 static void bind_iq_end(void *data, const char *name) {
     struct resource_bind_tmp *bind_data = (struct resource_bind_tmp*)data;
     struct xmpp_client *client = bind_data->client;
-    struct xmpp_server *server = client->server;
+    struct xmpp_server *server = xmpp_client_server(client);
+
 
     // Need space to construct our binding success message
     char success_msg[strlen(MSG_BIND_SUCCESS)
                      + strlen(bind_data->id)
-                     + strlen(client->jid.local)
-                     + strlen(client->jid.resource)];
+                     + jid_to_str_len(xmpp_client_jid(client))];
+
+    char *jidstr = jid_to_str(xmpp_client_jid(client));
 
     log_info("Bind IQ end");
     check(strcmp(name, XMPP_IQ) == 0, "Unexpected stanza");
 
     // Fill in our attributes to the success message
-    snprintf(success_msg, sizeof(success_msg), MSG_BIND_SUCCESS,
-             bind_data->id, client->jid.local, client->jid.resource);
+    sprintf(success_msg, MSG_BIND_SUCCESS, bind_data->id, jidstr);
+    free(jidstr);
 
     /* Step 16: Server accepts submitted resourcepart and informs client of
      * successful resource binding */
-    check(sendall(client->socket, success_msg, strlen(success_msg)) > 0,
+    check(client_socket_sendall(xmpp_client_socket(client),
+                                success_msg, strlen(success_msg)) > 0,
           "Error sending resource binding success message.");
 
     /* Resource binding, and thus authentication, is complete!  Continue to
      * process general messages. */
-    XML_SetElementHandler(client->parser, xmpp_core_stanza_start,
+    XML_SetElementHandler(xmpp_client_parser(client), xmpp_core_stanza_start,
                           xmpp_core_stream_end);
-    XML_SetCharacterDataHandler(client->parser, xmpp_ignore_data);
-    XML_SetUserData(client->parser, client);
-    xmpp_register_stanza_route(server, &client->jid,
-                               xmpp_core_message_handler, client);
-
+    XML_SetCharacterDataHandler(xmpp_client_parser(client), xmpp_ignore_data);
+    XML_SetUserData(xmpp_client_parser(client), client);
     free(bind_data);
+
+    xmpp_server_add_stanza_route(server, xmpp_client_jid(client),
+                                 xmpp_core_message_handler, client);
     return;
 
 error:
-    XML_SetUserData(client->parser, client);
+    XML_SetUserData(xmpp_client_parser(client), client);
     free(bind_data);
-    XML_StopParser(client->parser, false);
+    XML_StopParser(xmpp_client_parser(client), false);
 }
 
 /** Handles the start <bind> tag inside a resource binding <iq>. */
@@ -500,15 +519,15 @@ static void bind_start(void *data, const char *name, const char **attrs) {
     check(strcmp(name, XMPP_BIND) == 0, "Unexpected stanza");
 
     // We expect to see a <resource> tag next
-    XML_SetElementHandler(client->parser, bind_resource_start,
+    XML_SetElementHandler(xmpp_client_parser(client), bind_resource_start,
                           bind_resource_end);
-    XML_SetCharacterDataHandler(client->parser, bind_resource_data);
+    XML_SetCharacterDataHandler(xmpp_client_parser(client), bind_resource_data);
     return;
 
 error:
-    XML_SetUserData(client->parser, client);
+    XML_SetUserData(xmpp_client_parser(client), client);
     free(bind_data);
-    XML_StopParser(client->parser, false);
+    XML_StopParser(xmpp_client_parser(client), false);
 }
 
 /** Handles the ending <bind> tag inside a resource binding <iq>. */
@@ -519,13 +538,14 @@ static void bind_end(void *data, const char *name) {
     check(strcmp(name, XMPP_BIND) == 0, "Unexpected stanza");
 
     // We expect to see a closing </iq> tag next
-    XML_SetElementHandler(client->parser, xmpp_error_start, bind_iq_end);
+    XML_SetElementHandler(xmpp_client_parser(client),
+                          xmpp_error_start, bind_iq_end);
     return;
 
 error:
-    XML_SetUserData(client->parser, client);
+    XML_SetUserData(xmpp_client_parser(client), client);
     free(bind_data);
-    XML_StopParser(client->parser, false);
+    XML_StopParser(xmpp_client_parser(client), false);
 }
 
 /** Handles the starting <resource> tag inside a resource binding <iq>. */
@@ -540,9 +560,9 @@ static void bind_resource_start(void *data, const char *name,
     return;
 
 error:
-    XML_SetUserData(client->parser, client);
+    XML_SetUserData(xmpp_client_parser(client), client);
     free(bind_data);
-    XML_StopParser(client->parser, false);
+    XML_StopParser(xmpp_client_parser(client), false);
 }
 
 /** Handles the resouce string in the in a resource binding <iq>. */
@@ -560,9 +580,9 @@ static void bind_resource_data(void *data, const char *s, int len) {
     return;
 
 error:
-    XML_SetUserData(client->parser, client);
+    XML_SetUserData(xmpp_client_parser(client), client);
     free(bind_data);
-    XML_StopParser(client->parser, false);
+    XML_StopParser(xmpp_client_parser(client), false);
 }
 
 /** Handles the ending <resource> tag inside a resource binding <iq>. */
@@ -573,16 +593,14 @@ static void bind_resource_end(void *data, const char *name) {
     check(strcmp(name, XMPP_BIND_RESOURCE) == 0, "Unexpected stanza");
 
     // Copy the resource into the client information structure
-    client->jid.resource = calloc(strlen(bind_data->resource) + 1,
-                                  sizeof(char));
-    check_mem(client->jid.resource);
-    strcpy(client->jid.resource, bind_data->resource);
+    jid_set_resource(xmpp_client_jid(client), bind_data->resource);
 
-    XML_SetElementHandler(client->parser, xmpp_error_start, bind_end);
+    XML_SetElementHandler(xmpp_client_parser(client),
+                          xmpp_error_start, bind_end);
     return;
 
 error:
-    XML_SetUserData(client->parser, client);
+    XML_SetUserData(xmpp_client_parser(client), client);
     free(bind_data);
-    XML_StopParser(client->parser, false);
+    XML_StopParser(xmpp_client_parser(client), false);
 }

@@ -7,10 +7,8 @@
 
 #pragma once
 
-#include <stdint.h>
 #include <stdbool.h>
-
-#include <arpa/inet.h>
+#include <netinet/in.h>
 
 extern const struct in_addr DEFAULT_ADDR;
 extern const uint16_t DEFAULT_PORT;

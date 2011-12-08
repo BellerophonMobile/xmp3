@@ -35,7 +35,7 @@ struct jid* jid_new_from_str(const char *jidstr);
  * @param jid The JID to copy.
  * @returns A new JID structure.
  */
-struct jid* jid_new_from_jid(const struct *jid);
+struct jid* jid_new_from_jid(const struct jid *jid);
 
 /**
  * Converts a JID to a newly allocated string.
@@ -47,6 +47,9 @@ struct jid* jid_new_from_jid(const struct *jid);
  *          is invalid.
  */
 char* jid_to_str(const struct jid *jid);
+
+/** Gets the length of a JID string without converting it. */
+int jid_to_str_len(const struct jid *jid);
 
 /**
  * Compare two JIDs exactly.
@@ -113,4 +116,4 @@ const char* jid_resource(const struct jid *jid);
  * The string will be copied into the JID.  The string you pass in is your
  * responsibility to clean up.
  */
-void jid_set_resource(struct jid *jid, const char *domainpart);
+void jid_set_resource(struct jid *jid, const char *resourcepart);

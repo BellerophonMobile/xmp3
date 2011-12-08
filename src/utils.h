@@ -7,11 +7,6 @@
 
 #pragma once
 
-#include <expat.h>
-
-#include "client_socket.h"
-#include "xmpp_common.h"
-
 /**
  * Allocate and copy a string.
  *
@@ -38,36 +33,6 @@
     dst = strndup(src, n); \
     check_mem(dst); \
 } while(0)
-
-/**
- * Send all data in a buffer to the connected socket.
- *
- * This will keep trying until all data is sent.  This should later be
- * rewritten to add a write callback using a non-blocking socket.
- *
- * @param fd     File descriptor to send to.
- * @param buffer Buffer to read data from.
- * @param len    Length of the buffer to send.
- * @return Number of bytes sent, or -1 on error.
- */
-int sendall(struct client_socket *socket, const char *buffer, int len);
-
-/**
- * Send the raw text of the current Expat parse event to a client.
- *
- * @param parser An Expat parser instance.
- * @param fd     The file descriptor to send to.
- */
-int sendxml(XML_Parser parser, struct client_socket *socket);
-
-/**
- * Takes a stanza struct and recreates the string tag.
- *
- * @param stanza Stanza structure to create a tag for.
- * @return A string representing the start stanza tag, with all attributes and
- *         their values.
- */
-char* create_start_tag(struct xmpp_stanza *stanza);
 
 /*
  * These functions are from libb64, found at: http://libb64.sourceforge.net/

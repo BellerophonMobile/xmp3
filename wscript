@@ -40,7 +40,7 @@ def configure(ctx):
     ctx.check_cc(lib='crypto')
     ctx.check_cc(lib='ssl')
 
-    ctx.env.CFLAGS += ['-std=gnu99', '-Wall']
+    ctx.env.CFLAGS += ['-std=gnu99', '-Wall', '-Werror']
     ctx.env.CFLAGS += ['-O0', '-ggdb']
 
 def build(ctx):
@@ -49,15 +49,18 @@ def build(ctx):
         source = [
             'src/client_socket.c',
             'src/event.c',
+            'src/jid.c',
             'src/main.c',
             'src/utils.c',
             'src/xep_muc.c',
             'src/xmp3_options.c',
             'src/xmpp_auth.c',
-            'src/xmpp.c',
+            'src/xmpp_client.c',
             'src/xmpp_common.c',
             'src/xmpp_core.c',
             'src/xmpp_im.c',
+            'src/xmpp_server.c',
+            'src/xmpp_stanza.c',
         ],
         use = ['EXPAT', 'CRYPTO', 'SSL'],
     )

@@ -9,7 +9,8 @@
 
 #include <stdbool.h>
 
-#include "xmpp_common.h"
+// Forward declarations
+struct xmpp_stanza;
 
 /** Expat handler for general XMPP stanza processing. */
 void xmpp_core_stanza_start(void *data, const char *name, const char **attrs);

@@ -7,12 +7,13 @@
 
 #pragma once
 
-#include "xmpp.h"
-
 const char *XMPP_IQ_SESSION;
 const char *XMPP_IQ_QUERY_ROSTER;
 const char *XMPP_IQ_DISCO_QUERY_INFO;
 const char *XMPP_IQ_DISCO_QUERY_ITEMS;
+
+// Forward declarations
+struct xmpp_stanza;
 
 /** IQ stanza callback for handling a session IQ. */
 bool xmpp_im_iq_session(struct xmpp_stanza *stanza, void *data);

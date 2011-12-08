@@ -5,17 +5,17 @@
  * @file
  */
 
-#include "jid.h"
-
 #include "utstring.h"
 
 #include "log.h"
 #include "utils.h"
 
+#include "jid.h"
+
 #define MAX_JIDSTR_LEN 3071
 
 // Forward declarations
-static void copy_jid_field(char *jidfield, char *arg);
+static void copy_jid_field(char *jidfield, const char *arg);
 
 /** Represents a JID (local@domain/resource). */
 struct jid {
@@ -41,7 +41,8 @@ struct jid* jid_new_from_str(const char *jidstr) {
 
     /* We use this temp string to replace delimiters with NULLs, then copy
      * those substrings out into the final structure. */
-    char *tmpstr = strndupa(jidstr, MAX_JIDSTR_LEN);
+    char *tmpstr;
+    STRNDUP_CHECK(tmpstr, jidstr, MAX_JIDSTR_LEN);
 
     char *at_delim = strchr(tmpstr, '@');
     if (at_delim != NULL) {
@@ -65,14 +66,18 @@ struct jid* jid_new_from_str(const char *jidstr) {
     if (slash_delim != NULL) {
         jid_set_resource(jid, slash_delim);
     }
+
+    free(tmpstr);
     return jid;
 }
 
-struct jid* jid_new_from_jid(const struct *jid) {
+struct jid* jid_new_from_jid(const struct jid *jid) {
     struct jid *newjid = jid_new();
     jid_set_local(newjid, jid_local(jid));
     jid_set_domain(newjid, jid_local(jid));
     jid_set_resource(newjid, jid_local(jid));
+
+    return newjid;
 }
 
 char* jid_to_str(const struct jid *jid) {
@@ -95,6 +100,19 @@ char* jid_to_str(const struct jid *jid) {
     }
 
     return utstring_body(&strjid);
+}
+
+int jid_to_str_len(const struct jid *jid) {
+    int len = strlen(jid->domain);
+    if (jid->local) {
+        // +1 for '@'
+        len += strlen(jid->local) + 1;
+    }
+    if (jid->resource) {
+        // +1 for '/'
+        len += strlen(jid->resource) + 1;
+    }
+    return len;
 }
 
 int jid_cmp(const struct jid *a, const struct jid *b) {
@@ -152,11 +170,11 @@ const char* jid_resource(const struct jid *jid) {
     return jid->resource;
 }
 
-void jid_set_resource(struct jid *jid, const char *domainpart) {
+void jid_set_resource(struct jid *jid, const char *resourcepart) {
     copy_jid_field(jid->resource, resourcepart);
 }
 
-static void copy_jid_field(char *jidfield, char *arg) {
+static void copy_jid_field(char *jidfield, const char *arg) {
     free(jidfield);
     if (arg == NULL) {
         jidfield = NULL;

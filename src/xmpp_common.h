@@ -7,17 +7,6 @@
 
 #pragma once
 
-#include <stdbool.h>
-#include <netinet/in.h>
-
-#include <openssl/ssl.h>
-
-#include <expat.h>
-
-#include "utarray.h"
-
-#include "log.h"
-
 // XML string constants
 #define XMPP_NS_SEPARATOR "#"
 
@@ -42,74 +31,8 @@ extern const char *XMPP_MESSAGE_BODY;
 extern const char *XMPP_PRESENCE;
 extern const char *XMPP_IQ;
 
-extern const char *XMPP_ATTR_TYPE_GET;
-extern const char *XMPP_ATTR_TYPE_SET;
-extern const char *XMPP_ATTR_TYPE_RESULT;
-extern const char *XMPP_ATTR_TYPE_ERROR;
-
-extern const struct jid SERVER_JID;
-
-/** Data on a connected client. */
-struct xmpp_client {
-    /** The connected client_socket structure. */
-    struct client_socket* socket;
-
-    /** The address of the client. */
-    struct sockaddr_in caddr;
-
-    /** An Expat parser instance for this client. */
-    XML_Parser parser;
-
-    /** A pointer to the server this client is connected to. */
-    struct xmpp_server *server;
-
-    /** Whether the client has successfully authenticated or not. */
-    bool authenticated;
-
-    /** Whether this client is still connected or not. */
-    bool connected;
-
-    /** The JID of this client. */
-    struct jid jid;
-
-    /** @{ Clients are stored in a doubly-linked list. */
-    struct xmpp_client *prev;
-    struct xmpp_client *next;
-    /** @} */
-};
-
-/** Represents a top-level XMPP stanza. */
-struct xmpp_stanza {
-    /** The name + namespace string. */
-    char *ns_name;
-
-    /** The name of this tag. */
-    char *name;
-
-    /** The namespace of this tag. */
-    char *namespace;
-
-    /** The "id" attribute of this tag (may be NULL). */
-    char *id;
-
-    /** The "to" attribute of this tag (may be NULL). */
-    char *to;
-
-    /** The "to" attribute converted to a JID structure. */
-    struct jid to_jid;
-
-    /** The "from" attribute of this tag (may be NULL). */
-    char *from;
-
-    /** The client structure that this stanza was received from. */
-    struct xmpp_client *from_client;
-
-    /** The "type" attribute of this tag (may be NULL). */
-    char *type;
-
-    /** Any other attributes attached to this tag. */
-    UT_array *other_attrs;
-};
+// Forward declarations
+struct xmpp_stanza;
 
 /** Print out an XML start element and its attributes */
 void xmpp_print_start_tag(const char *name, const char **attrs);

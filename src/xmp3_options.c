@@ -5,19 +5,21 @@
  * @file
  */
 
-#include "xmp3_options.h"
-
 #include <stdlib.h>
+#include <stdint.h>
 #include <errno.h>
+#include <arpa/inet.h>
 
 #include "log.h"
+
+#include "xmp3_options.h"
 
 // Default address is loopback
 const struct in_addr DEFAULT_ADDR = { 0x0100007f };
 const uint16_t DEFAULT_PORT = 5222;
 const int DEFAULT_BACKLOG = 3;
 const size_t DEFAULT_BUFFER_SIZE = 2000;
-extern const bool DEFAULT_USE_SSL = true;
+const bool DEFAULT_USE_SSL = true;
 const char *DEFAULT_KEYFILE = "server.pem";
 const char *DEFAULT_CERTFILE = "server.crt";
 const char *DEFAULT_SERVER_NAME = "proxy";

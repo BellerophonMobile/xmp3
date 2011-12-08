@@ -7,87 +7,32 @@
 
 #pragma once
 
+#include <stdbool.h>
+#include <netinet/in.h>
+
+#include <expat.h>
 #include <openssl/ssl.h>
 
-// Forward declaration
 struct client_socket;
-
-/**
- * Function to call to send data to this socket.
- *
- * @param socket A client_socket structure to send to.
- * @param buf    The data to send.
- * @param len    The length of buf.
- * @return The number of bytes written, or <= 0 on error.
- */
-typedef ssize_t (*socket_send_func)(struct client_socket *socket,
-                                    const void *buf, size_t len);
-
-/**
- * Function to call to receive data from this socket.
- *
- * @param socket A client_socket structure to receive from.
- * @param buf    A buffer to write data into
- * @param len    The length of buf.
- * @return The number of bytes written, <= 0 on error.
- */
-typedef ssize_t (*socket_recv_func)(struct client_socket *socket,
-                                    void *buf, size_t len);
-
-/**
- * Function to call to close a socket.
- *
- * @param socket The client_socket to close.
- */
-typedef void (*socket_close_func)(struct client_socket *socket);
-
-/**
- * Function to call to clean up and delete the client_socket.
- *
- * This should clean up anything that was put in the client_socket->data item.
- * This should NOT close the socket.
- *
- * @param socket The client_socket to delete.
- */
-typedef void (*socket_del_func)(struct client_socket *socket);
-
-/** An abstract representation of a socket. */
-struct client_socket {
-    /** Function used for sending data. */
-    socket_send_func send_func;
-
-    /** Function used for receiving data. */
-    socket_recv_func recv_func;
-
-    /** Function used to close the socket. */
-    socket_close_func close_func;
-
-    /** Function used to delete the "data" pointer. */
-    socket_del_func del_func;
-
-    /** Implementation-specific data structure. */
-    void *data;
-};
 
 /**
  * Allocates and initializes a new client socket using a file descriptor.
  *
  * Reading/writing is done just with send/recv.
  *
- * @param fd The file descriptor to read/write from.
+ * @param fd   The file descriptor to read/write from.
+ * @param addr The address of the connected client.
  * @return A client_socket structure.
  */
-struct client_socket* client_socket_new(int fd);
+struct client_socket* client_socket_new(int fd, struct sockaddr_in addr);
 
-/**
- * Allocates and initializes a new client socket using SSL.
- *
- * @param ssl_context An OpenSSL context.
- * @param fd A connected file descriptor.
- * @return A client_socket structure.
- */
-struct client_socket* client_socket_ssl_new(
-        SSL_CTX *ssl_context, struct client_socket *orig_socket);
+/** Closes, cleans up and deallocates a client_socket structure. */
+void client_socket_del(struct client_socket *socket);
+
+/** Closes a client_socket. */
+void client_socket_close(struct client_socket *socket);
+
+int client_socket_fd(const struct client_socket *socket);
 
 /**
  * Send some data to a client_socket.
@@ -112,17 +57,35 @@ ssize_t client_socket_recv(struct client_socket *socket, void *buf,
                            size_t len);
 
 /**
- * Closes a client_socket.
+ * Enables SSL on a client socket.
  *
- * @param socket The client socket to close.
+ * @param socket The socket to toggle SSL on.
+ * @param ssl_enabled True to enable SSL, false to disable it.
+ * @returns True if successful, false if not.
  */
-void client_socket_close(struct client_socket *socket);
+bool client_socket_set_ssl(struct client_socket *socket, SSL_CTX *ssl_context);
 
 /**
- * Cleans up and deallocates a client_socket structure.
+ * Send all data in a buffer to the connected socket.
  *
- * Note, this does NOT try to close the socket beforehand.
+ * This will keep trying until all data is sent.  This should later be
+ * rewritten to add a write callback using a non-blocking socket.
  *
- * @param socket The client_socket to delete.
+ * @param fd     File descriptor to send to.
+ * @param buffer Buffer to read data from.
+ * @param len    Length of the buffer to send.
+ * @return Number of bytes sent, or -1 on error.
  */
-void client_socket_del(struct client_socket *socket);
+ssize_t client_socket_sendall(struct client_socket *socket, const void *buf,
+                              size_t len);
+
+/**
+ * Send the raw text of the current Expat parse event to a client.
+ *
+ * @param parser An Expat parser instance.
+ * @param fd     The file descriptor to send to.
+ */
+int client_socket_sendxml(struct client_socket *socket, XML_Parser parser);
+
+/** Returns a newly allocated string version of the socket address. */
+char* client_socket_addr_str(struct client_socket *socket);

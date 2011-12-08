@@ -7,16 +7,20 @@
 
 #pragma once
 
-#include "xmpp_client.h"
-#include "jid.h"
-
 extern const char *XMPP_STANZA_ATTR_TO;
 extern const char *XMPP_STANZA_ATTR_FROM;
 extern const char *XMPP_STANZA_ATTR_ID;
 extern const char *XMPP_STANZA_ATTR_TYPE;
 
-/** Opaque pointer to an XMPP stanza structure. */
+extern const char *XMPP_ATTR_TYPE_GET;
+extern const char *XMPP_ATTR_TYPE_SET;
+extern const char *XMPP_ATTR_TYPE_RESULT;
+extern const char *XMPP_ATTR_TYPE_ERROR;
+
 struct xmpp_stanza;
+
+// Forward declarations
+struct xmpp_client;
 
 /**
  * Allocate and initialize a new XMPP stanza structure.
@@ -61,7 +65,7 @@ const char* xmpp_stanza_namespace(const struct xmpp_stanza *stanza);
  *
  * This is mostly for convenience, so you can strcmp both in one go.
  */
-const char* xmpp_stanza_name_namespace(const struct xmpp_stanza *stanza);
+const char* xmpp_stanza_ns_name(const struct xmpp_stanza *stanza);
 
 /**
  * Returns the JID structure from the string JID attribute "from".
@@ -72,7 +76,7 @@ const char* xmpp_stanza_name_namespace(const struct xmpp_stanza *stanza);
  * @returns A new JID structure based on the "from" attribute of the stanza.
  *          If not present, NULL is returned.
  */
-const struct jid* xmpp_stanza_jid_from(const struct xmpp_stanza *stanza);
+struct jid* xmpp_stanza_jid_from(const struct xmpp_stanza *stanza);
 
 /**
  * Returns the JID structure from the string JID attribute "to".
@@ -83,7 +87,7 @@ const struct jid* xmpp_stanza_jid_from(const struct xmpp_stanza *stanza);
  * @returns A new JID structure based on the "from" attribute of the stanza.
  *          If not present, NULL is returned.
  */
-const struct jid* xmpp_stanza_jid_to(const struct xmpp_stanza *stanza);
+struct jid* xmpp_stanza_jid_to(const struct xmpp_stanza *stanza);
 
 /**
  * Returns the value of an attribute of this stanza.
@@ -96,3 +100,20 @@ const struct jid* xmpp_stanza_jid_to(const struct xmpp_stanza *stanza);
  */
 const char* xmpp_stanza_attr(const struct xmpp_stanza *stanza,
                              const char *name);
+
+/**
+ * Sets the value of an attribute in a stanza.
+ *
+ * The name/value are copied if necessary.
+ */
+void xmpp_stanza_set_attr(struct xmpp_stanza *stanza, const char *name,
+                          const char *value);
+
+/**
+ * Takes a stanza struct and recreates the string tag.
+ *
+ * @param stanza Stanza structure to create a tag for.
+ * @return A newly allocated string representing the start stanza tag, with all
+ *         attributes and their values.
+ */
+char* xmpp_stanza_create_tag(const struct xmpp_stanza *stanza);
