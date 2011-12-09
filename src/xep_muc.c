@@ -159,12 +159,17 @@ struct xep_muc* xep_muc_new(struct xmpp_server *server) {
 
     muc->jid = jid_new_from_jid(xmpp_server_jid(server));
 
-    char new_domain[strlen(MUC_DOMAINPART) + strlen(jid_domain(muc->jid))];
+    char new_domain[strlen(MUC_DOMAINPART)
+                    + strlen(jid_domain(muc->jid)) + 1];
     strcpy(new_domain, MUC_DOMAINPART);
     strcat(new_domain, jid_domain(muc->jid));
     jid_set_domain(muc->jid, new_domain);
 
+    jid_set_local(muc->jid, "*");
+    jid_set_resource(muc->jid, "*");
     xmpp_server_add_stanza_route(server, muc->jid, stanza_handler, muc);
+    jid_set_local(muc->jid, NULL);
+    jid_set_resource(muc->jid, NULL);
 
     return muc;
 }

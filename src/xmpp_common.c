@@ -13,6 +13,7 @@
 #include "utstring.h"
 
 #include "log.h"
+#include "utils.h"
 
 #include "client_socket.h"
 #include "xmpp_stanza.h"
@@ -110,17 +111,23 @@ static void send_error(struct xmpp_stanza *stanza, const char *error) {
     utstring_new(msg);
 
     // Ignore the "to" and "from" attributes
-    char *to = strdup(xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_TO));
-    check_mem(to);
-    xmpp_stanza_set_attr(stanza, XMPP_STANZA_ATTR_TO, NULL);
+    char *to = NULL;
+    if (xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_TO) != NULL) {
+        STRDUP_CHECK(to, xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_TO));
+        xmpp_stanza_set_attr(stanza, XMPP_STANZA_ATTR_TO, NULL);
+    }
 
-    char *from = strdup(xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_FROM));
-    check_mem(from);
-    xmpp_stanza_set_attr(stanza, XMPP_STANZA_ATTR_FROM, NULL);
+    char *from = NULL;
+    if (xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_FROM) != NULL) {
+        STRDUP_CHECK(from, xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_FROM));
+        xmpp_stanza_set_attr(stanza, XMPP_STANZA_ATTR_FROM, NULL);
+    }
 
     // We need to change the type to "error"
-    char *type = strdup(xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_TYPE));
-    check_mem(type);
+    char *type = NULL;
+    if (xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_TYPE) != NULL) {
+        STRDUP_CHECK(type, xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_TYPE));
+    }
     xmpp_stanza_set_attr(stanza, XMPP_STANZA_ATTR_TYPE, XMPP_ATTR_TYPE_ERROR);
 
     char *start_tag = xmpp_stanza_create_tag(stanza);
@@ -129,9 +136,15 @@ static void send_error(struct xmpp_stanza *stanza, const char *error) {
     xmpp_stanza_set_attr(stanza, XMPP_STANZA_ATTR_TO, to);
     xmpp_stanza_set_attr(stanza, XMPP_STANZA_ATTR_FROM, from);
     xmpp_stanza_set_attr(stanza, XMPP_STANZA_ATTR_TYPE, type);
-    free(to);
-    free(from);
-    free(type);
+    if (to != NULL) {
+        free(to);
+    }
+    if (from != NULL) {
+        free(from);
+    }
+    if (type != NULL) {
+        free(type);
+    }
 
     utstring_printf(msg, start_tag);
     free(start_tag);
@@ -145,8 +158,9 @@ static void send_error(struct xmpp_stanza *stanza, const char *error) {
     check(client_socket_sendall(xmpp_client_socket(client), utstring_body(msg),
                                 utstring_len(msg)) > 0,
           "Error sending not supported error items");
+    utstring_free(msg);
+    return;
 
-    // Explicit fallthrough
 error:
     if (msg != NULL) {
         utstring_free(msg);

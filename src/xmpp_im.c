@@ -28,7 +28,7 @@ const char *XMPP_IQ_DISCO_QUERY_INFO =
 
 // XML String constants
 static const char *MSG_STREAM_SUCCESS =
-    "<iq from='localhost' type='result' id='%s'/>";
+    "<iq from='proxy' type='result' id='%s'/>";
 
 static const char *MSG_ROSTER =
     "<iq id='%s' type='result'>"
@@ -137,7 +137,7 @@ static void roster_query_end(void *data, const char *name) {
 
     // TODO: Actually manage the user's roster.
 
-    sprintf(msg, MSG_ROSTER, xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_TYPE));
+    sprintf(msg, MSG_ROSTER, xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_ID));
     check(client_socket_sendall(xmpp_client_socket(client), msg,
                                 strlen(msg)) > 0,
           "Error sending roster message");

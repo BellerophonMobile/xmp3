@@ -11,6 +11,8 @@
 
 #include "log.h"
 
+#include "jid.h"
+
 #include "client_socket.h"
 #include "xmpp_client.h"
 #include "xmpp_common.h"
@@ -108,6 +110,7 @@ bool xmpp_core_message_handler(struct xmpp_stanza *from_stanza, void *data) {
                           message_client_start, message_client_end);
     XML_SetCharacterDataHandler(xmpp_client_parser(from_client), message_client_data);
 
+    struct message_tmp *tmp = NULL;
     char* msg = xmpp_stanza_create_tag(from_stanza);
     check_mem(msg);
 
@@ -116,7 +119,7 @@ bool xmpp_core_message_handler(struct xmpp_stanza *from_stanza, void *data) {
           "Error sending message start tag to destination.");
     free(msg);
 
-    struct message_tmp *tmp = calloc(1, sizeof(*tmp));
+    tmp = calloc(1, sizeof(*tmp));
     check_mem(tmp);
 
     tmp->to_client = to_client;
@@ -215,7 +218,7 @@ static void iq_start(void *data, const char *name, const char **attrs) {
 
     /* Routing for IQ stanzas is based on the namespace (and tag name) of the
      * first child of the top IQ tag. */
-    if (!xmpp_server_route_iq(stanza)) {
+    if (!xmpp_server_route_iq(stanza, name)) {
         /* If we can't answer the IQ, then let the client know.  Make sure to
          * ignore anything inside this stanza. */
         xmpp_send_service_unavailable(stanza);

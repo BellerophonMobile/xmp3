@@ -173,4 +173,4 @@ void xmpp_server_del_iq_route(struct xmpp_server *server, const char *ns,
  * @param stanza The stanza to deliver.
  * @return True if successfully handled, false if not.
  */
-bool xmpp_server_route_iq(struct xmpp_stanza *stanza);
+bool xmpp_server_route_iq(struct xmpp_stanza *stanza, const char *ns);

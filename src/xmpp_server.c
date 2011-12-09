@@ -351,18 +351,31 @@ void xmpp_server_del_stanza_route(struct xmpp_server *server,
 bool xmpp_server_route_stanza(struct xmpp_stanza *stanza) {
     struct xmpp_client *client = xmpp_stanza_client(stanza);
     struct xmpp_server *server = xmpp_client_server(client);
-    const struct jid *search_jid = xmpp_stanza_jid_from(stanza);
+    const struct jid *search_jid = xmpp_stanza_jid_to(stanza);
 
     bool was_handled = false;
 
+    char *jidstr = jid_to_str(search_jid);
+    debug("Looking for stanza route for '%s'", jidstr);
+    free(jidstr);
+
     struct stanza_route *route = NULL;
     DL_FOREACH(server->stanza_routes, route) {
+        jidstr = jid_to_str(route->jid);
+        debug("Is it '%s'?", jidstr);
+        free(jidstr);
         if (jid_cmp_wildcards(search_jid, route->jid) == 0) {
             was_handled = route->cb(stanza, route->data);
         }
     }
     if (!was_handled) {
         log_info("No route for destination");
+        // If its an IQ, we must respond if nobody handled it.
+        /*
+        if (strcmp(xmpp_stanza_ns_name(stanza), XMPP_IQ) == 0) {
+            xmpp_send_service_unavailable(stanza);
+        }
+        */
     }
     return was_handled;
 }
@@ -377,15 +390,19 @@ void xmpp_server_del_iq_route(struct xmpp_server *server, const char *ns,
     DEL_CALLBACK(iq_route, server->iq_routes, ns, cb, data);
 }
 
-bool xmpp_server_route_iq(struct xmpp_stanza *stanza) {
+bool xmpp_server_route_iq(struct xmpp_stanza *stanza, const char *ns_name) {
     struct xmpp_client *client = xmpp_stanza_client(stanza);
     struct xmpp_server *server = xmpp_client_server(client);
 
     bool was_handled = false;
 
+    debug("Looking for IQ '%s'", ns_name);
+
     struct iq_route *route = NULL;
     DL_FOREACH(server->iq_routes, route) {
-        if (strcmp(xmpp_stanza_ns_name(stanza), route->ns) == 0) {
+        debug("Is it '%s'?", route->ns);
+        if (strcmp(ns_name, route->ns) == 0) {
+            debug("Yes!");
             was_handled = route->cb(stanza, route->data);
         }
     }
@@ -466,6 +483,9 @@ static bool init_components(struct xmpp_server *server,
 
 static void connect_client(struct event_loop *loop, int fd, void *data) {
     struct xmpp_server *server = (struct xmpp_server*)data;
+    struct client_socket *socket = NULL;
+    struct xmpp_client *client = NULL;
+    struct c_client *connected_client = NULL;
 
     struct sockaddr_in caddr;
     socklen_t caddrlen = sizeof(caddr);
@@ -473,15 +493,15 @@ static void connect_client(struct event_loop *loop, int fd, void *data) {
     int client_fd = accept(fd, (struct sockaddr*)&caddr, &caddrlen);
     check(client_fd != -1, "Error accepting new client connection");
 
-    struct client_socket *socket = client_socket_new(client_fd, caddr);
+    socket = client_socket_new(client_fd, caddr);
     check_mem(socket);
 
-    struct xmpp_client *client = xmpp_client_new(server, socket);
+    client = xmpp_client_new(server, socket);
     check_mem(client);
 
     event_register_callback(loop, client_fd, read_client, client);
 
-    struct c_client *connected_client = calloc(1, sizeof(*connected_client));
+    connected_client = calloc(1, sizeof(*connected_client));
     connected_client->client = client;
 
     log_info("New connection from %s:%d", inet_ntoa(caddr.sin_addr),

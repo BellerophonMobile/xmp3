@@ -50,6 +50,8 @@ struct xmpp_client* xmpp_client_new(struct xmpp_server *server,
     XML_SetCharacterDataHandler(client->parser, xmpp_error_data);
     XML_SetUserData(client->parser, client);
 
+    return client;
+
 error:
     xmpp_client_del(client);
     return NULL;

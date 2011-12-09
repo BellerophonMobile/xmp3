@@ -13,9 +13,10 @@
 #include "jid.h"
 
 #define MAX_JIDSTR_LEN 3071
+#define MAX_PART_LEN 1023
 
 // Forward declarations
-static void copy_jid_field(char *jidfield, const char *arg);
+static void copy_jid_field(char **jidfield, const char *arg);
 
 /** Represents a JID (local@domain/resource). */
 struct jid {
@@ -74,8 +75,8 @@ struct jid* jid_new_from_str(const char *jidstr) {
 struct jid* jid_new_from_jid(const struct jid *jid) {
     struct jid *newjid = jid_new();
     jid_set_local(newjid, jid_local(jid));
-    jid_set_domain(newjid, jid_local(jid));
-    jid_set_resource(newjid, jid_local(jid));
+    jid_set_domain(newjid, jid_domain(jid));
+    jid_set_resource(newjid, jid_resource(jid));
 
     return newjid;
 }
@@ -128,6 +129,7 @@ int jid_cmp(const struct jid *a, const struct jid *b) {
         }
     }
 
+    // Domains should never be NULL, but just to be sure.
     if ((a->domain == NULL) != (b->domain == NULL)) {
         return a->domain == NULL ? -1 : 1;
     }
@@ -150,12 +152,66 @@ int jid_cmp(const struct jid *a, const struct jid *b) {
     return 0;
 }
 
+int jid_cmp_wildcards(const struct jid *a, const struct jid *b) {
+    if (a->local == NULL) {
+        if (b->local != NULL && strcmp(b->local, "*") != 0) {
+            return 1;
+        }
+    }
+    if (b->local == NULL) {
+        if (a->local != NULL && strcmp(a->local, "*") != 0) {
+            return 1;
+        }
+    }
+    if (a->local != NULL && b->local != NULL
+            && strcmp(a->local, "*") != 0 && strcmp(b->local, "*") != 0) {
+        int rv = strcmp(a->local, b->local);
+        if (rv != 0) {
+            return rv;
+        }
+    }
+
+    if (a->domain == NULL) {
+        if (b->domain != NULL && strcmp(b->domain, "*") != 0) {
+            return 1;
+        }
+    }
+    if (b->domain == NULL) {
+        if (a->domain != NULL && strcmp(a->domain, "*") != 0) {
+            return 1;
+        }
+    }
+    if (a->domain != NULL && b->domain != NULL
+            && strcmp(a->domain, "*") != 0 && strcmp(b->domain, "*") != 0) {
+        int rv = strcmp(a->domain, b->domain);
+        if (rv != 0) {
+            return rv;
+        }
+    }
+
+    if (a->resource == NULL) {
+        if (b->resource != NULL && strcmp(b->resource, "*") != 0) {
+            return 1;
+        }
+    }
+    if (b->resource == NULL) {
+        if (a->resource != NULL && strcmp(a->resource, "*") != 0) {
+            return 1;
+        }
+    }
+    if (a->resource != NULL && b->resource != NULL
+            && strcmp(a->resource, "*") != 0 && strcmp(b->resource, "*") != 0) {
+        return strcmp(a->resource, b->resource);
+    }
+    return 0;
+}
+
 const char* jid_local(const struct jid *jid) {
     return jid->local;
 }
 
 void jid_set_local(struct jid *jid, const char *localpart) {
-    copy_jid_field(jid->local, localpart);
+    copy_jid_field(&jid->local, localpart);
 }
 
 const char* jid_domain(const struct jid *jid) {
@@ -163,7 +219,7 @@ const char* jid_domain(const struct jid *jid) {
 }
 
 void jid_set_domain(struct jid *jid, const char *domainpart) {
-    copy_jid_field(jid->domain, domainpart);
+    copy_jid_field(&jid->domain, domainpart);
 }
 
 const char* jid_resource(const struct jid *jid) {
@@ -171,14 +227,14 @@ const char* jid_resource(const struct jid *jid) {
 }
 
 void jid_set_resource(struct jid *jid, const char *resourcepart) {
-    copy_jid_field(jid->resource, resourcepart);
+    copy_jid_field(&jid->resource, resourcepart);
 }
 
-static void copy_jid_field(char *jidfield, const char *arg) {
-    free(jidfield);
+static void copy_jid_field(char **jidfield, const char *arg) {
+    free(*jidfield);
     if (arg == NULL) {
-        jidfield = NULL;
+        *jidfield = NULL;
     } else {
-        STRNDUP_CHECK(jidfield, arg, MAX_JIDSTR_LEN);
+        STRNDUP_CHECK(*jidfield, arg, MAX_PART_LEN);
     }
 }

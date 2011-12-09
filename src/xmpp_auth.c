@@ -49,7 +49,7 @@ static const char *XMPP_AUTH_MECHANISM_PLAIN = "PLAIN";
  * but it doesn't seem to really matter. */
 static const char *MSG_STREAM_HEADER =
     "<stream:stream "
-        "from='localhost' "
+        "from='proxy' "
         "id='foobarx' "
         "version='1.0' "
         "xml:lang='en' "

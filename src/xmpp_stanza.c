@@ -107,7 +107,7 @@ struct xmpp_stanza* xmpp_stanza_new(struct xmpp_client *client,
     const char *to = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_TO);
     if (to == NULL) {
         struct attribute *attr = calloc(1, sizeof(*attr));
-        STRDUP_CHECK(attr->name, XMPP_STANZA_ATTR_FROM);
+        STRDUP_CHECK(attr->name, XMPP_STANZA_ATTR_TO);
 
         if (strcmp(stanza->ns_name, XMPP_MESSAGE) == 0) {
             /* If there is no "to" in a message, it is addressed to the bare
