@@ -426,8 +426,8 @@ static void enter_room_presence(const char *search_room,
         fromstr = NULL;
     }
 
-    struct room_client *new_client = room_client_new(jid_resource(from_jid),
-                                                     from_client);
+    struct room_client *new_client = room_client_new(
+            jid_resource(xmpp_stanza_jid_to(stanza)), from_client);
     check_mem(new_client);
     DL_APPEND(room->clients, new_client);
 
@@ -559,7 +559,7 @@ static bool leave_room(struct xep_muc *muc, struct room *room,
                   + strlen(tostr)];
     sprintf(msg_self, MSG_PRESENCE_EXIT_ITEM_SELF, fromstr, tostr);
     if (client_socket_sendall(xmpp_client_socket(room_client->client),
-                              msg_self, strlen(msg_self)) > 0) {
+                              msg_self, strlen(msg_self)) <= 0) {
         log_err("Error sending self exit presence to client");
         rv = false;
     }

@@ -45,16 +45,17 @@ struct jid* jid_new_from_str(const char *jidstr) {
     char *tmpstr;
     STRNDUP_CHECK(tmpstr, jidstr, MAX_JIDSTR_LEN);
 
+    // Need to check for '/' first, since I'm modifying the string.
+    char *slash_delim = strchr(tmpstr, '/');
+    if (slash_delim != NULL) {
+        *slash_delim = '\0';
+        slash_delim++;
+    }
+
     char *at_delim = strchr(tmpstr, '@');
     if (at_delim != NULL) {
         *at_delim = '\0';
         at_delim++;
-    }
-
-    char *slash_delim = strchr(tmpstr, '/');
-    if(slash_delim != NULL) {
-        *slash_delim = '\0';
-        slash_delim++;
     }
 
     if (at_delim == NULL) {

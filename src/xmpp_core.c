@@ -115,7 +115,7 @@ bool xmpp_core_message_handler(struct xmpp_stanza *from_stanza, void *data) {
     check_mem(msg);
 
     check(client_socket_sendall(xmpp_client_socket(to_client),
-                                msg, strlen(msg)) <= 0,
+                                msg, strlen(msg)) > 0,
           "Error sending message start tag to destination.");
     free(msg);
 
@@ -147,7 +147,7 @@ static void message_client_start(void *data, const char *name,
     log_info("Client message start");
 
     check(client_socket_sendxml(xmpp_client_socket(tmp->to_client),
-                xmpp_client_parser(from_client)) <= 0,
+                xmpp_client_parser(from_client)) > 0,
             "Error sending message to destination.");
     return;
 
@@ -171,7 +171,7 @@ static void message_client_end(void *data, const char *name) {
     if (XML_GetCurrentByteCount(xmpp_client_parser(from_client)) > 0) {
         check(client_socket_sendxml(
                     xmpp_client_socket(tmp->to_client),
-                    xmpp_client_parser(from_client)) <= 0,
+                    xmpp_client_parser(from_client)) > 0,
               "Error sending message to destination.");
     }
 
@@ -199,7 +199,7 @@ static void message_client_data(void *data, const char *s, int len) {
     log_info("Client message data");
 
     check(client_socket_sendxml(xmpp_client_socket(tmp->to_client),
-                xmpp_client_parser(from_client)) <= 0,
+                xmpp_client_parser(from_client)) > 0,
             "Error sending message to destination.");
     return;
 
