@@ -182,11 +182,9 @@ void xep_muc_del(struct xep_muc *muc) {
         struct room_client *r_client, *r_client_tmp;
         DL_FOREACH_SAFE(room->clients, r_client, r_client_tmp) {
             DL_DELETE(room->clients, r_client);
-            free(r_client->nickname);
-            free(r_client);
+            room_client_del(r_client);
         }
-        jid_del(room->jid);
-        free(room);
+        room_del(room);
     }
     free(muc);
 }
@@ -533,7 +531,6 @@ static void client_disconnect(struct xmpp_client *client, void *data) {
         DL_FOREACH_SAFE(room->clients, room_client, room_client_tmp) {
             if (room_client->client == client) {
                 leave_room(muc, room, room_client);
-                room_client_del(room_client);
             }
         }
     }

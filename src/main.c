@@ -56,7 +56,9 @@ static void print_usage() {
 static struct event_loop *loop = NULL;
 
 static void signal_handler(int signal) {
-    event_loop_stop(loop);
+    if (signal == SIGINT) {
+        event_loop_stop(loop);
+    }
 }
 
 int main(int argc, char *argv[]) {
@@ -110,6 +112,7 @@ int main(int argc, char *argv[]) {
     };
 
     check(sigaction(SIGINT, &sa, NULL) != -1, "Cannot set signal handler.");
+    check(sigaction(SIGPIPE, &sa, NULL) != -1, "Cannot set signal handler.");
 
     loop = event_new_loop();
 
