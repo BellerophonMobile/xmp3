@@ -296,6 +296,9 @@ void xmpp_server_add_client_listener(struct xmpp_client *client,
                                      xmpp_server_client_callback cb,
                                      void *data) {
     struct xmpp_server *server = xmpp_client_server(client);
+    char *strjid = jid_to_str(xmpp_client_jid(client));
+    debug("Registering disconnect listener for '%s'", strjid);
+    free(strjid);
     ADD_CALLBACK(client_listener, server->client_listeners, client, cb, data);
 }
 
