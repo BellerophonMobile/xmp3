@@ -190,16 +190,8 @@ int jid_cmp_wildcards(const struct jid *a, const struct jid *b) {
         }
     }
 
-    if (a->resource == NULL) {
-        if (b->resource != NULL && strcmp(b->resource, "*") != 0) {
-            return 1;
-        }
-    }
-    if (b->resource == NULL) {
-        if (a->resource != NULL && strcmp(a->resource, "*") != 0) {
-            return 1;
-        }
-    }
+    /* If one resource is NULL, and the other isn't we don't care.  Only if
+     * they both do, and they are different. */
     if (a->resource != NULL && b->resource != NULL
             && strcmp(a->resource, "*") != 0 && strcmp(b->resource, "*") != 0) {
         return strcmp(a->resource, b->resource);
