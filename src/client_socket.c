@@ -5,9 +5,10 @@
  * @file
  */
 
+#include <arpa/inet.h>
+#include <signal.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <arpa/inet.h>
 #include <unistd.h>
 
 #include <openssl/ssl.h>
@@ -39,7 +40,6 @@ struct client_socket* client_socket_new(int fd, struct sockaddr_in addr) {
 }
 
 void client_socket_del(struct client_socket *socket) {
-    client_socket_close(socket);
     if (socket->ssl) {
         SSL_free(socket->ssl);
     }
@@ -48,9 +48,22 @@ void client_socket_del(struct client_socket *socket) {
 
 void client_socket_close(struct client_socket *socket) {
     if (socket->ssl) {
-        if (SSL_shutdown(socket->ssl) != 1) {
-            ERR_print_errors_fp(stderr);
+        /* If the socket has already been closed, SSL_shutdown will cause
+         * a SIGPIPE to be sent to this process.  We don't care, so block it
+         * every time. */
+        struct sigaction sa = { .sa_handler=SIG_IGN };
+        struct sigaction osa;
+        if (sigaction(SIGPIPE, &sa, &osa) == 0) {
+            if (SSL_shutdown(socket->ssl) != 1) {
+                ERR_print_errors_fp(stderr);
+            }
+            if (sigaction(SIGPIPE, &osa, NULL) != 0) {
+                log_err("Can't unignore SIGPIPE");
+            }
+        } else {
+            log_err("Can't ignore SIGPIPE.");
         }
+
     }
     if (shutdown(socket->fd, SHUT_RDWR) == -1) {
         log_err("Unable to shut down client socket.");

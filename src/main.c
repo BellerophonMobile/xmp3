@@ -112,7 +112,6 @@ int main(int argc, char *argv[]) {
     };
 
     check(sigaction(SIGINT, &sa, NULL) != -1, "Cannot set signal handler.");
-    check(sigaction(SIGPIPE, &sa, NULL) != -1, "Cannot set signal handler.");
 
     loop = event_new_loop();
 
