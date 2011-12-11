@@ -28,7 +28,7 @@ const char *XMPP_IQ_DISCO_QUERY_INFO =
 
 // XML String constants
 static const char *MSG_STREAM_SUCCESS =
-    "<iq from='proxy' type='result' id='%s'/>";
+    "<iq from='localhost' type='result' id='%s'/>";
 
 static const char *MSG_ROSTER =
     "<iq id='%s' type='result'>"

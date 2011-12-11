@@ -22,7 +22,7 @@ const size_t DEFAULT_BUFFER_SIZE = 2000;
 const bool DEFAULT_USE_SSL = true;
 const char *DEFAULT_KEYFILE = "server.pem";
 const char *DEFAULT_CERTFILE = "server.crt";
-const char *DEFAULT_SERVER_NAME = "proxy";
+const char *DEFAULT_SERVER_NAME = "localhost";
 
 /** Hold all the options used to configure the XMP3 server. */
 struct xmp3_options {
