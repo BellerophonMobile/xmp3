@@ -329,9 +329,9 @@ void xmpp_server_disconnect_client(struct xmpp_client *client) {
     DL_FOREACH_SAFE(server->client_listeners, listener, tmp) {
         if (listener->client == client) {
             listener->cb(client, listener->data);
+            DL_DELETE(server->client_listeners, listener);
+            free(listener);
         }
-        DL_DELETE(server->client_listeners, listener);
-        free(listener);
     }
 
     DL_DELETE(server->clients, search);
