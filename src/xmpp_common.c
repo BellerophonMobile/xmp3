@@ -5,16 +5,21 @@
  * @file
  */
 
-#include "xmpp_common.h"
-
+#include <stdbool.h>
 #include <stdio.h>
+
+#include <expat.h>
 
 #include "utstring.h"
 
+#include "log.h"
 #include "utils.h"
 
-const char *SERVER_DOMAIN = "localhost";
-const struct jid SERVER_JID = {NULL, "localhost", NULL};
+#include "client_socket.h"
+#include "xmpp_stanza.h"
+#include "xmpp_client.h"
+
+#include "xmpp_common.h"
 
 const char *XMPP_STREAM = XMPP_NS_STREAM XMPP_NS_SEPARATOR "stream";
 const char *XMPP_AUTH = XMPP_NS_SASL XMPP_NS_SEPARATOR "auth";
@@ -25,15 +30,6 @@ const char *XMPP_MESSAGE = XMPP_NS_CLIENT XMPP_NS_SEPARATOR "message";
 const char *XMPP_MESSAGE_BODY = XMPP_NS_CLIENT XMPP_NS_SEPARATOR "body";
 const char *XMPP_PRESENCE = XMPP_NS_CLIENT XMPP_NS_SEPARATOR "presence";
 const char *XMPP_IQ = XMPP_NS_CLIENT XMPP_NS_SEPARATOR "iq";
-
-const char *XMPP_ATTR_TO = "to";
-const char *XMPP_ATTR_FROM = "from";
-const char *XMPP_ATTR_ID = "id";
-const char *XMPP_ATTR_TYPE = "type";
-const char *XMPP_ATTR_TYPE_GET = "get";
-const char *XMPP_ATTR_TYPE_SET = "set";
-const char *XMPP_ATTR_TYPE_RESULT = "result";
-const char *XMPP_ATTR_TYPE_ERROR = "error";
 
 static const char *MSG_NOT_IMPLEMENTED =
     "<error type='cancel'>"
@@ -74,19 +70,19 @@ void xmpp_print_data(const char *s, int len) {
 void xmpp_error_start(void *data, const char *name, const char **attrs) {
     struct xmpp_client *client = (struct xmpp_client*)data;
     log_err("Unexpected start tag %s", name);
-    XML_StopParser(client->parser, false);
+    XML_StopParser(xmpp_client_parser(client), false);
 }
 
 void xmpp_error_end(void *data, const char *name) {
     struct xmpp_client *client = (struct xmpp_client*)data;
     log_err("Unexpected end tag %s", name);
-    XML_StopParser(client->parser, false);
+    XML_StopParser(xmpp_client_parser(client), false);
 }
 
 void xmpp_error_data(void *data, const char *s, int len) {
     struct xmpp_client *client = (struct xmpp_client*)data;
     log_err("Unexpected data");
-    XML_StopParser(client->parser, false);
+    XML_StopParser(xmpp_client_parser(client), false);
 }
 
 void xmpp_ignore_start(void *data, const char *name, const char **attrs) {
@@ -109,47 +105,65 @@ void xmpp_send_service_unavailable(struct xmpp_stanza *stanza) {
 
 /** Generic code to send errors. */
 static void send_error(struct xmpp_stanza *stanza, const char *error) {
-    struct xmpp_client *client = stanza->from_client;
+    struct xmpp_client *client = xmpp_stanza_client(stanza);
 
     UT_string *msg = NULL;
     utstring_new(msg);
 
     // Ignore the "to" and "from" attributes
-    char *to = stanza->to;
-    stanza->to = NULL;
-    char *from = stanza->from;
-    stanza->from = NULL;
+    char *to = NULL;
+    if (xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_TO) != NULL) {
+        STRDUP_CHECK(to, xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_TO));
+        xmpp_stanza_set_attr(stanza, XMPP_STANZA_ATTR_TO, NULL);
+    }
+
+    char *from = NULL;
+    if (xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_FROM) != NULL) {
+        STRDUP_CHECK(from, xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_FROM));
+        xmpp_stanza_set_attr(stanza, XMPP_STANZA_ATTR_FROM, NULL);
+    }
 
     // We need to change the type to "error"
-    char *type = stanza->type;
-    stanza->type = calloc(strlen(XMPP_ATTR_TYPE_ERROR) + 1,
-                          sizeof(*stanza->type));
-    check_mem(stanza->type);
-    strcpy(stanza->type, XMPP_ATTR_TYPE_ERROR);
+    char *type = NULL;
+    if (xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_TYPE) != NULL) {
+        STRDUP_CHECK(type, xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_TYPE));
+    }
+    xmpp_stanza_set_attr(stanza, XMPP_STANZA_ATTR_TYPE, XMPP_ATTR_TYPE_ERROR);
 
-    char *start_tag = create_start_tag(stanza);
+    char *start_tag = xmpp_stanza_create_tag(stanza);
 
     // Put everything back how it was
-    stanza->to = to;
-    stanza->from = from;
-    free(stanza->type);
-    stanza->type = type;
+    xmpp_stanza_set_attr(stanza, XMPP_STANZA_ATTR_TO, to);
+    xmpp_stanza_set_attr(stanza, XMPP_STANZA_ATTR_FROM, from);
+    xmpp_stanza_set_attr(stanza, XMPP_STANZA_ATTR_TYPE, type);
+    if (to != NULL) {
+        free(to);
+    }
+    if (from != NULL) {
+        free(from);
+    }
+    if (type != NULL) {
+        free(type);
+    }
 
     utstring_printf(msg, start_tag);
     free(start_tag);
 
     utstring_printf(msg, error);
 
-    utstring_printf(msg, "</%s>", stanza->name);
+    utstring_printf(msg, "</%s>", xmpp_stanza_name(stanza));
 
     /* TODO: If this fails, we should probably close the connection or
      * something. */
-    check(sendall(client->socket, utstring_body(msg), utstring_len(msg)) > 0,
+    check(client_socket_sendall(xmpp_client_socket(client), utstring_body(msg),
+                                utstring_len(msg)) > 0,
           "Error sending not supported error items");
+    utstring_free(msg);
+    return;
 
-    // Explicit fallthrough
 error:
     if (msg != NULL) {
         utstring_free(msg);
     }
+    XML_StopParser(xmpp_client_parser(xmpp_stanza_client(stanza)), false);
 }

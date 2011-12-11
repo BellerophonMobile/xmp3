@@ -5,169 +5,153 @@
  * @file
  */
 
-#include "client_socket.h"
-
-#include <sys/types.h>
+#include <arpa/inet.h>
+#include <signal.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
+#include "utstring.h"
+
 #include "log.h"
 
-/** Data structure used for normal client_sockets. */
-struct fd_data {
-    /** The connected file descriptor. */
-    int fd;
-};
+#include "client_socket.h"
 
-/** Data structure used for SSL client_sockets. */
-struct ssl_data {
+struct client_socket {
     /** The connected file descriptor. */
     int fd;
+
+    /** The address of the connected socket. */
+    struct sockaddr_in addr;
 
     /** The OpenSSL connection structure. */
     SSL *ssl;
 };
 
-// Forward declarations
-static ssize_t fd_data_send(struct client_socket *socket, const void *buf,
-                            size_t len);
-static ssize_t fd_data_recv(struct client_socket *socket, void *buf,
-                            size_t len);
-static void fd_data_close(struct client_socket *socket);
-static void fd_data_del(struct client_socket *socket);
-
-static ssize_t ssl_data_send(struct client_socket *socket, const void *buf,
-                            size_t len);
-static ssize_t ssl_data_recv(struct client_socket *socket, void *buf,
-                            size_t len);
-static void ssl_data_close(struct client_socket *socket);
-static void ssl_data_del(struct client_socket *socket);
-
-ssize_t client_socket_send(struct client_socket *socket, const void *buf,
-                           size_t len) {
-    return socket->send_func(socket, buf, len);
-}
-
-ssize_t client_socket_recv(struct client_socket *socket, void *buf,
-                           size_t len) {
-    return socket->recv_func(socket, buf, len);
-}
-
-void client_socket_close(struct client_socket *socket) {
-    socket->close_func(socket);
-}
-
-void client_socket_del(struct client_socket *socket) {
-    socket->del_func(socket);
-    free(socket);
-}
-
-struct client_socket* client_socket_new(int fd) {
+struct client_socket* client_socket_new(int fd, struct sockaddr_in addr) {
     struct client_socket *socket = calloc(1, sizeof(*socket));
-    check_mem(socket);
-
-    struct fd_data *fd_data = calloc(1, sizeof(*fd_data));
-    check_mem(fd_data);
-
-    fd_data->fd = fd;
-
-    socket->data = fd_data;
-    socket->send_func = fd_data_send;
-    socket->recv_func = fd_data_recv;
-    socket->close_func = fd_data_close;
-    socket->del_func = fd_data_del;
+    socket->fd = fd;
+    socket->addr = addr;
 
     return socket;
 }
 
-struct client_socket* client_socket_ssl_new(
-        SSL_CTX *ssl_context, struct client_socket *orig_socket) {
-
-    struct fd_data *fd_data = (struct fd_data*)orig_socket->data;
-
-    struct client_socket *ssl_socket = calloc(1, sizeof(*ssl_socket));
-    check_mem(ssl_socket);
-
-    struct ssl_data *ssl_data = calloc(1, sizeof(*ssl_data));
-    check_mem(ssl_data);
-
-    ssl_data->fd = fd_data->fd;
-    ssl_data->ssl = SSL_new(ssl_context);
-    if (ssl_data->ssl == NULL) {
-        ERR_print_errors_fp(stderr);
-        // TODO: This should not exit, but return NULL.
-        exit(1);
+void client_socket_del(struct client_socket *socket) {
+    if (socket->ssl) {
+        SSL_free(socket->ssl);
     }
-    if (SSL_set_fd(ssl_data->ssl, ssl_data->fd) == 0) {
-        ERR_print_errors_fp(stderr);
-        // TODO: This should not exit, but return NULL.
-        exit(1);
+    free(socket);
+}
+
+void client_socket_close(struct client_socket *socket) {
+    if (socket->ssl) {
+        /* If the socket has already been closed, SSL_shutdown will cause
+         * a SIGPIPE to be sent to this process.  We don't care, so block it
+         * every time. */
+        struct sigaction sa = { .sa_handler=SIG_IGN };
+        struct sigaction osa;
+        if (sigaction(SIGPIPE, &sa, &osa) == 0) {
+            if (SSL_shutdown(socket->ssl) != 1) {
+                ERR_print_errors_fp(stderr);
+            }
+            if (sigaction(SIGPIPE, &osa, NULL) != 0) {
+                log_err("Can't unignore SIGPIPE");
+            }
+        } else {
+            log_err("Can't ignore SIGPIPE.");
+        }
+
+    }
+    if (shutdown(socket->fd, SHUT_RDWR) == -1) {
+        log_err("Unable to shut down client socket.");
+    } else if (close(socket->fd) == -1) {
+        log_err("Unable to close client socket");
+    }
+}
+
+int client_socket_fd(const struct client_socket *socket) {
+    return socket->fd;
+}
+
+ssize_t client_socket_send(struct client_socket *socket, const void *buf,
+                           size_t len) {
+    if (socket->ssl) {
+        return SSL_write(socket->ssl, buf, len);
+    } else {
+        return send(socket->fd, buf, len, 0);
+    }
+}
+
+ssize_t client_socket_recv(struct client_socket *socket, void *buf,
+                           size_t len) {
+    if (socket->ssl) {
+        return SSL_read(socket->ssl, buf, len);
+    } else {
+        return recv(socket->fd, buf, len, 0);
+    }
+}
+
+bool client_socket_set_ssl(struct client_socket *socket, SSL_CTX *ssl_context)
+{
+    if (socket->ssl) {
+        SSL_free(socket->ssl);
     }
 
+    socket->ssl = SSL_new(ssl_context);
+
+    check(socket->ssl != NULL, "Cannot create new SSL structure.");
+    check(SSL_set_fd(socket->ssl, socket->fd) != 0,
+          "Unable to attach original socket to SSL structure.");
     // TODO: This should be done elsewhere, since it could block for awhile.
-    if (SSL_accept(ssl_data->ssl) != 1) {
+    check(SSL_accept(socket->ssl) == 1, "SSL_accept failed.");
+
+    return true;
+
+error:
+    if (socket->ssl) {
         ERR_print_errors_fp(stderr);
-        // TODO: This should not exit, but return NULL.
-        exit(1);
+        SSL_free(socket->ssl);
+        socket->ssl = NULL;
     }
-    debug("Done!");
-
-    ssl_socket->data = ssl_data;
-    ssl_socket->send_func = ssl_data_send;
-    ssl_socket->recv_func = ssl_data_recv;
-    ssl_socket->close_func = ssl_data_close;
-    ssl_socket->del_func = ssl_data_del;
-
-    return ssl_socket;
+    return false;
 }
 
-static ssize_t fd_data_send(struct client_socket *socket, const void *buf,
-                            size_t len) {
-    struct fd_data *fd_data = (struct fd_data*)socket->data;
-    return send(fd_data->fd, buf, len, 0);
+ssize_t client_socket_sendall(struct client_socket *socket, const void *buf,
+                              size_t len) {
+    // Keep track of how much we've sent so far
+    ssize_t numsent = 0;
+    do {
+        ssize_t newsent = client_socket_send(socket, buf + numsent,
+                                             len - numsent);
+        check(newsent != -1, "Error sending data");
+        numsent += newsent;
+    } while (numsent < len);
+
+    return numsent;
+error:
+    return -1;
 }
 
-static ssize_t fd_data_recv(struct client_socket *socket, void *buf,
-                            size_t len) {
-    struct fd_data *fd_data = (struct fd_data*)socket->data;
-    return recv(fd_data->fd, buf, len, 0);
+int client_socket_sendxml(struct client_socket *socket, XML_Parser parser) {
+    int offset, size;
+    // Gets us Expat's buffer
+    const char *buffer = XML_GetInputContext(parser, &offset, &size);
+    check_mem(buffer);
+    // Returns how much of the buffer is about the current event
+    int count = XML_GetCurrentByteCount(parser);
+
+    return client_socket_sendall(socket, buffer + offset, count);
 }
 
-static void fd_data_close(struct client_socket *socket) {
-    struct fd_data *fd_data = (struct fd_data*)socket->data;
-    shutdown(fd_data->fd, SHUT_RDWR);
-    close(fd_data->fd);
-}
+char* client_socket_addr_str(struct client_socket *socket) {
+    UT_string s;
+    utstring_init(&s);
 
-static void fd_data_del(struct client_socket *socket) {
-    struct fd_data *fd_data = (struct fd_data*)socket->data;
-    free(fd_data);
-}
+    utstring_printf(&s, "%s:%d", inet_ntoa(socket->addr.sin_addr),
+                    socket->addr.sin_port);
 
-static ssize_t ssl_data_send(struct client_socket *socket, const void *buf,
-                            size_t len) {
-    struct ssl_data *ssl_data = (struct ssl_data*)socket->data;
-    return SSL_write(ssl_data->ssl, buf, len);
-}
-
-static ssize_t ssl_data_recv(struct client_socket *socket, void *buf,
-                            size_t len) {
-    struct ssl_data *ssl_data = (struct ssl_data*)socket->data;
-    return SSL_read(ssl_data->ssl, buf, len);
-}
-
-static void ssl_data_close(struct client_socket *socket) {
-    struct ssl_data *ssl_data = (struct ssl_data*)socket->data;
-    if (SSL_shutdown(ssl_data->ssl) != 1) {
-        ERR_print_errors_fp(stderr);
-    }
-}
-
-static void ssl_data_del(struct client_socket *socket) {
-    struct ssl_data *ssl_data = (struct ssl_data*)socket->data;
-    SSL_free(ssl_data->ssl);
-    free(ssl_data);
+    return utstring_body(&s);
 }

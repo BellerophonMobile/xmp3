@@ -15,13 +15,17 @@
 #include <getopt.h>
 #include <arpa/inet.h>
 
+#include <expat.h>
 #include <openssl/ssl.h>
 
 #include "log.h"
 
-#include "xmp3_options.h"
 #include "event.h"
-#include "xmpp.h"
+#include "jid.h"
+#include "xmp3_options.h"
+#include "xmpp_client.h"
+#include "xmpp_server.h"
+#include "xmpp_stanza.h"
 
 static struct option long_options[] = {
     {"addr",     required_argument, NULL, 'a'},
@@ -52,7 +56,9 @@ static void print_usage() {
 static struct event_loop *loop = NULL;
 
 static void signal_handler(int signal) {
-    event_loop_stop(loop);
+    if (signal == SIGINT) {
+        event_loop_stop(loop);
+    }
 }
 
 int main(int argc, char *argv[]) {
@@ -113,14 +119,14 @@ int main(int argc, char *argv[]) {
     SSL_load_error_strings();
     SSL_library_init();
 
-    struct xmpp_server *server = xmpp_init(loop, options);
+    struct xmpp_server *server = xmpp_server_new(loop, options);
     check(server != NULL, "XMPP server initialization failed");
 
     log_info("Starting event loop...");
     event_loop_start(loop);
     log_info("Event loop exited");
 
-    xmpp_shutdown(server);
+    xmpp_server_del(server);
     event_del_loop(loop);
     xmp3_options_del(options);
 
