@@ -10,6 +10,7 @@
 #include "client_socket.h"
 #include "event.h"
 #include "jid.h"
+#include "xmp3_xml.h"
 #include "xmpp_auth.h"
 #include "xmpp_common.h"
 #include "xmpp_core.h"
@@ -45,10 +46,9 @@ struct xmpp_client* xmpp_client_new(struct xmpp_server *server,
     check(client->parser != NULL, "Error creating XML parser");
 
     // Set initial Expat handlers to begin authentication.
-    XML_SetElementHandler(client->parser, xmpp_auth_stream_start,
-                          xmpp_error_end);
-    XML_SetCharacterDataHandler(client->parser, xmpp_error_data);
-    XML_SetUserData(client->parser, client);
+    xmp3_xml_init_parser(client->parser);
+    xmp3_xml_add_handlers(client->parser, xmpp_auth_stream_start,
+                          xmpp_error_end, xmpp_error_data, client);
 
     return client;
 

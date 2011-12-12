@@ -15,6 +15,7 @@
 
 #include "client_socket.h"
 #include "jid.h"
+#include "xmp3_xml.h"
 #include "xmpp_client.h"
 #include "xmpp_common.h"
 #include "xmpp_core.h"
@@ -200,10 +201,8 @@ static bool stanza_handler(struct xmpp_stanza *stanza, void *data) {
     muc_tmp->stanza = stanza;
     muc_tmp->muc = muc;
 
-    XML_SetElementHandler(xmpp_client_parser(client),
-                          xmpp_ignore_start,
-                          muc_stanza_end);
-    XML_SetUserData(xmpp_client_parser(client), muc_tmp);
+    xmp3_xml_replace_handlers(xmpp_client_parser(client), xmpp_ignore_start,
+                              muc_stanza_end, xmpp_ignore_data, muc_tmp);
 
     if (strcmp(xmpp_stanza_ns_name(stanza), XMPP_MESSAGE) == 0) {
         log_info("MUC Message");
@@ -215,7 +214,7 @@ static bool stanza_handler(struct xmpp_stanza *stanza, void *data) {
         return true;
     } else if (strcmp(xmpp_stanza_ns_name(stanza), XMPP_IQ) == 0) {
         log_info("MUC IQ");
-        XML_SetStartElementHandler(xmpp_client_parser(client), iq_start);
+        xmp3_xml_replace_start_handler(xmpp_client_parser(client), iq_start);
         return true;
     } else {
         log_warn("Unknown MUC stanza");
@@ -234,7 +233,7 @@ static void muc_stanza_end(void *data, const char *name) {
     }
 
     log_info("MUC stanza end");
-    XML_SetUserData(xmpp_client_parser(client), stanza);
+    xmp3_xml_replace_user_data(xmpp_client_parser(client), stanza);
     free(muc_tmp);
 
     xmpp_core_stanza_end(stanza, name);
@@ -295,17 +294,19 @@ static void handle_message(struct xmpp_stanza *stanza, struct xep_muc *muc) {
         }
     }
 
-    XML_SetElementHandler(xmpp_client_parser(from_client),
-                          message_client_start, message_client_end);
-    XML_SetCharacterDataHandler(xmpp_client_parser(from_client),
-                                message_client_data);
-
-    struct muc_tmp *muc_tmp = XML_GetUserData(xmpp_client_parser(from_client));
+    struct muc_tmp *muc_tmp = xmp3_xml_get_current_user_data(
+            xmpp_client_parser(from_client));
     muc_tmp->room = room;
+
+    debug("Replacing handlers");
+    xmp3_xml_replace_handlers(xmpp_client_parser(from_client),
+                              message_client_start, message_client_end,
+                              message_client_data, muc_tmp);
 }
 
 static void message_client_start(void *data, const char *name,
                                  const char **attrs) {
+    debug("message client start");
     struct muc_tmp *muc_tmp = (struct muc_tmp*)data;
     struct xmpp_stanza *stanza = muc_tmp->stanza;
     struct xmpp_client *from_client = xmpp_stanza_client(stanza);
@@ -323,6 +324,7 @@ static void message_client_start(void *data, const char *name,
 }
 
 static void message_client_end(void *data, const char *name) {
+    debug("message client end");
     struct muc_tmp *muc_tmp = (struct muc_tmp*)data;
     struct xmpp_stanza *stanza = muc_tmp->stanza;
     struct xmpp_client *from_client = xmpp_stanza_client(stanza);
@@ -349,6 +351,7 @@ static void message_client_end(void *data, const char *name) {
 }
 
 static void message_client_data(void *data, const char *s, int len) {
+    debug("message client data");
     struct muc_tmp *muc_tmp = (struct muc_tmp*)data;
     struct xmpp_stanza *stanza = muc_tmp->stanza;
     struct xmpp_client *from_client = xmpp_stanza_client(stanza);
@@ -638,13 +641,14 @@ static void iq_start(void *data, const char *name, const char **attrs) {
 
     if (strcmp(name, XMPP_IQ_DISCO_QUERY_INFO) == 0) {
         log_info("MUC Info Query Start");
-        XML_SetElementHandler(xmpp_client_parser(client), xmpp_error_start,
-                              disco_query_info_end);
+        xmp3_xml_replace_handlers(xmpp_client_parser(client), xmpp_error_start,
+                                  disco_query_info_end, xmpp_ignore_data, data);
 
     } else if (strcmp(name, XMPP_IQ_DISCO_QUERY_ITEMS) == 0) {
         log_info("MUC Items Query Start");
-        XML_SetElementHandler(xmpp_client_parser(client), xmpp_error_start,
-                              disco_query_items_end);
+        xmp3_xml_replace_handlers(xmpp_client_parser(client), xmpp_error_start,
+                                  disco_query_items_end, xmpp_ignore_data,
+                                  data);
 
     } else {
         log_info("Unhandled MUC IQ");
@@ -669,8 +673,8 @@ static void disco_query_info_end(void *data, const char *name) {
                                 strlen(msg)) > 0,
           "Error sending info query IQ message");
 
-    XML_SetElementHandler(xmpp_client_parser(client),
-                          xmpp_error_start, muc_stanza_end);
+    xmp3_xml_replace_handlers(xmpp_client_parser(client), xmpp_error_start,
+                                  muc_stanza_end, xmpp_ignore_data, data);
     return;
 
 error:
@@ -709,8 +713,8 @@ static void disco_query_items_end(void *data, const char *name) {
           "Error sending items query IQ message");
     utstring_done(&msg);
 
-    XML_SetElementHandler(xmpp_client_parser(client),
-                          xmpp_error_start, muc_stanza_end);
+    xmp3_xml_replace_handlers(xmpp_client_parser(client), xmpp_error_start,
+                              muc_stanza_end, xmpp_ignore_data, data);
     return;
 
 error:

@@ -14,6 +14,7 @@
 #include "jid.h"
 
 #include "client_socket.h"
+#include "xmp3_xml.h"
 #include "xmpp_client.h"
 #include "xmpp_common.h"
 #include "xmpp_server.h"
@@ -40,13 +41,11 @@ void xmpp_core_stanza_start(void *data, const char *name, const char **attrs) {
 
     struct xmpp_stanza *stanza = xmpp_stanza_new(client, name, attrs);
     check_mem(stanza);
-    XML_SetUserData(xmpp_client_parser(client), stanza);
 
     /* We expect any stanza callbacks to change the XML callbacks if
      * neccessary, else the whole stanza is ignored. */
-    XML_SetElementHandler(xmpp_client_parser(client), xmpp_ignore_start,
-                          xmpp_core_stanza_end);
-    XML_SetCharacterDataHandler(xmpp_client_parser(client), xmpp_ignore_data);
+    xmp3_xml_replace_handlers(xmpp_client_parser(client), xmpp_ignore_start,
+                              xmpp_core_stanza_end, xmpp_ignore_data, stanza);
 
     if (!xmpp_server_route_stanza(stanza)) {
         log_warn("Unhandled stanza");
@@ -64,13 +63,12 @@ void xmpp_core_stanza_end(void *data, const char *name) {
     log_info("Stanza end");
 
     // Clean up our stanza structure.
-    XML_SetUserData(xmpp_client_parser(client), client);
     xmpp_stanza_del(stanza);
 
     // We expect to see the start of a new stanza next.
-    XML_SetElementHandler(xmpp_client_parser(client), xmpp_core_stanza_start,
-                          xmpp_core_stream_end);
-    XML_SetCharacterDataHandler(xmpp_client_parser(client), xmpp_ignore_data);
+    xmp3_xml_replace_handlers(xmpp_client_parser(client),
+                              xmpp_core_stanza_start, xmpp_core_stream_end,
+                              xmpp_ignore_data, client);
 }
 
 void xmpp_core_stream_end(void *data, const char *name) {
@@ -88,7 +86,7 @@ bool xmpp_core_stanza_handler(struct xmpp_stanza *stanza, void *data) {
         return false;
     } else if (strcmp(xmpp_stanza_ns_name(stanza), XMPP_IQ) == 0) {
         log_info("IQ stanza start");
-        XML_SetStartElementHandler(
+        xmp3_xml_replace_start_handler(
                 xmpp_client_parser(xmpp_stanza_client(stanza)), iq_start);
         return true;
     } else {
@@ -105,11 +103,6 @@ bool xmpp_core_message_handler(struct xmpp_stanza *from_stanza, void *data) {
         return false;
     }
 
-    // Set the XML handlers to expect the rest of the message stanza.
-    XML_SetElementHandler(xmpp_client_parser(from_client),
-                          message_client_start, message_client_end);
-    XML_SetCharacterDataHandler(xmpp_client_parser(from_client), message_client_data);
-
     struct message_tmp *tmp = NULL;
     char* msg = xmpp_stanza_create_tag(from_stanza);
     check_mem(msg);
@@ -124,15 +117,21 @@ bool xmpp_core_message_handler(struct xmpp_stanza *from_stanza, void *data) {
 
     tmp->to_client = to_client;
     tmp->from_stanza = from_stanza;
-    XML_SetUserData(xmpp_client_parser(from_client), tmp);
+
+    // Set the XML handlers to expect the rest of the message stanza.
+    xmp3_xml_replace_handlers(xmpp_client_parser(from_client),
+                              message_client_start, message_client_end,
+                              message_client_data, tmp);
+
     return true;
 
 error:
     free(msg);
     free(tmp);
     xmpp_server_disconnect_client(to_client);
-    XML_SetElementHandler(xmpp_client_parser(from_client), xmpp_ignore_start,
-                          xmpp_core_stanza_end);
+    xmp3_xml_replace_handlers(xmpp_client_parser(from_client),
+                              xmpp_ignore_start, xmpp_core_stanza_end,
+                              xmpp_ignore_data, from_stanza);
     return false;
 }
 
@@ -152,11 +151,11 @@ static void message_client_start(void *data, const char *name,
     return;
 
 error:
-    XML_SetUserData(xmpp_client_parser(from_client), from_stanza);
     xmpp_server_disconnect_client(tmp->to_client);
-    XML_SetElementHandler(xmpp_client_parser(from_client), xmpp_ignore_start,
-                          xmpp_core_stanza_end);
     free(tmp);
+    xmp3_xml_replace_handlers(xmpp_client_parser(from_client),
+                              xmpp_ignore_start, xmpp_core_stanza_end,
+                              xmpp_ignore_data, from_stanza);
 }
 
 /** Handles an end tag inside of a <message> stanza. */
@@ -177,17 +176,18 @@ static void message_client_end(void *data, const char *name) {
 
     // If we received a </message> tag, we are done parsing this stanza.
     if (strcmp(name, XMPP_MESSAGE) == 0) {
-        XML_SetUserData(xmpp_client_parser(from_client), tmp->from_stanza);
+        xmp3_xml_replace_user_data(xmpp_client_parser(from_client),
+                                   tmp->from_stanza);
         free(tmp);
         xmpp_core_stanza_end(tmp->from_stanza, name);
     }
     return;
 
 error:
-    XML_SetUserData(xmpp_client_parser(from_client), tmp->from_stanza);
     xmpp_server_disconnect_client(tmp->to_client);
-    XML_SetElementHandler(xmpp_client_parser(from_client), xmpp_ignore_start,
-                          xmpp_core_stanza_end);
+    xmp3_xml_replace_handlers(xmpp_client_parser(from_client),
+                              xmpp_ignore_start, xmpp_core_stanza_end,
+                              xmpp_ignore_data, tmp->from_stanza);
     free(tmp);
 }
 
@@ -204,10 +204,10 @@ static void message_client_data(void *data, const char *s, int len) {
     return;
 
 error:
-    XML_SetUserData(xmpp_client_parser(from_client), tmp->from_stanza);
     xmpp_server_disconnect_client(tmp->to_client);
-    XML_SetElementHandler(xmpp_client_parser(from_client), xmpp_ignore_start,
-                          xmpp_core_stanza_end);
+    xmp3_xml_replace_handlers(xmpp_client_parser(from_client),
+                              xmpp_ignore_start, xmpp_core_stanza_end,
+                              xmpp_ignore_data, tmp->from_stanza);
     free(tmp);
 }
 
@@ -222,9 +222,8 @@ static void iq_start(void *data, const char *name, const char **attrs) {
         /* If we can't answer the IQ, then let the client know.  Make sure to
          * ignore anything inside this stanza. */
         xmpp_send_service_unavailable(stanza);
-        XML_SetElementHandler(xmpp_client_parser(client), xmpp_ignore_start,
-                              xmpp_core_stanza_end);
-        XML_SetCharacterDataHandler(xmpp_client_parser(client),
-                                    xmpp_ignore_data);
+        xmp3_xml_replace_handlers(xmpp_client_parser(client),
+                                  xmpp_ignore_start, xmpp_core_stanza_end,
+                                  xmpp_ignore_data, data);
     }
 }

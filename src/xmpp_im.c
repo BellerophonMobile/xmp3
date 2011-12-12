@@ -11,6 +11,7 @@
 #include "utils.h"
 
 #include "client_socket.h"
+#include "xmp3_xml.h"
 #include "xmpp_client.h"
 #include "xmpp_common.h"
 #include "xmpp_core.h"
@@ -68,9 +69,8 @@ bool xmpp_im_iq_session(struct xmpp_stanza *stanza, void *data) {
           "Session IQ type must be \"set\"");
 
     // We expect to see the </session> tag next
-    XML_SetElementHandler(xmpp_client_parser(client), xmpp_error_start,
-                          session_end);
-    XML_SetCharacterDataHandler(xmpp_client_parser(client), xmpp_error_data);
+    xmp3_xml_replace_handlers(xmpp_client_parser(client), xmpp_error_start,
+                              session_end, xmpp_error_data, stanza);
     return true;
 
 error:
@@ -96,9 +96,8 @@ static void session_end(void *data, const char *name) {
           "Error sending stream success message");
 
     // We expect to see the </iq> tag next
-    XML_SetElementHandler(xmpp_client_parser(client), xmpp_error_start,
-                          xmpp_core_stanza_end);
-    XML_SetCharacterDataHandler(xmpp_client_parser(client), xmpp_error_data);
+    xmp3_xml_replace_handlers(xmpp_client_parser(client), xmpp_error_start,
+                              xmpp_core_stanza_end, xmpp_error_data, data);
     return;
 
 error:
@@ -115,9 +114,8 @@ bool xmpp_im_iq_roster_query(struct xmpp_stanza *stanza, void *data) {
           "Session IQ type must be \"set\"");
 
     // We expect to see the </query> tag next.
-    XML_SetElementHandler(xmpp_client_parser(client), xmpp_error_start,
-                          roster_query_end);
-    XML_SetCharacterDataHandler(xmpp_client_parser(client), xmpp_error_data);
+    xmp3_xml_replace_handlers(xmpp_client_parser(client), xmpp_error_start,
+                              roster_query_end, xmpp_error_data, stanza);
     return true;
 
 error:
@@ -143,8 +141,8 @@ static void roster_query_end(void *data, const char *name) {
           "Error sending roster message");
 
     // We expect to see the </iq> tag next.
-    XML_SetElementHandler(xmpp_client_parser(client), xmpp_error_start,
-                          xmpp_core_stanza_end);
+    xmp3_xml_replace_handlers(xmpp_client_parser(client), xmpp_error_start,
+                              xmpp_core_stanza_end, xmpp_error_data, data);
     return;
 
 error:
@@ -154,7 +152,8 @@ error:
 bool xmpp_im_iq_disco_query_info(struct xmpp_stanza *stanza, void *data) {
     struct xmpp_client *client = xmpp_stanza_client(stanza);
     log_info("Info Query IQ Start");
-    XML_SetEndElementHandler(xmpp_client_parser(client), disco_query_info_end);
+    xmp3_xml_replace_end_handler(xmpp_client_parser(client),
+                                 disco_query_info_end);
     return true;
 }
 
@@ -174,8 +173,8 @@ static void disco_query_info_end(void *data, const char *name) {
                                 strlen(msg)) > 0,
           "Error sending info query IQ message");
 
-    XML_SetElementHandler(xmpp_client_parser(client), xmpp_error_start,
-                          xmpp_core_stanza_end);
+    xmp3_xml_replace_handlers(xmpp_client_parser(client), xmpp_error_start,
+                              xmpp_core_stanza_end, xmpp_error_data, data);
     return;
 
 error:
@@ -185,7 +184,8 @@ error:
 bool xmpp_im_iq_disco_query_items(struct xmpp_stanza *stanza, void *data) {
     struct xmpp_client *client = xmpp_stanza_client(stanza);
     log_info("Items Query IQ Start");
-    XML_SetEndElementHandler(xmpp_client_parser(client), disco_query_items_end);
+    xmp3_xml_replace_end_handler(xmpp_client_parser(client),
+                                 disco_query_items_end);
     return true;
 }
 
@@ -205,8 +205,8 @@ static void disco_query_items_end(void *data, const char *name) {
                                 strlen(msg)) > 0,
           "Error sending items query IQ message");
 
-    XML_SetElementHandler(xmpp_client_parser(client), xmpp_error_start,
-                          xmpp_core_stanza_end);
+    xmp3_xml_replace_handlers(xmpp_client_parser(client), xmpp_error_start,
+                              xmpp_core_stanza_end, xmpp_error_data, data);
     return;
 
 error:

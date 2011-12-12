@@ -54,6 +54,7 @@ def build(ctx):
             'src/utils.c',
             'src/xep_muc.c',
             'src/xmp3_options.c',
+            'src/xmp3_xml.c',
             'src/xmpp_auth.c',
             'src/xmpp_client.c',
             'src/xmpp_common.c',
