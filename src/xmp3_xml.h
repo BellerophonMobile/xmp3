@@ -17,6 +17,7 @@ void xmp3_xml_add_handlers(XML_Parser parser,
                            XML_CharacterDataHandler chardata,
                            void *data);
 
+/** This should only be called from inside a handler. */
 void* xmp3_xml_get_current_user_data(XML_Parser parser);
 
 /** This should only be called from inside a handler. */
