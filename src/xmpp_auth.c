@@ -278,8 +278,10 @@ static void tls_end(void *data, const char *name) {
                 MSG_TLS_PROCEED, strlen(MSG_TLS_PROCEED)) > 0,
           "Error sending TLS proceed to client");
 
-    client_socket_set_ssl(xmpp_client_socket(client),
-            xmpp_server_ssl_context(xmpp_client_server(client)));
+    check(client_socket_ssl_new(
+          xmpp_client_socket(client),
+          xmpp_server_ssl_context(xmpp_client_server(client))) != NULL,
+          "Error initializing SSL socket.");
 
     // We expect a new stream from the client
     xmp3_xml_replace_handlers(xmpp_client_parser(client), stream_sasl_start,

@@ -15,6 +15,26 @@
 
 struct client_socket;
 
+typedef void (*client_socket_del_func)(struct client_socket *socket);
+typedef void (*client_socket_close_func)(struct client_socket *socket);
+typedef int (*client_socket_fd_func)(struct client_socket *socket);
+typedef ssize_t (*client_socket_send_func)(struct client_socket *socket,
+                                           const void *buffer, size_t length);
+typedef ssize_t (*client_socket_recv_func)(struct client_socket *socket,
+                                           void *buffer, size_t length);
+typedef char* (*client_socket_str_func)(struct client_socket *socket);
+
+struct client_socket {
+    client_socket_del_func del_func;
+    client_socket_close_func close_func;
+    client_socket_fd_func fd_func;
+    client_socket_send_func send_func;
+    client_socket_recv_func recv_func;
+    client_socket_str_func str_func;
+
+    void *self;
+};
+
 /**
  * Allocates and initializes a new client socket using a file descriptor.
  *
@@ -26,13 +46,25 @@ struct client_socket;
  */
 struct client_socket* client_socket_new(int fd, struct sockaddr_in addr);
 
+/**
+ * Creates a SSL client socket from an existing normal client socket.
+ *
+ * The original socket is modified to support SSL.
+ *
+ * @param socket The socket to convert to SSL.
+ * @param ssl_context The OpenSSL context.
+ * @returns A pointer to the same input socket, which has been modified.
+ */
+struct client_socket* client_socket_ssl_new(struct client_socket *socket,
+                                            SSL_CTX *ssl_context);
+
 /** Closes, cleans up and deallocates a client_socket structure. */
 void client_socket_del(struct client_socket *socket);
 
 /** Closes a client_socket. */
 void client_socket_close(struct client_socket *socket);
 
-int client_socket_fd(const struct client_socket *socket);
+int client_socket_fd(struct client_socket *socket);
 
 /**
  * Send some data to a client_socket.
@@ -57,15 +89,6 @@ ssize_t client_socket_recv(struct client_socket *socket, void *buf,
                            size_t len);
 
 /**
- * Enables SSL on a client socket.
- *
- * @param socket The socket to toggle SSL on.
- * @param ssl_enabled True to enable SSL, false to disable it.
- * @returns True if successful, false if not.
- */
-bool client_socket_set_ssl(struct client_socket *socket, SSL_CTX *ssl_context);
-
-/**
  * Send all data in a buffer to the connected socket.
  *
  * This will keep trying until all data is sent.  This should later be
@@ -87,5 +110,7 @@ ssize_t client_socket_sendall(struct client_socket *socket, const void *buf,
  */
 int client_socket_sendxml(struct client_socket *socket, XML_Parser parser);
 
-/** Returns a newly allocated string version of the socket address. */
+/**
+ * Returns a string version of the address of this client.
+ */
 char* client_socket_addr_str(struct client_socket *socket);
