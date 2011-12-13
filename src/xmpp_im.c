@@ -70,7 +70,7 @@ bool xmpp_im_iq_session(struct xmpp_stanza *stanza, void *data) {
 
     // We expect to see the </session> tag next
     xmp3_xml_replace_handlers(xmpp_client_parser(client), xmpp_error_start,
-                              session_end, xmpp_error_data, stanza);
+                              session_end, xmpp_ignore_data, stanza);
     return true;
 
 error:
@@ -97,7 +97,7 @@ static void session_end(void *data, const char *name) {
 
     // We expect to see the </iq> tag next
     xmp3_xml_replace_handlers(xmpp_client_parser(client), xmpp_error_start,
-                              xmpp_core_stanza_end, xmpp_error_data, data);
+                              xmpp_core_stanza_end, xmpp_ignore_data, data);
     return;
 
 error:
@@ -115,7 +115,7 @@ bool xmpp_im_iq_roster_query(struct xmpp_stanza *stanza, void *data) {
 
     // We expect to see the </query> tag next.
     xmp3_xml_replace_handlers(xmpp_client_parser(client), xmpp_error_start,
-                              roster_query_end, xmpp_error_data, stanza);
+                              roster_query_end, xmpp_ignore_data, stanza);
     return true;
 
 error:
@@ -142,7 +142,7 @@ static void roster_query_end(void *data, const char *name) {
 
     // We expect to see the </iq> tag next.
     xmp3_xml_replace_handlers(xmpp_client_parser(client), xmpp_error_start,
-                              xmpp_core_stanza_end, xmpp_error_data, data);
+                              xmpp_core_stanza_end, xmpp_ignore_data, data);
     return;
 
 error:
@@ -174,7 +174,7 @@ static void disco_query_info_end(void *data, const char *name) {
           "Error sending info query IQ message");
 
     xmp3_xml_replace_handlers(xmpp_client_parser(client), xmpp_error_start,
-                              xmpp_core_stanza_end, xmpp_error_data, data);
+                              xmpp_core_stanza_end, xmpp_ignore_data, data);
     return;
 
 error:
@@ -206,7 +206,7 @@ static void disco_query_items_end(void *data, const char *name) {
           "Error sending items query IQ message");
 
     xmp3_xml_replace_handlers(xmpp_client_parser(client), xmpp_error_start,
-                              xmpp_core_stanza_end, xmpp_error_data, data);
+                              xmpp_core_stanza_end, xmpp_ignore_data, data);
     return;
 
 error:

@@ -175,7 +175,7 @@ void xmpp_auth_stream_start(void *data, const char *name, const char **attrs) {
 
         // We expect to see a <starttls> tag from the client.
         xmp3_xml_replace_handlers(xmpp_client_parser(client), tls_start,
-                                  tls_end, xmpp_error_data, data);
+                                  tls_end, xmpp_ignore_data, data);
 
     } else {
         // SSL is disabled, skip right to SASL.
@@ -241,7 +241,7 @@ static void stream_bind_start(void *data, const char *name, const char **attrs)
 
     // We expect to see the resouce binding IQ stanza next.
     xmp3_xml_replace_handlers(xmpp_client_parser(client), bind_iq_start,
-                              xmpp_error_end, xmpp_error_data, data);
+                              xmpp_error_end, xmpp_ignore_data, data);
     return;
 
 error:
@@ -283,7 +283,7 @@ static void tls_end(void *data, const char *name) {
 
     // We expect a new stream from the client
     xmp3_xml_replace_handlers(xmpp_client_parser(client), stream_sasl_start,
-                              xmpp_error_end, xmpp_error_data, data);
+                              xmpp_error_end, xmpp_ignore_data, data);
 
     return;
 
@@ -400,7 +400,7 @@ static void sasl_plain_end(void *data, const char *name) {
 
     // Go to step 7, the client needs to send us a new stream header.
     xmp3_xml_replace_handlers(xmpp_client_parser(client), stream_bind_start,
-                              xmpp_error_end, xmpp_error_data, client);
+                              xmpp_error_end, xmpp_ignore_data, client);
 
     log_info("User authenticated");
 
@@ -451,7 +451,7 @@ static void bind_iq_start(void *data, const char *name, const char **attrs) {
 
     // Next, we expect to see the <bind> tag
     xmp3_xml_replace_handlers(xmpp_client_parser(client), bind_start,
-                              bind_end, xmpp_error_data, bind_data);
+                              bind_end, xmpp_ignore_data, bind_data);
     return;
 
 error:
@@ -532,7 +532,7 @@ static void bind_end(void *data, const char *name) {
 
     // We expect to see a closing </iq> tag next
     xmp3_xml_replace_handlers(xmpp_client_parser(client), xmpp_error_start,
-                              bind_iq_end, xmpp_error_data, data);
+                              bind_iq_end, xmpp_ignore_data, data);
     return;
 
 error:
@@ -589,7 +589,7 @@ static void bind_resource_end(void *data, const char *name) {
     jid_set_resource(xmpp_client_jid(client), bind_data->resource);
 
     xmp3_xml_replace_handlers(xmpp_client_parser(client), xmpp_error_start,
-                              bind_end, xmpp_error_data, data);
+                              bind_end, xmpp_ignore_data, data);
     return;
 
 error:

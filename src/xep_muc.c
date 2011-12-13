@@ -639,6 +639,15 @@ static void iq_start(void *data, const char *name, const char **attrs) {
     struct xmpp_stanza *stanza = muc_tmp->stanza;
     struct xmpp_client *client = xmpp_stanza_client(stanza);
 
+    if (jid_resource(xmpp_stanza_jid_to(stanza)) != NULL) {
+        log_info("MUC info query to room client.");
+        xmpp_send_feature_not_implemented(stanza);
+        xmp3_xml_replace_handlers(xmpp_client_parser(client),
+                                  xmpp_ignore_start, muc_stanza_end,
+                                  xmpp_ignore_data, data);
+        return;
+    }
+
     if (strcmp(name, XMPP_IQ_DISCO_QUERY_INFO) == 0) {
         log_info("MUC Info Query Start");
         xmp3_xml_replace_handlers(xmpp_client_parser(client), xmpp_error_start,
