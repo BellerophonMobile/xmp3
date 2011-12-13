@@ -84,7 +84,6 @@ void xmp3_xml_replace_start_handler(XML_Parser parser,
     if (handlers->cur_handler == NULL) {
         return;
     }
-    debug("Cur handler: %p", handlers->cur_handler);
     handlers->cur_handler->start = start;
 }
 
@@ -149,7 +148,6 @@ static void xml_data(void *data, const char *s, int len) {
     struct handler *handler, *handler_tmp;
     DL_FOREACH_SAFE(handlers->handlers, handler, handler_tmp) {
         handlers->cur_handler = handler;
-        debug("New cur handler: %p", handlers->cur_handler);
         handler->chardata(handler->data, s, len);
     }
     handlers->cur_handler = NULL;
