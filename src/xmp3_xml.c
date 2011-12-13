@@ -56,7 +56,7 @@ void xmp3_xml_add_handlers(XML_Parser parser,
     handler->end = end;
     handler->chardata = chardata;
     handler->data = data;
-    DL_APPEND(handlers->handlers, handler);
+    DL_PREPEND(handlers->handlers, handler);
 }
 
 void* xmp3_xml_get_current_user_data(XML_Parser parser) {
