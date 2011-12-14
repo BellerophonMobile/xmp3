@@ -44,13 +44,13 @@ def configure(ctx):
     ctx.env.CFLAGS += ['-O0', '-ggdb']
 
 def build(ctx):
-    ctx.program(
+    ctx.stlib(
         target = 'xmp3',
+        name = 'libxmp3',
         source = [
             'src/client_socket.c',
             'src/event.c',
             'src/jid.c',
-            'src/main.c',
             'src/utils.c',
             'src/xep_muc.c',
             'src/xmp3_options.c',
@@ -63,7 +63,15 @@ def build(ctx):
             'src/xmpp_server.c',
             'src/xmpp_stanza.c',
         ],
-        use = ['EXPAT', 'CRYPTO', 'SSL'],
+        export_includes = 'src',
+    )
+
+    ctx.program(
+        target = 'xmp3',
+        source = [
+            'src/main.c',
+        ],
+        use = ['libxmp3', 'EXPAT', 'CRYPTO', 'SSL'],
     )
 
     ctx(
