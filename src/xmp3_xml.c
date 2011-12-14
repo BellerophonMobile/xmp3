@@ -113,7 +113,7 @@ void xmp3_xml_replace_user_data(XML_Parser parser, void *data) {
     handlers->cur_handler->data = data;
 }
 
-void xmp3_xml_remove_handler(XML_Parser parser) {
+void xmp3_xml_remove_handlers(XML_Parser parser) {
     struct xml_handlers *handlers = XML_GetUserData(parser);
     if (handlers->cur_handler == NULL) {
         return;

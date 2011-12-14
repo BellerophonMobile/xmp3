@@ -43,4 +43,4 @@ void xmp3_xml_replace_chardata_handler(XML_Parser parser,
 void xmp3_xml_replace_user_data(XML_Parser parser, void *data);
 
 /** This should only be called from inside a handler. */
-void xmp3_xml_remove_handler(XML_Parser parser);
+void xmp3_xml_remove_handlers(XML_Parser parser);
