@@ -15,8 +15,9 @@
 #include <openssl/err.h>
 
 #include "utstring.h"
-
 #include "log.h"
+
+#include "xmp3_xml.h"
 
 #include "client_socket.h"
 
@@ -143,13 +144,14 @@ error:
     return -1;
 }
 
-int client_socket_sendxml(struct client_socket *socket, XML_Parser parser) {
+int client_socket_sendxml(struct client_socket *socket,
+                          struct xmp3_xml *parser) {
     int offset, size;
     // Gets us Expat's buffer
-    const char *buffer = XML_GetInputContext(parser, &offset, &size);
+    const char *buffer = xmp3_xml_get_buffer(parser, &offset, &size);
     check_mem(buffer);
     // Returns how much of the buffer is about the current event
-    int count = XML_GetCurrentByteCount(parser);
+    int count = xmp3_xml_get_byte_count(parser);
 
     return client_socket_sendall(socket, buffer + offset, count);
 }

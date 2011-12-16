@@ -14,6 +14,7 @@ const char *XMPP_IQ_DISCO_QUERY_ITEMS;
 
 // Forward declarations
 struct xmpp_stanza;
+struct xmp3_xml;
 
 /** IQ stanza callback for handling a session IQ. */
 bool xmpp_im_iq_session(struct xmpp_stanza *stanza, void *data);

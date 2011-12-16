@@ -10,10 +10,10 @@
 #include <stdbool.h>
 #include <netinet/in.h>
 
-#include <expat.h>
 #include <openssl/ssl.h>
 
 struct client_socket;
+struct xmp3_xml;
 
 typedef void (*client_socket_del_func)(struct client_socket *socket);
 typedef void (*client_socket_close_func)(struct client_socket *socket);
@@ -108,7 +108,8 @@ ssize_t client_socket_sendall(struct client_socket *socket, const void *buf,
  * @param parser An Expat parser instance.
  * @param fd     The file descriptor to send to.
  */
-int client_socket_sendxml(struct client_socket *socket, XML_Parser parser);
+int client_socket_sendxml(struct client_socket *socket,
+                          struct xmp3_xml *parser);
 
 /**
  * Returns a string version of the address of this client.

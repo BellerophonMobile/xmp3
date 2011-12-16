@@ -21,5 +21,7 @@
  * @param data A struct xmpp_client for the newly connected client.
  * @param name The name of the starting tag that caused this event.
  * @param attrs The attributes of the starting tag that caused this event.
+ * @param parser The XML parser instance.
  */
-void xmpp_auth_stream_start(void *data, const char *name, const char **attrs);
+void xmpp_auth_stream_start(void *data, const char *name, const char **attrs,
+                            struct xmp3_xml *parser);

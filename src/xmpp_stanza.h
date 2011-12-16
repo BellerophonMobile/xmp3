@@ -17,28 +17,36 @@ extern const char *XMPP_ATTR_TYPE_SET;
 extern const char *XMPP_ATTR_TYPE_RESULT;
 extern const char *XMPP_ATTR_TYPE_ERROR;
 
-struct xmpp_stanza;
 
 // Forward declarations
+struct xmpp_stanza;
+struct xmpp_server;
 struct xmpp_client;
+struct xmp3_xml;
 
 /**
  * Allocate and initialize a new XMPP stanza structure.
  *
- * @param client The client who sent this stanza.  The stanza DOES NOT take
- *               ownership of the client.
+ * @param server The server this message is being processed by.
+ * @param parser The XML parser that is parsing this stanza.
+ * @param client An optional client that sent this stanza, may be NULL.
  * @param name The name of the stanza start tag.
  * @param attrs NULL terminated list attribute = value pairs.
  * @returns A new XMPP stanza structure.
  */
-struct xmpp_stanza* xmpp_stanza_new(struct xmpp_client *client,
+struct xmpp_stanza* xmpp_stanza_new(struct xmpp_server *server,
+                                    struct xmp3_xml *parser,
+                                    struct xmpp_client *client,
                                     const char *name, const char **attrs);
 
 /** Cleans up and frees an XMPP stanza. */
 void xmpp_stanza_del(struct xmpp_stanza *stanza);
 
-/** Get the client who sent this stanza. */
-struct xmpp_client* xmpp_stanza_client(const struct xmpp_stanza *stanza);
+/** Get the server who is processing this stanza. */
+struct xmpp_server* xmpp_stanza_server(const struct xmpp_stanza *stanza);
+
+/** Get the XML parser that is parsing this stanza. */
+struct xmp3_xml* xmpp_stanza_parser(const struct xmpp_stanza *stanza);
 
 /**
  * Returns the name of the tag of this stanza (message/presence/IQ)

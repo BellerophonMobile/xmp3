@@ -93,6 +93,24 @@ void xmpp_server_del_client_listener(struct xmpp_client *client,
 void xmpp_server_disconnect_client(struct xmpp_client *client);
 
 /**
+ * Find a locally connected client by JID.
+ *
+ * @returns The connected client instance if found, NULL if not.
+ */
+struct xmpp_client* xmpp_server_find_client(const struct xmpp_server *server,
+                                            const struct jid *jid);
+
+/**
+ * Gets the client reponsible for the current parse event.
+ *
+ * This should only be called by XML parsing callbacks.
+ *
+ * XXX: HACK HACK HACK HACK DONT USE THIS PRETEND ITS NOT HERE
+ */
+struct xmpp_client* xmpp_server_get_cur_client(
+        const struct xmpp_server *server);
+
+/**
  * Add a callback to the list of routes for stanza delivery.
  *
  * You can use wildcards ("*") to be notified of stanzas for a range of JIDs.

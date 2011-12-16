@@ -7,9 +7,8 @@
 
 #pragma once
 
-#include <expat.h>
-
 struct xmpp_client;
+struct xmp3_xml;
 
 // Forward declarations
 struct xmpp_server;
@@ -24,7 +23,7 @@ struct xmpp_server* xmpp_client_server(struct xmpp_client *client);
 
 struct client_socket* xmpp_client_socket(struct xmpp_client *client);
 
-XML_Parser xmpp_client_parser(struct xmpp_client *client);
+struct xmp3_xml* xmpp_client_parser(struct xmpp_client *client);
 
 struct jid* xmpp_client_jid(const struct xmpp_client *client);
 

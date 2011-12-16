@@ -14,6 +14,7 @@
 #include "utils.h"
 
 #include "jid.h"
+#include "xmp3_xml.h"
 #include "xmpp_client.h"
 #include "xmpp_common.h"
 #include "xmpp_server.h"
@@ -33,7 +34,7 @@ const char *XMPP_ATTR_TYPE_ERROR = "error";
 
 // Forward declarations
 static struct jid* copy_attr_jid(const struct xmpp_stanza *stanza,
-                                       const char *name);
+                                 const char *name);
 
 struct attribute {
     char *name;
@@ -44,8 +45,11 @@ struct attribute {
 };
 
 struct xmpp_stanza {
-    /** The client who sent this stanza. */
-    struct xmpp_client *client;
+    /** The server who who is processing this stanza. */
+    struct xmpp_server *server;
+
+    /** The XML parser that is parsing this stanza. */
+    struct xmp3_xml *parser;
 
     /** The name + namespace string. */
     char *ns_name;
@@ -66,12 +70,15 @@ struct xmpp_stanza {
     struct attribute *attributes;
 };
 
-struct xmpp_stanza* xmpp_stanza_new(struct xmpp_client *client,
+struct xmpp_stanza* xmpp_stanza_new(struct xmpp_server *server,
+                                    struct xmp3_xml *parser,
+                                    struct xmpp_client *client,
                                     const char *name, const char **attrs) {
     struct xmpp_stanza *stanza = calloc(1, sizeof(*stanza));
     check_mem(stanza);
 
-    stanza->client = client;
+    stanza->server = server;
+    stanza->parser = parser;
 
     STRDUP_CHECK(stanza->ns_name, name);
 
@@ -94,7 +101,7 @@ struct xmpp_stanza* xmpp_stanza_new(struct xmpp_client *client,
 
     // If there is no "from" attribute, add one.
     const char *from = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_FROM);
-    if (from == NULL) {
+    if (from == NULL && client != NULL) {
         struct attribute *attr = calloc(1, sizeof(*attr));
         STRDUP_CHECK(attr->name, XMPP_STANZA_ATTR_FROM);
         attr->value = jid_to_str(xmpp_client_jid(client));
@@ -105,7 +112,7 @@ struct xmpp_stanza* xmpp_stanza_new(struct xmpp_client *client,
 
     // If there is no "to" attribute, add one.
     const char *to = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_TO);
-    if (to == NULL) {
+    if (to == NULL && client != NULL) {
         struct attribute *attr = calloc(1, sizeof(*attr));
         STRDUP_CHECK(attr->name, XMPP_STANZA_ATTR_TO);
 
@@ -149,8 +156,12 @@ void xmpp_stanza_del(struct xmpp_stanza *stanza) {
     free(stanza);
 }
 
-struct xmpp_client* xmpp_stanza_client(const struct xmpp_stanza *stanza) {
-    return stanza->client;
+struct xmpp_server* xmpp_stanza_server(const struct xmpp_stanza *stanza) {
+    return stanza->server;
+}
+
+struct xmp3_xml* xmpp_stanza_parser(const struct xmpp_stanza *stanza) {
+    return stanza->parser;
 }
 
 const char* xmpp_stanza_name(const struct xmpp_stanza *stanza) {

@@ -52,14 +52,16 @@ static const char *MSG_DISCO_QUERY_ITEMS =
     "</iq>";
 
 // Forward declarations
-static void session_end(void *data, const char *name);
-static void roster_query_end(void *data, const char *name);
-static void disco_query_info_end(void *data, const char *name);
-static void disco_query_items_end(void *data, const char *name);
+static void session_end(void *data, const char *name,
+                        struct xmp3_xml *parser);
+static void roster_query_end(void *data, const char *name,
+                             struct xmp3_xml *parser);
+static void disco_query_info_end(void *data, const char *name,
+                                 struct xmp3_xml *parser);
+static void disco_query_items_end(void *data, const char *name,
+                                  struct xmp3_xml *parser);
 
 bool xmpp_im_iq_session(struct xmpp_stanza *stanza, void *data) {
-    struct xmpp_client *client = xmpp_stanza_client(stanza);
-
     log_info("Session IQ Start");
 
     check(xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_ID) != NULL,
@@ -69,7 +71,7 @@ bool xmpp_im_iq_session(struct xmpp_stanza *stanza, void *data) {
           "Session IQ type must be \"set\"");
 
     // We expect to see the </session> tag next
-    xmp3_xml_replace_handlers(xmpp_client_parser(client), xmpp_error_start,
+    xmp3_xml_replace_handlers(xmpp_stanza_parser(stanza), xmpp_error_start,
                               session_end, xmpp_ignore_data, stanza);
     return true;
 
@@ -78,34 +80,35 @@ error:
 }
 
 /** Handles the end </session> tag in a session IQ. */
-static void session_end(void *data, const char *name) {
+static void session_end(void *data, const char *name,
+                        struct xmp3_xml *parser) {
     struct xmpp_stanza *stanza = (struct xmpp_stanza*)data;
-    struct xmpp_client *client = xmpp_stanza_client(stanza);
-
-    char msg[strlen(MSG_STREAM_SUCCESS)
-             + strlen(xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_ID))];
+    struct xmpp_client *client = xmpp_server_find_client(
+            xmpp_stanza_server(stanza), xmpp_stanza_jid_from(stanza));
 
     log_info("Session IQ End");
-
     check(strcmp(name, XMPP_IQ_SESSION) == 0, "Unexpected stanza");
 
-    sprintf(msg, MSG_STREAM_SUCCESS,
-            xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_ID));
-    check(client_socket_sendall(xmpp_client_socket(client), msg,
-                                strlen(msg)) > 0,
-          "Error sending stream success message");
+    if (client != NULL) {
+        char msg[strlen(MSG_STREAM_SUCCESS)
+                 + strlen(xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_ID))];
+        sprintf(msg, MSG_STREAM_SUCCESS,
+                xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_ID));
+        check(client_socket_sendall(xmpp_client_socket(client), msg,
+                                    strlen(msg)) > 0,
+              "Error sending stream success message");
+    }
 
     // We expect to see the </iq> tag next
-    xmp3_xml_replace_handlers(xmpp_client_parser(client), xmpp_error_start,
-                              xmpp_core_stanza_end, xmpp_ignore_data, data);
+    xmp3_xml_replace_handlers(parser, xmpp_error_start, xmpp_core_stanza_end,
+                              xmpp_ignore_data, data);
     return;
 
 error:
-    XML_StopParser(xmpp_client_parser(client), false);
+    xmp3_xml_stop_parser(parser, false);
 }
 
 bool xmpp_im_iq_roster_query(struct xmpp_stanza *stanza, void *data) {
-    struct xmpp_client *client = xmpp_stanza_client(stanza);
 
     log_info("Roster Query IQ Start");
 
@@ -114,7 +117,7 @@ bool xmpp_im_iq_roster_query(struct xmpp_stanza *stanza, void *data) {
           "Session IQ type must be \"set\"");
 
     // We expect to see the </query> tag next.
-    xmp3_xml_replace_handlers(xmpp_client_parser(client), xmpp_error_start,
+    xmp3_xml_replace_handlers(xmpp_stanza_parser(stanza), xmpp_error_start,
                               roster_query_end, xmpp_ignore_data, stanza);
     return true;
 
@@ -123,92 +126,101 @@ error:
 }
 
 /** Handles the end </query> in a roster query. */
-static void roster_query_end(void *data, const char *name) {
+static void roster_query_end(void *data, const char *name,
+                             struct xmp3_xml *parser) {
     struct xmpp_stanza *stanza = (struct xmpp_stanza*)data;
-    struct xmpp_client *client = xmpp_stanza_client(stanza);
+    struct xmpp_client *client = xmpp_server_find_client(
+            xmpp_stanza_server(stanza), xmpp_stanza_jid_from(stanza));
 
-    char msg[strlen(MSG_ROSTER)
-             + strlen(xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_ID))];
 
     log_info("Roster Query IQ End");
     check(strcmp(name, XMPP_IQ_QUERY_ROSTER) == 0, "Unexpected stanza");
 
-    // TODO: Actually manage the user's roster.
+    if (client != NULL) {
+        char msg[strlen(MSG_ROSTER)
+                 + strlen(xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_ID))];
 
-    sprintf(msg, MSG_ROSTER, xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_ID));
-    check(client_socket_sendall(xmpp_client_socket(client), msg,
-                                strlen(msg)) > 0,
-          "Error sending roster message");
+        // TODO: Actually manage the user's roster.
+
+        sprintf(msg, MSG_ROSTER, xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_ID));
+        check(client_socket_sendall(xmpp_client_socket(client), msg,
+                                    strlen(msg)) > 0,
+              "Error sending roster message");
+    }
 
     // We expect to see the </iq> tag next.
-    xmp3_xml_replace_handlers(xmpp_client_parser(client), xmpp_error_start,
-                              xmpp_core_stanza_end, xmpp_ignore_data, data);
+    xmp3_xml_replace_handlers(parser, xmpp_error_start, xmpp_core_stanza_end,
+                              xmpp_ignore_data, data);
     return;
 
 error:
-    XML_StopParser(xmpp_client_parser(client), false);
+    xmp3_xml_stop_parser(parser, false);
 }
 
 bool xmpp_im_iq_disco_query_info(struct xmpp_stanza *stanza, void *data) {
-    struct xmpp_client *client = xmpp_stanza_client(stanza);
     log_info("Info Query IQ Start");
-    xmp3_xml_replace_end_handler(xmpp_client_parser(client),
+    xmp3_xml_replace_end_handler(xmpp_stanza_parser(stanza),
                                  disco_query_info_end);
     return true;
 }
 
-static void disco_query_info_end(void *data, const char *name) {
+static void disco_query_info_end(void *data, const char *name,
+                                 struct xmp3_xml *parser) {
     struct xmpp_stanza *stanza = (struct xmpp_stanza*)data;
-    struct xmpp_client *client = xmpp_stanza_client(stanza);
-
-    char msg[strlen(MSG_DISCO_QUERY_INFO)
-             + strlen(xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_ID))];
+    struct xmpp_client *client = xmpp_server_find_client(
+            xmpp_stanza_server(stanza), xmpp_stanza_jid_from(stanza));
 
     log_info("Info Query IQ End");
     check(strcmp(name, XMPP_IQ_DISCO_QUERY_INFO) == 0, "Unexpected stanza");
 
-    sprintf(msg, MSG_DISCO_QUERY_INFO,
-            xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_ID));
-    check(client_socket_sendall(xmpp_client_socket(client), msg,
-                                strlen(msg)) > 0,
-          "Error sending info query IQ message");
+    if (client != NULL) {
+        char msg[strlen(MSG_DISCO_QUERY_INFO)
+                 + strlen(xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_ID))];
+        sprintf(msg, MSG_DISCO_QUERY_INFO,
+                xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_ID));
+        check(client_socket_sendall(xmpp_client_socket(client), msg,
+                                    strlen(msg)) > 0,
+              "Error sending info query IQ message");
+    }
 
-    xmp3_xml_replace_handlers(xmpp_client_parser(client), xmpp_error_start,
-                              xmpp_core_stanza_end, xmpp_ignore_data, data);
+    xmp3_xml_replace_handlers(parser, xmpp_error_start, xmpp_core_stanza_end,
+                              xmpp_ignore_data, data);
     return;
 
 error:
-    XML_StopParser(xmpp_client_parser(client), false);
+    xmp3_xml_stop_parser(parser, false);
 }
 
 bool xmpp_im_iq_disco_query_items(struct xmpp_stanza *stanza, void *data) {
-    struct xmpp_client *client = xmpp_stanza_client(stanza);
     log_info("Items Query IQ Start");
-    xmp3_xml_replace_end_handler(xmpp_client_parser(client),
+    xmp3_xml_replace_end_handler(xmpp_stanza_parser(stanza),
                                  disco_query_items_end);
     return true;
 }
 
-static void disco_query_items_end(void *data, const char *name) {
+static void disco_query_items_end(void *data, const char *name,
+                                  struct xmp3_xml *parser) {
     struct xmpp_stanza *stanza = (struct xmpp_stanza*)data;
-    struct xmpp_client *client = xmpp_stanza_client(stanza);
-
-    char msg[strlen(MSG_DISCO_QUERY_ITEMS)
-             + strlen(xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_ID))];
+    struct xmpp_client *client = xmpp_server_find_client(
+            xmpp_stanza_server(stanza), xmpp_stanza_jid_from(stanza));
 
     log_info("Items Query IQ End");
     check(strcmp(name, XMPP_IQ_DISCO_QUERY_ITEMS) == 0, "Unexpected stanza");
 
-    sprintf(msg, MSG_DISCO_QUERY_ITEMS,
-            xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_ID));
-    check(client_socket_sendall(xmpp_client_socket(client), msg,
-                                strlen(msg)) > 0,
-          "Error sending items query IQ message");
+    if (client != NULL) {
+        char msg[strlen(MSG_DISCO_QUERY_ITEMS)
+                 + strlen(xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_ID))];
+        sprintf(msg, MSG_DISCO_QUERY_ITEMS,
+                xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_ID));
+        check(client_socket_sendall(xmpp_client_socket(client), msg,
+                                    strlen(msg)) > 0,
+              "Error sending items query IQ message");
+    }
 
-    xmp3_xml_replace_handlers(xmpp_client_parser(client), xmpp_error_start,
-                              xmpp_core_stanza_end, xmpp_ignore_data, data);
+    xmp3_xml_replace_handlers(parser, xmpp_error_start, xmpp_core_stanza_end,
+                              xmpp_ignore_data, data);
     return;
 
 error:
-    XML_StopParser(xmpp_client_parser(client), false);
+    xmp3_xml_stop_parser(parser, false);
 }

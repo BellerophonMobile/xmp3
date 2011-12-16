@@ -16,8 +16,10 @@
 #include "utils.h"
 
 #include "client_socket.h"
+#include "xmp3_xml.h"
 #include "xmpp_stanza.h"
 #include "xmpp_client.h"
+#include "xmpp_server.h"
 
 #include "xmpp_common.h"
 
@@ -67,29 +69,33 @@ void xmpp_print_data(const char *s, int len) {
     printf("\t%1$d bytes: '%2$.*1$s'\n", len, s);
 }
 
-void xmpp_error_start(void *data, const char *name, const char **attrs) {
+void xmpp_error_start(void *data, const char *name, const char **attrs,
+                      struct xmp3_xml *parser) {
     struct xmpp_client *client = (struct xmpp_client*)data;
     log_err("Unexpected start tag %s", name);
-    XML_StopParser(xmpp_client_parser(client), false);
+    xmp3_xml_stop_parser(xmpp_client_parser(client), false);
 }
 
-void xmpp_error_end(void *data, const char *name) {
+void xmpp_error_end(void *data, const char *name, struct xmp3_xml *parser) {
     struct xmpp_client *client = (struct xmpp_client*)data;
     log_err("Unexpected end tag %s", name);
-    XML_StopParser(xmpp_client_parser(client), false);
+    xmp3_xml_stop_parser(xmpp_client_parser(client), false);
 }
 
-void xmpp_error_data(void *data, const char *s, int len) {
+void xmpp_error_data(void *data, const char *s, int len,
+                     struct xmp3_xml *parser) {
     struct xmpp_client *client = (struct xmpp_client*)data;
     log_err("Unexpected data");
-    XML_StopParser(xmpp_client_parser(client), false);
+    xmp3_xml_stop_parser(xmpp_client_parser(client), false);
 }
 
-void xmpp_ignore_start(void *data, const char *name, const char **attrs) {
+void xmpp_ignore_start(void *data, const char *name, const char **attrs,
+                       struct xmp3_xml *parser) {
     debug("Ignoring start tag");
 }
 
-void xmpp_ignore_data(void *data, const char *s, int len) {
+void xmpp_ignore_data(void *data, const char *s, int len,
+                      struct xmp3_xml *parser) {
     debug("Ignoring data");
 }
 
@@ -105,7 +111,12 @@ void xmpp_send_service_unavailable(struct xmpp_stanza *stanza) {
 
 /** Generic code to send errors. */
 static void send_error(struct xmpp_stanza *stanza, const char *error) {
-    struct xmpp_client *client = xmpp_stanza_client(stanza);
+    struct xmpp_client *client = xmpp_server_find_client(
+            xmpp_stanza_server(stanza), xmpp_stanza_jid_from(stanza));
+
+    if (client == NULL) {
+        return;
+    }
 
     UT_string *msg = NULL;
     utstring_new(msg);
@@ -165,5 +176,5 @@ error:
     if (msg != NULL) {
         utstring_free(msg);
     }
-    XML_StopParser(xmpp_client_parser(xmpp_stanza_client(stanza)), false);
+    xmp3_xml_stop_parser(xmpp_stanza_parser(stanza), false);
 }

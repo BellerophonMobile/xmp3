@@ -26,8 +26,8 @@ struct xmpp_client {
     /** The connected client_socket structure. */
     struct client_socket *socket;
 
-    /** An Expat parser instance for this client. */
-    XML_Parser parser;
+    /** An XML parser instance for this client. */
+    struct xmp3_xml *parser;
 
     /** The JID of this client. */
     struct jid *jid;
@@ -42,11 +42,10 @@ struct xmpp_client* xmpp_client_new(struct xmpp_server *server,
     client->socket = socket;
 
     // Create the XML parser we'll use to parse stanzas from the client.
-    client->parser = XML_ParserCreateNS(NULL, *XMPP_NS_SEPARATOR);
+    client->parser = xmp3_xml_new();
     check(client->parser != NULL, "Error creating XML parser");
 
-    // Set initial Expat handlers to begin authentication.
-    xmp3_xml_init_parser(client->parser);
+    // Set initial handlers to begin authentication.
     xmp3_xml_add_handlers(client->parser, xmpp_auth_stream_start,
                           xmpp_error_end, xmpp_error_data, client);
 
@@ -73,7 +72,7 @@ void xmpp_client_del(struct xmpp_client *client) {
     }
 
     if (client->parser) {
-        XML_ParserFree(client->parser);
+        xmp3_xml_del(client->parser);
     }
 
     free(client);
@@ -87,7 +86,7 @@ struct client_socket* xmpp_client_socket(struct xmpp_client *client) {
     return client->socket;
 }
 
-XML_Parser xmpp_client_parser(struct xmpp_client *client) {
+struct xmp3_xml* xmpp_client_parser(struct xmpp_client *client) {
     return client->parser;
 }
 

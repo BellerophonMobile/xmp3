@@ -125,34 +125,43 @@ struct resource_bind_tmp {
  * See: http://tools.ietf.org/html/rfc6120#section-9.1 */
 
 static void stream_sasl_start(void *data, const char *name,
-                              const char **attrs);
+                              const char **attrs, struct xmp3_xml *parser);
 static void stream_bind_start(void *data, const char *name,
-                              const char **attrs);
+                              const char **attrs, struct xmp3_xml *parser);
 
-static void tls_start(void *data, const char *name, const char **attrs);
-static void tls_end(void *data, const char *name);
+static void tls_start(void *data, const char *name, const char **attrs,
+                      struct xmp3_xml *parser);
+static void tls_end(void *data, const char *name, struct xmp3_xml *parser);
 
-static void sasl_plain_start(void *data, const char *name, const char **attrs);
-static void sasl_plain_data(void *data, const char *s, int len);
-static void sasl_plain_end(void *data, const char *name);
+static void sasl_plain_start(void *data, const char *name, const char **attrs,
+                             struct xmp3_xml *parser);
+static void sasl_plain_data(void *data, const char *s, int len,
+                            struct xmp3_xml *parser);
+static void sasl_plain_end(void *data, const char *name,
+                           struct xmp3_xml *parser);
 
-static void bind_iq_start(void *data, const char *name, const char **attrs);
-static void bind_iq_end(void *data, const char *name);
+static void bind_iq_start(void *data, const char *name, const char **attrs,
+                          struct xmp3_xml *parser);
+static void bind_iq_end(void *data, const char *name, struct xmp3_xml *parser);
 
-static void bind_start(void *data, const char *name, const char **attrs);
-static void bind_end(void *data, const char *name);
+static void bind_start(void *data, const char *name, const char **attrs,
+                       struct xmp3_xml *parser);
+static void bind_end(void *data, const char *name, struct xmp3_xml *parser);
 
 static void bind_resource_start(void *data, const char *name,
-                                const char **attrs);
-static void bind_resource_data(void *data, const char *s, int len);
-static void bind_resource_end(void *data, const char *name);
+                                const char **attrs, struct xmp3_xml *parser);
+static void bind_resource_data(void *data, const char *s, int len,
+                               struct xmp3_xml *parser);
+static void bind_resource_end(void *data, const char *name,
+                              struct xmp3_xml *parser);
 
 /**
  * Step 1: Client initiates stream to server.
  *
  * Handles the starting <stream> tag.
  */
-void xmpp_auth_stream_start(void *data, const char *name, const char **attrs) {
+void xmpp_auth_stream_start(void *data, const char *name, const char **attrs,
+                            struct xmp3_xml *parser) {
     struct xmpp_client *client = (struct xmpp_client*)data;
 
     log_info("Starting stream...");
@@ -174,8 +183,8 @@ void xmpp_auth_stream_start(void *data, const char *name, const char **attrs) {
               "Error sending TLS stream features to client");
 
         // We expect to see a <starttls> tag from the client.
-        xmp3_xml_replace_handlers(xmpp_client_parser(client), tls_start,
-                                  tls_end, xmpp_ignore_data, data);
+        xmp3_xml_replace_handlers(parser, tls_start, tls_end, xmpp_ignore_data,
+                                  data);
 
     } else {
         // SSL is disabled, skip right to SASL.
@@ -185,17 +194,17 @@ void xmpp_auth_stream_start(void *data, const char *name, const char **attrs) {
               "Error sending SASL stream features to client");
 
         // We expect to see a SASL PLAIN <auth> tag next.
-        xmp3_xml_replace_handlers(xmpp_client_parser(client), sasl_plain_start,
-                                  sasl_plain_end, sasl_plain_data, data);
+        xmp3_xml_replace_handlers(parser, sasl_plain_start, sasl_plain_end,
+                                  sasl_plain_data, data);
     }
     return;
 
 error:
-    XML_StopParser(xmpp_client_parser(client), false);
+    xmp3_xml_stop_parser(parser, false);
 }
 
-static void stream_sasl_start(void *data, const char *name, const char **attrs)
-{
+static void stream_sasl_start(void *data, const char *name, const char **attrs,
+                              struct xmp3_xml *parser) {
     struct xmpp_client *client = (struct xmpp_client*)data;
 
     log_info("Starting SASL stream");
@@ -215,16 +224,16 @@ static void stream_sasl_start(void *data, const char *name, const char **attrs)
           "Error sending SASL stream features to client");
 
     // We expect to see a SASL PLAIN <auth> tag next.
-    xmp3_xml_replace_handlers(xmpp_client_parser(client), sasl_plain_start,
-                              sasl_plain_end, sasl_plain_data, data);
+    xmp3_xml_replace_handlers(parser, sasl_plain_start, sasl_plain_end,
+                              sasl_plain_data, data);
     return;
 
 error:
-    XML_StopParser(xmpp_client_parser(client), false);
+    xmp3_xml_stop_parser(parser, false);
 }
 
-static void stream_bind_start(void *data, const char *name, const char **attrs)
-{
+static void stream_bind_start(void *data, const char *name, const char **attrs,
+                              struct xmp3_xml *parser) {
     struct xmpp_client *client = (struct xmpp_client*)data;
 
     log_info("Starting resource bind stream");
@@ -240,12 +249,12 @@ static void stream_bind_start(void *data, const char *name, const char **attrs)
           "Error sending bind stream features to client");
 
     // We expect to see the resouce binding IQ stanza next.
-    xmp3_xml_replace_handlers(xmpp_client_parser(client), bind_iq_start,
-                              xmpp_error_end, xmpp_ignore_data, data);
+    xmp3_xml_replace_handlers(parser, bind_iq_start, xmpp_error_end,
+                              xmpp_ignore_data, data);
     return;
 
 error:
-    XML_StopParser(xmpp_client_parser(client), false);
+    xmp3_xml_stop_parser(parser, false);
 }
 
 /**
@@ -253,14 +262,14 @@ error:
  *
  * Begins TLS authentication.
  */
-static void tls_start(void *data, const char *name, const char **attrs) {
-    struct xmpp_client *client = (struct xmpp_client*)data;
+static void tls_start(void *data, const char *name, const char **attrs,
+                      struct xmp3_xml *parser) {
     log_info("Starting TLS...");
     check(strcmp(name, XMPP_STARTTLS) == 0, "Unexpected stanza");
     return;
 
 error:
-    XML_StopParser(xmpp_client_parser(client), false);
+    xmp3_xml_stop_parser(parser, false);
 }
 
 /**
@@ -268,7 +277,7 @@ error:
  *
  * Confirms to the client that TLS is ok.
  */
-static void tls_end(void *data, const char *name) {
+static void tls_end(void *data, const char *name, struct xmp3_xml *parser) {
     struct xmpp_client *client = (struct xmpp_client*)data;
 
     log_info("Initiating SSL connection...");
@@ -284,13 +293,13 @@ static void tls_end(void *data, const char *name) {
           "Error initializing SSL socket.");
 
     // We expect a new stream from the client
-    xmp3_xml_replace_handlers(xmpp_client_parser(client), stream_sasl_start,
-                              xmpp_error_end, xmpp_ignore_data, data);
+    xmp3_xml_replace_handlers(parser, stream_sasl_start, xmpp_error_end,
+                              xmpp_ignore_data, data);
 
     return;
 
 error:
-    XML_StopParser(xmpp_client_parser(client), false);
+    xmp3_xml_stop_parser(parser, false);
 }
 
 /**
@@ -298,8 +307,8 @@ error:
  *
  * Handles the starting <auth> tag.
  */
-static void sasl_plain_start(void *data, const char *name, const char **attrs)
-{
+static void sasl_plain_start(void *data, const char *name, const char **attrs,
+                             struct xmp3_xml *parser) {
     struct xmpp_client *client = (struct xmpp_client*)data;
     log_info("Starting SASL plain...");
 
@@ -322,12 +331,12 @@ static void sasl_plain_start(void *data, const char *name, const char **attrs)
     auth_data->client = client;
     base64_init_decodestate(&auth_data->state);
 
-    xmp3_xml_replace_handlers(xmpp_client_parser(client), xmpp_error_start,
-                              sasl_plain_end, sasl_plain_data, auth_data);
+    xmp3_xml_replace_handlers(parser, xmpp_error_start, sasl_plain_end,
+                              sasl_plain_data, auth_data);
     return;
 
 error:
-    XML_StopParser(xmpp_client_parser(client), false);
+    xmp3_xml_stop_parser(parser, false);
 }
 
 /**
@@ -335,7 +344,8 @@ error:
  *
  * Handles the data between <auth> tags.
  */
-static void sasl_plain_data(void *data, const char *s, int len) {
+static void sasl_plain_data(void *data, const char *s, int len,
+                            struct xmp3_xml *parser) {
     struct auth_plain_tmp *auth_data = (struct auth_plain_tmp*)data;
     struct xmpp_client *client = auth_data->client;
 
@@ -354,9 +364,9 @@ static void sasl_plain_data(void *data, const char *s, int len) {
     return;
 
 error:
-    xmp3_xml_replace_user_data(xmpp_client_parser(client), client);
+    xmp3_xml_replace_user_data(parser, client);
     free(auth_data);
-    XML_StopParser(xmpp_client_parser(client), false);
+    xmp3_xml_stop_parser(parser, false);
 }
 
 /**
@@ -365,7 +375,8 @@ error:
  * When we receive this, we've received the username/password from the client
  * and can authenticate.
  */
-static void sasl_plain_end(void *data, const char *name) {
+static void sasl_plain_end(void *data, const char *name,
+                           struct xmp3_xml *parser) {
     struct auth_plain_tmp *auth_data = (struct auth_plain_tmp*)data;
     struct xmpp_client *client = auth_data->client;
 
@@ -401,17 +412,17 @@ static void sasl_plain_end(void *data, const char *name) {
     free(auth_data);
 
     // Go to step 7, the client needs to send us a new stream header.
-    xmp3_xml_replace_handlers(xmpp_client_parser(client), stream_bind_start,
-                              xmpp_error_end, xmpp_ignore_data, client);
+    xmp3_xml_replace_handlers(parser, stream_bind_start, xmpp_error_end,
+                              xmpp_ignore_data, client);
 
     log_info("User authenticated");
 
     return;
 
 error:
-    xmp3_xml_replace_user_data(xmpp_client_parser(client), client);
+    xmp3_xml_replace_user_data(parser, client);
     free(auth_data);
-    XML_StopParser(xmpp_client_parser(client), false);
+    xmp3_xml_stop_parser(parser, false);
 }
 
 /**
@@ -419,7 +430,8 @@ error:
  *
  * Handles the resource binding starting <iq> tag.
  */
-static void bind_iq_start(void *data, const char *name, const char **attrs) {
+static void bind_iq_start(void *data, const char *name, const char **attrs,
+                          struct xmp3_xml *parser) {
     struct xmpp_client *client = (struct xmpp_client*)data;
     struct resource_bind_tmp *bind_data = NULL;
 
@@ -452,17 +464,18 @@ static void bind_iq_start(void *data, const char *name, const char **attrs) {
     check(attrs[i] != NULL, "Did not find \"id\" attribute");
 
     // Next, we expect to see the <bind> tag
-    xmp3_xml_replace_handlers(xmpp_client_parser(client), bind_start,
-                              bind_end, xmpp_ignore_data, bind_data);
+    xmp3_xml_replace_handlers(parser, bind_start, bind_end, xmpp_ignore_data,
+                              bind_data);
     return;
 
 error:
     free(bind_data);
-    XML_StopParser(xmpp_client_parser(client), false);
+    xmp3_xml_stop_parser(parser, false);
 }
 
 /** Handles the resouce binding ending <iq> tag. */
-static void bind_iq_end(void *data, const char *name) {
+static void bind_iq_end(void *data, const char *name,
+                        struct xmp3_xml *parser) {
     struct resource_bind_tmp *bind_data = (struct resource_bind_tmp*)data;
     struct xmpp_client *client = bind_data->client;
     struct xmpp_server *server = xmpp_client_server(client);
@@ -490,9 +503,9 @@ static void bind_iq_end(void *data, const char *name) {
 
     /* Resource binding, and thus authentication, is complete!  Continue to
      * process general messages. */
-    xmp3_xml_replace_handlers(xmpp_client_parser(client),
-                              xmpp_core_stanza_start, xmpp_core_stream_end,
-                              xmpp_ignore_data, client);
+    xmp3_xml_replace_handlers(parser, xmpp_core_stanza_start,
+                              xmpp_core_stream_end, xmpp_ignore_data,
+                              xmpp_client_server(client));
     free(bind_data);
 
     xmpp_server_add_stanza_route(server, xmpp_client_jid(client),
@@ -500,13 +513,14 @@ static void bind_iq_end(void *data, const char *name) {
     return;
 
 error:
-    xmp3_xml_replace_user_data(xmpp_client_parser(client), client);
+    xmp3_xml_replace_user_data(parser, client);
     free(bind_data);
-    XML_StopParser(xmpp_client_parser(client), false);
+    xmp3_xml_stop_parser(parser, false);
 }
 
 /** Handles the start <bind> tag inside a resource binding <iq>. */
-static void bind_start(void *data, const char *name, const char **attrs) {
+static void bind_start(void *data, const char *name, const char **attrs,
+                       struct xmp3_xml *parser) {
     struct resource_bind_tmp *bind_data = (struct resource_bind_tmp*)data;
     struct xmpp_client *client = bind_data->client;
 
@@ -515,37 +529,37 @@ static void bind_start(void *data, const char *name, const char **attrs) {
     check(strcmp(name, XMPP_BIND) == 0, "Unexpected stanza");
 
     // We expect to see a <resource> tag next
-    xmp3_xml_replace_handlers(xmpp_client_parser(client), bind_resource_start,
-                              bind_resource_end, bind_resource_data, data);
+    xmp3_xml_replace_handlers(parser, bind_resource_start, bind_resource_end,
+                              bind_resource_data, data);
     return;
 
 error:
-    xmp3_xml_replace_user_data(xmpp_client_parser(client), client);
+    xmp3_xml_replace_user_data(parser, client);
     free(bind_data);
-    XML_StopParser(xmpp_client_parser(client), false);
+    xmp3_xml_stop_parser(parser, false);
 }
 
 /** Handles the ending <bind> tag inside a resource binding <iq>. */
-static void bind_end(void *data, const char *name) {
+static void bind_end(void *data, const char *name, struct xmp3_xml *parser) {
     struct resource_bind_tmp *bind_data = (struct resource_bind_tmp*)data;
     struct xmpp_client *client = bind_data->client;
 
     check(strcmp(name, XMPP_BIND) == 0, "Unexpected stanza");
 
     // We expect to see a closing </iq> tag next
-    xmp3_xml_replace_handlers(xmpp_client_parser(client), xmpp_error_start,
-                              bind_iq_end, xmpp_ignore_data, data);
+    xmp3_xml_replace_handlers(parser, xmpp_error_start, bind_iq_end,
+                              xmpp_ignore_data, data);
     return;
 
 error:
-    xmp3_xml_replace_user_data(xmpp_client_parser(client), client);
+    xmp3_xml_replace_user_data(parser, client);
     free(bind_data);
-    XML_StopParser(xmpp_client_parser(client), false);
+    xmp3_xml_stop_parser(parser, false);
 }
 
 /** Handles the starting <resource> tag inside a resource binding <iq>. */
 static void bind_resource_start(void *data, const char *name,
-                                const char **attrs) {
+                                const char **attrs, struct xmp3_xml *parser) {
     struct resource_bind_tmp *bind_data = (struct resource_bind_tmp*)data;
     struct xmpp_client *client = bind_data->client;
 
@@ -555,13 +569,14 @@ static void bind_resource_start(void *data, const char *name,
     return;
 
 error:
-    xmp3_xml_replace_user_data(xmpp_client_parser(client), client);
+    xmp3_xml_replace_user_data(parser, client);
     free(bind_data);
-    XML_StopParser(xmpp_client_parser(client), false);
+    xmp3_xml_stop_parser(parser, false);
 }
 
 /** Handles the resouce string in the in a resource binding <iq>. */
-static void bind_resource_data(void *data, const char *s, int len) {
+static void bind_resource_data(void *data, const char *s, int len,
+                               struct xmp3_xml *parser) {
     struct resource_bind_tmp *bind_data = (struct resource_bind_tmp*)data;
     struct xmpp_client *client = bind_data->client;
 
@@ -575,13 +590,14 @@ static void bind_resource_data(void *data, const char *s, int len) {
     return;
 
 error:
-    xmp3_xml_replace_user_data(xmpp_client_parser(client), client);
+    xmp3_xml_replace_user_data(parser, client);
     free(bind_data);
-    XML_StopParser(xmpp_client_parser(client), false);
+    xmp3_xml_stop_parser(parser, false);
 }
 
 /** Handles the ending <resource> tag inside a resource binding <iq>. */
-static void bind_resource_end(void *data, const char *name) {
+static void bind_resource_end(void *data, const char *name,
+                              struct xmp3_xml *parser) {
     struct resource_bind_tmp *bind_data = (struct resource_bind_tmp*)data;
     struct xmpp_client *client = bind_data->client;
 
@@ -590,12 +606,12 @@ static void bind_resource_end(void *data, const char *name) {
     // Copy the resource into the client information structure
     jid_set_resource(xmpp_client_jid(client), bind_data->resource);
 
-    xmp3_xml_replace_handlers(xmpp_client_parser(client), xmpp_error_start,
-                              bind_end, xmpp_ignore_data, data);
+    xmp3_xml_replace_handlers(parser, xmpp_error_start, bind_end,
+                              xmpp_ignore_data, data);
     return;
 
 error:
-    xmp3_xml_replace_user_data(xmpp_client_parser(client), client);
+    xmp3_xml_replace_user_data(parser, client);
     free(bind_data);
-    XML_StopParser(xmpp_client_parser(client), false);
+    xmp3_xml_stop_parser(parser, false);
 }
