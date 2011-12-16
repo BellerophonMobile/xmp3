@@ -40,7 +40,7 @@ def configure(ctx):
     ctx.check_cc(lib='crypto')
     ctx.check_cc(lib='ssl')
 
-    ctx.env.CFLAGS += ['-std=gnu99', '-Wall', '-Werror']
+    ctx.env.CFLAGS += ['-std=gnu99', '-Wall', '-Werror', '-fPIC']
     ctx.env.CFLAGS += ['-O0', '-ggdb']
 
 def build(ctx):
