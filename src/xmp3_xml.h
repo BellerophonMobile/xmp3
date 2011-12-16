@@ -27,6 +27,8 @@ struct xmp3_xml* xmp3_xml_new();
 
 void xmp3_xml_del(struct xmp3_xml *parser);
 
+void xmp3_xml_reset(struct xmp3_xml *parser);
+
 enum XML_Status xmp3_xml_parse(struct xmp3_xml *parser, const char *s, int len,
                                int isFinal);
 

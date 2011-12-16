@@ -63,6 +63,14 @@ void xmp3_xml_del(struct xmp3_xml *parser) {
     free(parser);
 }
 
+void xmp3_xml_reset(struct xmp3_xml *parser) {
+    XML_ParserReset(parser->parser, NULL);
+
+    XML_SetElementHandler(parser->parser, xml_start, xml_end);
+    XML_SetCharacterDataHandler(parser->parser, xml_data);
+    XML_SetUserData(parser->parser, parser);
+}
+
 enum XML_Status xmp3_xml_parse(struct xmp3_xml *parser, const char *s, int len,
                                int isFinal) {
     return XML_Parse(parser->parser, s, len, isFinal);
