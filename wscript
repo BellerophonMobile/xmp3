@@ -5,22 +5,7 @@
     Copyright (c) 2011 Drexel University
 '''
 
-import waflib
-
-# So you don't need to do ./waf configure if you are just using the defaults
-waflib.Configure.autoconfig = True
-
-def options(ctx):
-    ctx.load('compiler_c')
-
-    grp = ctx.add_option_group('xmp3 options')
-
-    grp.add_option('--build-docs', action='store_true', default=False,
-                   help='Build doxygen documentation (use during configure)')
-
 def configure(ctx):
-    ctx.env.BUILD_DOCS = ctx.options.build_docs
-
     ctx.load('compiler_c')
 
     if ctx.env.BUILD_DOCS:
@@ -39,9 +24,6 @@ def configure(ctx):
     ctx.check_cc(lib='expat')
     ctx.check_cc(lib='crypto')
     ctx.check_cc(lib='ssl')
-
-    ctx.env.CFLAGS += ['-std=gnu99', '-Wall', '-Werror', '-fPIC']
-    ctx.env.CFLAGS += ['-O0', '-ggdb']
 
 def build(ctx):
     ctx.stlib(
