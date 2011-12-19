@@ -35,9 +35,9 @@ else
     echo "Failed!"
 fi
 
-echo "Building documentation"
-./waf --build-docs --targets="doxygen" > /dev/null
-rsync -r --delete doc/html/ /srv/http/docs/xmp3/ > /dev/null || echo Failed
-echo "Done"
+#echo "Building documentation"
+#./waf --build-docs --targets="doxygen" > /dev/null
+#rsync -r --delete doc/html/ /srv/http/docs/xmp3/ > /dev/null || echo Failed
+#echo "Done"
 
 clean

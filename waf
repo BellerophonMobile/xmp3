@@ -25,4 +25,4 @@ then
     ln -s .. "$MOD_NAME"
 fi
 
-./waf $@
+./waf -m $MOD_NAME $@

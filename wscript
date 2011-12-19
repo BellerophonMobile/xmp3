@@ -58,7 +58,6 @@ def build(ctx):
 
     ctx(
         features = 'doxygen',
-        name = 'doxygen',
         doxyfile = 'doxyfile',
         posted = not ctx.env.BUILD_DOCS,
     )
