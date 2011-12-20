@@ -9,25 +9,34 @@ MOD_NAME="$(echo "$MOD_DIR" | awk -F/ '{print $NF}')"
 
 cd "$MOD_DIR"
 
+# XXX: This should probably be more robust...  Try to detect whether we are
+# inside a swat_build submodule, or in a stand-alone module.
+if [ -f ../wscript ]
+then
+    cd ..
+    ./waf $@
+    exit $?
+fi
+
 if [ ! -d swat_build ]
 then
     echo "swat_build not found, cloning..."
-    git clone "$REPO_URL" || exit 1
+    git clone "$REPO_URL"
     echo "done"
 fi
 
 # Link the master's build directory locally
 if [ ! -h build ]
 then
-    ln -s swat_build/build/ . || exit 1
+    ln -s swat_build/build/ .
 fi
 
-cd swat_build || exit 1
+cd swat_build
 
 # Link this module's source directory to the master
 if [ ! -h "$MOD_NAME" ]
 then
-    ln -s .. "$MOD_NAME" || exit 1
+    ln -s .. "$MOD_NAME"
 fi
 
 # Call waf, passing through any options we set, and always include ourselves
