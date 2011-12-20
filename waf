@@ -22,7 +22,7 @@ then
     ln -s swat_build/build/ . || exit 1
 fi
 
-cd swat_build && exit 1
+cd swat_build || exit 1
 
 # Link this module's source directory to the master
 if [ ! -h "$MOD_NAME" ]
