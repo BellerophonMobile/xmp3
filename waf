@@ -21,22 +21,22 @@ fi
 if [ ! -d swat_build ]
 then
     echo "swat_build not found, cloning..."
-    git clone "$REPO_URL"
+    git clone "$REPO_URL" || exit 1
     echo "done"
 fi
 
 # Link the master's build directory locally
 if [ ! -h build ]
 then
-    ln -s swat_build/build/ .
+    ln -s swat_build/build/ . || exit 1
 fi
 
-cd swat_build
+cd swat_build || exit 1
 
 # Link this module's source directory to the master
 if [ ! -h "$MOD_NAME" ]
 then
-    ln -s .. "$MOD_NAME"
+    ln -s .. "$MOD_NAME" || exit 1
 fi
 
 # Call waf, passing through any options we set, and always include ourselves

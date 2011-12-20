@@ -60,8 +60,8 @@ def build(ctx):
         use = ['libxmp3', 'EXPAT', 'CRYPTO', 'SSL'],
     )
 
-    ctx(
-        features = 'doxygen',
-        doxyfile = 'doxyfile',
-        posted = not ctx.env.BUILD_DOCS,
-    )
+    #ctx(
+    #    features = 'doxygen',
+    #    doxyfile = 'doxyfile',
+    #    posted = not ctx.env.BUILD_DOCS,
+    #)
