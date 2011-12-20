@@ -12,7 +12,7 @@ cd "$MOD_DIR"
 if [ ! -d swat_build ]
 then
     echo "swat_build not found, cloning..."
-    git clone "$REPO_URL"
+    git clone "$REPO_URL" || exit 1
     echo "done"
 fi
 
