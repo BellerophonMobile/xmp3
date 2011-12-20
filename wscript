@@ -46,6 +46,7 @@ def build(ctx):
             'src/xmpp_stanza.c',
         ],
         export_includes = 'src',
+        use = ['uthash'],
     )
 
     ctx.program(
