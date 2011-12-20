@@ -5,6 +5,9 @@
     Copyright (c) 2011 Drexel University
 '''
 
+def options(ctx):
+    pass
+
 def configure(ctx):
     ctx.load('compiler_c')
 
