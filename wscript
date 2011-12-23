@@ -11,9 +11,6 @@ def options(ctx):
 def configure(ctx):
     ctx.load('compiler_c')
 
-    if ctx.env.BUILD_DOCS:
-        ctx.load('doxygen')
-
     # To compile for android...
     # grab libexpat.so from an android phone, and copy expat.h and
     # expat_external.h and put them in the root directory.
@@ -59,9 +56,3 @@ def build(ctx):
         ],
         use = ['libxmp3', 'EXPAT', 'CRYPTO', 'SSL'],
     )
-
-    #ctx(
-    #    features = 'doxygen',
-    #    doxyfile = 'doxyfile',
-    #    posted = not ctx.env.BUILD_DOCS,
-    #)
