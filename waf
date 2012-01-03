@@ -5,7 +5,7 @@ REPO_URL=pm:/srv/repos/swat_build.git
 
 # Get the full path to where this script is located
 MOD_DIR="$(cd "$(dirname "$0")" && pwd)"
-MOD_NAME="$(echo "$MOD_DIR" | awk -F/ '{print $NF}')"
+MOD_NAME=xmp3
 
 cd "$MOD_DIR"
 
