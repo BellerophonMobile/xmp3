@@ -143,10 +143,10 @@ int jid_cmp(const struct jid *a, const struct jid *b) {
     }
 
     if ((a->resource == NULL) != (b->resource == NULL)) {
-        return a->domain == NULL ? -1 : 1;
+        return a->resource == NULL ? -1 : 1;
     }
 
-    if (a->domain != NULL && b->domain != NULL) {
+    if (a->resource != NULL && b->resource != NULL) {
         return strcmp(a->resource, b->resource);
     }
 
