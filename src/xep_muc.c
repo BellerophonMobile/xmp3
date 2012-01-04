@@ -732,9 +732,6 @@ static void disco_query_items_end(void *data, const char *name,
     log_info("MUC Items Query IQ End");
     check(strcmp(name, XMPP_IQ_DISCO_QUERY_ITEMS) == 0, "Unexpected stanza");
 
-    UT_string msg;
-    utstring_init(&msg);
-
     if (client != NULL) {
         UT_string items;
         utstring_init(&items);
@@ -747,15 +744,18 @@ static void disco_query_items_end(void *data, const char *name,
             free(strjid);
         }
 
+        UT_string msg;
+        utstring_init(&msg);
         utstring_printf(&msg, MSG_DISCO_QUERY_ITEMS,
                         xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_ID),
                         utstring_body(&items));
         utstring_done(&items);
 
-        check(client_socket_sendall(xmpp_client_socket(client),
-                                    utstring_body(&msg), utstring_len(&msg)) > 0,
-              "Error sending items query IQ message");
+        ssize_t res = client_socket_sendall(xmpp_client_socket(client),
+                                            utstring_body(&msg),
+                                            utstring_len(&msg));
         utstring_done(&msg);
+        check(res > 0, "Error sending items query IQ message");
     }
 
     xmp3_xml_replace_handlers(parser, xmpp_error_start,
@@ -763,6 +763,5 @@ static void disco_query_items_end(void *data, const char *name,
     return;
 
 error:
-    utstring_done(&msg);
     xmp3_xml_stop_parser(parser, false);
 }
