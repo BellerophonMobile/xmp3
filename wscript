@@ -12,21 +12,17 @@ def configure(ctx):
     ctx.load('compiler_c')
 
     # To compile for android...
-    # grab libexpat.so from an android phone, and copy expat.h and
-    # expat_external.h and put them in the root directory.
-    # and comment out the next two lines (with the right paths)
-    #ctx.env.INCLUDES += ['/home/tom/code/xmp3']
-    #ctx.env.LIBPATH += ['/home/tom/code/xmp3']
-
-    # Then run
     # CC="/opt/android-ndk/toolchains/arm-linux-androideabi-4.4.3/prebuilt/linux-x86/bin/arm-linux-androideabi-gcc --sysroot=/opt/android-ndk/platforms/android-9/arch-arm/" ./waf configure
 
-    ctx.check_cc(lib='expat')
-    ctx.check_cc(lib='crypto')
-    ctx.check_cc(lib='ssl')
+    if not ctx.env.use_local_expat:
+        ctx.check_cc(lib='expat')
+
+    if not ctx.env.use_local_openssl:
+        ctx.check_cc(lib='crypto')
+        ctx.check_cc(lib='ssl')
 
 def build(ctx):
-    ctx.stlib(
+    libxmp3 = ctx.stlib(
         target = 'xmp3',
         name = 'libxmp3',
         source = [
@@ -49,10 +45,20 @@ def build(ctx):
         use = ['uthash'],
     )
 
+    if ctx.env.use_local_expat:
+        libxmp3.use += ['expat']
+    else:
+        libxmp3.use += ['EXPAT']
+
+    if ctx.env.use_local_openssl:
+        libxmp3.use += ['crypto', 'ssl']
+    else:
+        libxmp3.use += ['CRYPTO', 'SSL']
+
     ctx.program(
         target = 'xmp3',
         source = [
             'src/main.c',
         ],
-        use = ['libxmp3', 'EXPAT', 'CRYPTO', 'SSL'],
+        use = ['libxmp3'],
     )
