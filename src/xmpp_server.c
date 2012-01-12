@@ -5,8 +5,10 @@
  * @file
  */
 
-#include <arpa/inet.h>
 #include <unistd.h>
+#include <arpa/inet.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
