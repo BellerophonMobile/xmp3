@@ -14,7 +14,7 @@ def configure(ctx):
     # To compile for android...
     # CC="/opt/android-ndk/toolchains/arm-linux-androideabi-4.4.3/prebuilt/linux-x86/bin/arm-linux-androideabi-gcc --sysroot=/opt/android-ndk/platforms/android-9/arch-arm/" ./waf configure
 
-    if ctx.env.cross is None:
+    if not ctx.env.cross:
         ctx.check_cc(lib='expat')
         ctx.check_cc(lib='crypto')
         ctx.check_cc(lib='ssl')
