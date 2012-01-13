@@ -14,10 +14,8 @@ def configure(ctx):
     # To compile for android...
     # CC="/opt/android-ndk/toolchains/arm-linux-androideabi-4.4.3/prebuilt/linux-x86/bin/arm-linux-androideabi-gcc --sysroot=/opt/android-ndk/platforms/android-9/arch-arm/" ./waf configure
 
-    if not ctx.env.use_local_expat:
+    if ctx.env.cross is None:
         ctx.check_cc(lib='expat')
-
-    if not ctx.env.use_local_openssl:
         ctx.check_cc(lib='crypto')
         ctx.check_cc(lib='ssl')
 
@@ -42,18 +40,8 @@ def build(ctx):
             'src/xmpp_stanza.c',
         ],
         export_includes = 'src',
-        use = ['uthash'],
+        use = ['uthash', 'EXPAT', 'CRYPTO', 'SSL'],
     )
-
-    if ctx.env.use_local_expat:
-        libxmp3.use += ['expat']
-    else:
-        libxmp3.use += ['EXPAT']
-
-    if ctx.env.use_local_openssl:
-        libxmp3.use += ['crypto', 'ssl']
-    else:
-        libxmp3.use += ['CRYPTO', 'SSL']
 
     ctx.program(
         target = 'xmp3',
