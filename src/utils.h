@@ -30,7 +30,8 @@
  * @param[in] n    Number of characters to copy.
  */
 #define STRNDUP_CHECK(dst, src, n) do { \
-    dst = strndup(src, n); \
+    dst = calloc(n + 1, sizeof(char)); \
+    dst = strncpy(dst, src, n); \
     check_mem(dst); \
 } while(0)
 
