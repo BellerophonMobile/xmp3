@@ -28,7 +28,7 @@ fi
 # Link the master's build directory locally
 if [ ! -h build ]
 then
-    ln -s swat_build/build/ . || exit 1
+    ln -s swat_build/build . || exit 1
 fi
 
 cd swat_build || exit 1
