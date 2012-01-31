@@ -262,7 +262,9 @@ error:
 }
 
 void xmpp_server_del(struct xmpp_server *server) {
-    xep_muc_del(server->muc);
+    if (server->muc != NULL) {
+        xep_muc_del(server->muc);
+    }
 
     DELETE_LIST(stanza_route, server->stanza_routes);
     DELETE_LIST(iq_route, server->iq_routes);
