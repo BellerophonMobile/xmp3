@@ -144,13 +144,12 @@ static void roster_query_end(void *data, const char *name,
     log_info("Roster Query IQ End");
     check(strcmp(name, XMPP_IQ_QUERY_ROSTER) == 0, "Unexpected stanza");
 
-    UT_string msg;
-    utstring_init(&msg);
-
     if (client != NULL) {
         /* TODO: Actually manage the user's roster.  Instead, everyone
          * currently connected is in the user's roster. */
 
+        UT_string msg;
+        utstring_init(&msg);
         utstring_printf(&msg, MSG_ROSTER_START,
                         xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_ID));
 
@@ -165,10 +164,11 @@ static void roster_query_end(void *data, const char *name,
 
         utstring_printf(&msg, MSG_ROSTER_END);
 
-        check(client_socket_sendall(xmpp_client_socket(client),
-                                    utstring_body(&msg),
-                                    utstring_len(&msg)) > 0,
-              "Error sending roster message");
+        ssize_t rv = client_socket_sendall(xmpp_client_socket(client),
+                                           utstring_body(&msg),
+                                           utstring_len(&msg));
+        utstring_done(&msg);
+        check(rv > 0, "Error sending roster message");
     }
 
     // We expect to see the </iq> tag next.
@@ -177,7 +177,6 @@ static void roster_query_end(void *data, const char *name,
     return;
 
 error:
-    utstring_done(&msg);
     xmp3_xml_stop_parser(parser, false);
 }
 
