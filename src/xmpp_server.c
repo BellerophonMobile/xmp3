@@ -196,6 +196,10 @@ struct xmpp_server {
     struct xmpp_client *cur_client;
 };
 
+struct xmpp_client_iterator {
+    struct c_client *client;
+};
+
 // Forward declarations
 static bool init_socket(struct xmpp_server *server,
                         const struct xmp3_options *options);
@@ -359,6 +363,29 @@ struct xmpp_client* xmpp_server_find_client(const struct xmpp_server *server,
         }
     }
     return NULL;
+}
+
+struct xmpp_client_iterator* xmpp_client_iterator_new(
+        const struct xmpp_server *server) {
+    struct xmpp_client_iterator *iter = calloc(1, sizeof(*iter));
+    check_mem(iter);
+
+    iter->client = server->clients;
+    return iter;
+}
+
+struct xmpp_client* xmpp_client_iterator_next(
+        struct xmpp_client_iterator *iter) {
+    if (iter->client == NULL) {
+        return NULL;
+    }
+    struct xmpp_client *rv = iter->client->client;
+    iter->client = iter->client->next;
+    return rv;
+}
+
+void xmpp_client_iterator_del(struct xmpp_client_iterator *iter) {
+    free(iter);
 }
 
 struct xmpp_client* xmpp_server_get_cur_client(

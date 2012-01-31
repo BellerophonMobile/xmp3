@@ -17,6 +17,7 @@ struct xmp3_options;
 struct xmpp_client;
 struct xmpp_server;
 struct xmpp_stanza;
+struct xmpp_client_iterator;
 
 /**
  * Callback to deliver an XMPP stanza.
@@ -99,6 +100,14 @@ void xmpp_server_disconnect_client(struct xmpp_client *client);
  */
 struct xmpp_client* xmpp_server_find_client(const struct xmpp_server *server,
                                             const struct jid *jid);
+
+struct xmpp_client_iterator* xmpp_client_iterator_new(
+        const struct xmpp_server *server);
+
+struct xmpp_client* xmpp_client_iterator_next(
+        struct xmpp_client_iterator *iter);
+
+void xmpp_client_iterator_del(struct xmpp_client_iterator *iter);
 
 /**
  * Gets the client reponsible for the current parse event.

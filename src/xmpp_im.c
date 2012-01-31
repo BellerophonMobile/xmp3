@@ -7,10 +7,13 @@
 
 #include <expat.h>
 
+#include "utstring.h"
+
 #include "log.h"
 #include "utils.h"
 
 #include "client_socket.h"
+#include "jid.h"
 #include "xmp3_xml.h"
 #include "xmpp_client.h"
 #include "xmpp_common.h"
@@ -31,9 +34,14 @@ const char *XMPP_IQ_DISCO_QUERY_INFO =
 static const char *MSG_STREAM_SUCCESS =
     "<iq from='localhost' type='result' id='%s'/>";
 
-static const char *MSG_ROSTER =
+static const char *MSG_ROSTER_START =
     "<iq id='%s' type='result'>"
-        "<query xmlns='jabber:iq:roster'>"
+        "<query xmlns='jabber:iq:roster'>";
+
+static const char *MSG_ROSTER_ITEM =
+            "<item jid='%s' subscription='both'/>";
+
+static const char *MSG_ROSTER_END =
         "</query>"
     "</iq>";
 
@@ -129,22 +137,37 @@ error:
 static void roster_query_end(void *data, const char *name,
                              struct xmp3_xml *parser) {
     struct xmpp_stanza *stanza = (struct xmpp_stanza*)data;
-    struct xmpp_client *client = xmpp_server_find_client(
-            xmpp_stanza_server(stanza), xmpp_stanza_jid_from(stanza));
-
+    struct xmpp_server *server = xmpp_stanza_server(stanza);
+    struct xmpp_client *client = xmpp_server_find_client(server,
+            xmpp_stanza_jid_from(stanza));
 
     log_info("Roster Query IQ End");
     check(strcmp(name, XMPP_IQ_QUERY_ROSTER) == 0, "Unexpected stanza");
 
+    UT_string msg;
+    utstring_init(&msg);
+
     if (client != NULL) {
-        char msg[strlen(MSG_ROSTER)
-                 + strlen(xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_ID))];
+        /* TODO: Actually manage the user's roster.  Instead, everyone
+         * currently connected is in the user's roster. */
 
-        // TODO: Actually manage the user's roster.
+        utstring_printf(&msg, MSG_ROSTER_START,
+                        xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_ID));
 
-        sprintf(msg, MSG_ROSTER, xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_ID));
-        check(client_socket_sendall(xmpp_client_socket(client), msg,
-                                    strlen(msg)) > 0,
+        struct xmpp_client_iterator *iter = xmpp_client_iterator_new(server);
+        struct xmpp_client *from_client;
+        while ((from_client = xmpp_client_iterator_next(iter)) != NULL) {
+            char *jid = jid_to_str(xmpp_client_jid(from_client));
+            utstring_printf(&msg, MSG_ROSTER_ITEM, jid);
+            free(jid);
+        }
+        xmpp_client_iterator_del(iter);
+
+        utstring_printf(&msg, MSG_ROSTER_END);
+
+        check(client_socket_sendall(xmpp_client_socket(client),
+                                    utstring_body(&msg),
+                                    utstring_len(&msg)) > 0,
               "Error sending roster message");
     }
 
@@ -154,6 +177,7 @@ static void roster_query_end(void *data, const char *name,
     return;
 
 error:
+    utstring_done(&msg);
     xmp3_xml_stop_parser(parser, false);
 }
 

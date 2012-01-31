@@ -5,6 +5,8 @@
  * @file
  */
 
+#include <stdlib.h>
+
 #include <expat.h>
 
 #include "utstring.h"
@@ -22,6 +24,15 @@
 
 #include "xmpp_core.h"
 
+static const char *MSG_ROSTER_PUSH =
+    "<iq id='%d' to='%s' type='set'>"
+        "<query xmlns='jabber:iq:roster'>"
+            "<item jid='%s' subscription='both'/>"
+        "</query>"
+    "</iq>";
+
+static const char *MSG_PRESENCE = "<presence from='%s' to='%s'/>";
+
 /** Temporary structure for reading a message stanza. */
 struct message_tmp {
     struct xmpp_client *to_client;
@@ -38,6 +49,11 @@ static void message_client_data(void *data, const char *s, int len,
 
 static void iq_start(void *data, const char *name, const char **attrs,
                      struct xmp3_xml *parser);
+
+static void presence_start(void *data, const char *name, const char **attrs,
+                           struct xmp3_xml *parser);
+static void presence_end(void *data, const char *name,
+                               struct xmp3_xml *parser);
 
 void xmpp_core_stanza_start(void *data, const char *name, const char **attrs,
                             struct xmp3_xml *parser) {
@@ -97,8 +113,9 @@ bool xmpp_core_stanza_handler(struct xmpp_stanza *stanza, void *data) {
     } else if (strcmp(xmpp_stanza_ns_name(stanza), XMPP_PRESENCE) == 0) {
         // TODO: Handle presence stanzas.
         log_info("Presence stanza");
-        //handle_presence(stanza, attrs);
-        return false;
+        xmp3_xml_replace_start_handler(xmpp_stanza_parser(stanza),
+                                       presence_start);
+        return true;
     } else if (strcmp(xmpp_stanza_ns_name(stanza), XMPP_IQ) == 0) {
         log_info("IQ stanza start");
         xmp3_xml_replace_start_handler(xmpp_stanza_parser(stanza), iq_start);
@@ -229,4 +246,83 @@ static void iq_start(void *data, const char *name, const char **attrs,
                                   xmpp_core_stanza_end, xmpp_ignore_data,
                                   data);
     }
+}
+
+/** Handles the routing of a presence stanza. */
+static void presence_start(void *data, const char *name, const char **attrs,
+                     struct xmp3_xml *parser) {
+    //struct xmpp_stanza *stanza = (struct xmpp_stanza*)data;
+    xmp3_xml_replace_handlers(parser, xmpp_ignore_start,
+                              presence_end, xmpp_ignore_data, data);
+}
+
+static void presence_end(void *data, const char *name, struct xmp3_xml *parser)
+{
+    struct xmpp_stanza *stanza = (struct xmpp_stanza*)data;
+
+    if (strcmp(name, xmpp_stanza_ns_name(stanza)) != 0) {
+        return;
+    }
+
+    struct xmpp_server *server = xmpp_stanza_server(stanza);
+    char *from_str = jid_to_str(xmpp_stanza_jid_from(stanza));
+
+    /* TODO: For now, just send presence to everyone connected to the server.
+     * In the future, we should have a separate module managing each user's
+     * roster, etc. */
+
+    struct xmpp_client *local_client = xmpp_server_find_client(server,
+            xmpp_stanza_jid_from(stanza));
+
+    struct xmpp_client_iterator *iter = xmpp_client_iterator_new(server);
+    struct xmpp_client *client;
+    while ((client = xmpp_client_iterator_next(iter)) != NULL) {
+        char *to_str = jid_to_str(xmpp_client_jid(client));
+        int roster_id = (rand() % 999) + 1;
+        char roster_msg[strlen(MSG_ROSTER_PUSH)
+                        + strlen(from_str)
+                        + strlen(to_str)
+                        + 4]; // 3 bytes for 3 digit ID, 1 for null terminator
+        sprintf(roster_msg, MSG_ROSTER_PUSH, roster_id, to_str, from_str);
+        if (client_socket_sendall(xmpp_client_socket(client), roster_msg,
+                                  strlen(roster_msg)) <= 0) {
+            log_err("Error sending roster push message to client.");
+            xmpp_server_disconnect_client(client);
+            free(to_str);
+            continue;
+        }
+
+        char presence_msg[strlen(MSG_PRESENCE)
+                          + strlen(from_str)
+                          + strlen(to_str) + 1];
+        sprintf(presence_msg, MSG_PRESENCE, from_str, to_str);
+        if (client_socket_sendall(xmpp_client_socket(client), presence_msg,
+                                  strlen(presence_msg)) <= 0) {
+            log_err("Error sending presence message to client.");
+            xmpp_server_disconnect_client(client);
+            free(to_str);
+            continue;
+        }
+
+        // If this is a local client, send it presences for everyone connected.
+        if (local_client != NULL) {
+            char local_presence_msg[strlen(MSG_PRESENCE)
+                                    + strlen(from_str)
+                                    + strlen(to_str) + 1];
+            sprintf(local_presence_msg, MSG_PRESENCE, to_str, from_str);
+            if (client_socket_sendall(xmpp_client_socket(local_client),
+                                      local_presence_msg,
+                                      strlen(local_presence_msg)) <= 0) {
+                log_err("Error sending presence message to local client.");
+                xmpp_server_disconnect_client(local_client);
+                free(to_str);
+                continue;
+            }
+        }
+        free(to_str);
+    }
+
+    free(from_str);
+    xmpp_client_iterator_del(iter);
+    xmpp_core_stanza_end(data, name, parser);
 }
