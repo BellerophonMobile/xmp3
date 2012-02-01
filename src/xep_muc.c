@@ -28,12 +28,12 @@
 static const char *MUC_DOMAINPART = "conference.";
 
 static const char *MSG_DISCO_QUERY_INFO =
-    "<iq id='%s' type='result'>"
+    "<iq id='%s' type='result' from='conference.localhost'>"
         "<query xmlns='http://jabber.org/protocol/disco#info'>"
-            "<identity category='conference' "
-                "name='XMP3 MUC' "
-                "type='text'/>"
+            "<identity category='conference' name='Public Chatrooms' type='text'/>"
             "<feature var='http://jabber.org/protocol/muc'/>"
+            "<feature var='http://jabber.org/protocol/disco#info'/>"
+            "<feature var='http://jabber.org/protocol/disco#items'/>"
         "</query>"
     "</iq>";
 

@@ -46,16 +46,18 @@ static const char *MSG_ROSTER_END =
     "</iq>";
 
 static const char *MSG_DISCO_QUERY_INFO =
-    "<iq id='%s' type='result'>"
+    "<iq id='%s' type='result' from='localhost'>"
         "<query xmlns='http://jabber.org/protocol/disco#info'>"
+            "<identity category='server' type='im' name='XMP3'/>"
             "<feature var='http://jabber.org/protocol/disco#info'/>"
             "<feature var='http://jabber.org/protocol/disco#items'/>"
         "</query>"
     "</iq>";
 
 static const char *MSG_DISCO_QUERY_ITEMS =
-    "<iq id='%s' type='result'>"
+    "<iq id='%s' type='result' from='localhost'>"
         "<query xmlns='http://jabber.org/protocol/disco#items'>"
+            "<item jid='conference.localhost' name='Public Chatrooms'/>"
         "</query>"
     "</iq>";
 
