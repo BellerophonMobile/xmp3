@@ -18,6 +18,7 @@
 #include "xmpp_stanza.h"
 
 const char *XMPP_STANZA_NS_CLIENT = "jabber:client";
+const char *XMPP_STANZA_NS_STANZA = "urn:ietf:params:xml:ns:xmpp-stanzas";
 
 const char *XMPP_STANZA_MESSAGE = "message";
 const char *XMPP_STANZA_PRESENCE = "presence";
@@ -31,6 +32,7 @@ const char *XMPP_STANZA_ATTR_TYPE = "type";
 const char *XMPP_STANZA_TYPE_SET = "set";
 const char *XMPP_STANZA_TYPE_GET = "get";
 const char *XMPP_STANZA_TYPE_RESULT = "result";
+const char *XMPP_STANZA_TYPE_ERROR = "error";
 
 struct attribute {
     char *name;

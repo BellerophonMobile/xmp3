@@ -13,6 +13,7 @@
 struct xmpp_stanza;
 
 extern const char *XMPP_STANZA_NS_CLIENT;
+extern const char *XMPP_STANZA_NS_STANZA;
 
 extern const char *XMPP_STANZA_MESSAGE;
 extern const char *XMPP_STANZA_PRESENCE;
@@ -26,6 +27,7 @@ extern const char *XMPP_STANZA_ATTR_TYPE;
 extern const char *XMPP_STANZA_TYPE_SET;
 extern const char *XMPP_STANZA_TYPE_GET;
 extern const char *XMPP_STANZA_TYPE_RESULT;
+extern const char *XMPP_STANZA_TYPE_ERROR;
 
 /**
  * Allocate and initialize a new XMPP stanza structure.

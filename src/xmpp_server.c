@@ -206,6 +206,9 @@ static bool init_components(struct xmpp_server *server,
 static void connect_client(struct event_loop *loop, int fd, void *data);
 static void read_client(struct event_loop *loop, int fd, void *data);
 
+static void send_service_unavailable(struct xmpp_server *server,
+                                     struct xmpp_stanza *stanza);
+
 static struct client_listener* client_listener_new(struct xmpp_client *client,
         xmpp_server_client_callback cb, void *data);
 static void client_listener_del(struct client_listener *listener);
@@ -468,6 +471,7 @@ bool xmpp_server_route_iq(struct xmpp_server *server,
     }
     if (!was_handled) {
         log_info("No route for destination");
+        send_service_unavailable(server, stanza);
     }
     return was_handled;
 }
@@ -623,6 +627,39 @@ static void read_client(struct event_loop *loop, int fd, void *data) {
 
 error:
     xmpp_server_disconnect_client(client);
+}
+
+static void send_service_unavailable(struct xmpp_server *server,
+                                     struct xmpp_stanza *stanza) {
+    log_info("Sending service unavailable.");
+
+    const char *id = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_ID);
+    check(id != NULL, "Disco IQ needs id attribute");
+
+    const char *from = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_FROM);
+    check(from != NULL, "Disco IQ needs from attribute");
+
+    struct xmpp_stanza *response = xmpp_stanza_new("iq", (const char*[]){
+            XMPP_STANZA_ATTR_ID, id,
+            XMPP_STANZA_ATTR_FROM, "localhost",
+            XMPP_STANZA_ATTR_TO, from,
+            XMPP_STANZA_ATTR_TYPE, XMPP_STANZA_TYPE_ERROR,
+            NULL});
+
+    struct xmpp_stanza *error = xmpp_stanza_new("error", (const char*[]){
+            "type", "cancel",
+            NULL});
+    xmpp_stanza_append_child(response, error);
+
+    struct xmpp_stanza *unavail = xmpp_stanza_new("service-unavailable",
+            (const char*[]){"xmlns", XMPP_STANZA_NS_STANZA, NULL});
+    xmpp_stanza_append_child(error, unavail);
+
+    xmpp_server_route_stanza(server, response);
+    xmpp_stanza_del(response, true);
+
+error:
+    return;
 }
 
 static struct client_listener* client_listener_new(struct xmpp_client *client,
