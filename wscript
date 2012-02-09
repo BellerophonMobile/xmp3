@@ -33,7 +33,7 @@ def build(ctx):
             'src/xmpp_auth.c',
             'src/xmpp_client.c',
             #'src/xmpp_common.c',
-            #'src/xmpp_core.c',
+            'src/xmpp_core.c',
             #'src/xmpp_im.c',
             'src/xmpp_parser.c',
             'src/xmpp_server.c',

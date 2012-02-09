@@ -10,23 +10,24 @@
 #include <stdbool.h>
 
 // Forward declarations
+struct xmpp_parser;
+struct xmpp_server;
 struct xmpp_stanza;
-struct xmp3_xml;
 
-/** Expat handler for general XMPP stanza processing. */
-void xmpp_core_stanza_start(void *data, const char *name, const char **attrs,
-                            struct xmp3_xml *parser);
+/**
+ * @attr data An xmpp_client structure.
+ */
+bool xmpp_core_handle_stanza(struct xmpp_stanza *stanza,
+                             struct xmpp_parser *parser, void *data);
 
-/** Expat handler for cleaning up from handling an XMPP stanza. */
-void xmpp_core_stanza_end(void *data, const char *name,
-                          struct xmp3_xml *parser);
+/**
+ * @attr data An xmpp_client structure.
+ */
+bool xmpp_core_route_client(struct xmpp_stanza *stanza,
+                            struct xmpp_server *server, void *data);
 
-/** Expat handler for handling the end of a stream. */
-void xmpp_core_stream_end(void *data, const char *name,
-                          struct xmp3_xml *parser);
-
-/** Callback for handling a stanza addressed to the server itself. */
-bool xmpp_core_stanza_handler(struct xmpp_stanza *stanza, void *data);
-
-/** Callback for handling a message stanza sent to a client. */
-bool xmpp_core_message_handler(struct xmpp_stanza *from_stanza, void *data);
+/**
+ * @attr data A null pointer, we don't need it.
+ */
+bool xmpp_core_route_server(struct xmpp_stanza *stanza,
+                            struct xmpp_server *server, void *data);

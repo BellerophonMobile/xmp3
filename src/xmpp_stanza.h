@@ -18,6 +18,8 @@ extern const char *XMPP_STANZA_MESSAGE;
 extern const char *XMPP_STANZA_PRESENCE;
 extern const char *XMPP_STANZA_IQ;
 
+extern const char *XMPP_STANZA_ATTR_TO;
+extern const char *XMPP_STANZA_ATTR_FROM;
 extern const char *XMPP_STANZA_ATTR_ID;
 extern const char *XMPP_STANZA_ATTR_TYPE;
 
@@ -42,7 +44,7 @@ void xmpp_stanza_del(struct xmpp_stanza *stanza, bool recursive);
  * @param stanza The stanza to convert.
  * @param len If not null, is filled in with the length of the string.
  */
-char* xmpp_stanza_string(struct xmpp_stanza *stanza, int *len);
+char* xmpp_stanza_string(struct xmpp_stanza *stanza, size_t *len);
 
 /**
  * Returns the namespace of this stanza.
@@ -83,10 +85,18 @@ const char* xmpp_stanza_attr(const struct xmpp_stanza *stanza,
 /**
  * Sets the value of an attribute in a stanza.
  *
- * The name/value are copied.
+ * The name/value are NOT copied.
  */
 void xmpp_stanza_set_attr(struct xmpp_stanza *stanza, const char *name,
-                          const char *value);
+                          char *value);
+
+/**
+ * Sets the value of an attribute in a stanza.
+ *
+ * The name/value are copied.
+ */
+void xmpp_stanza_copy_attr(struct xmpp_stanza *stanza, const char *name,
+                           const char *value);
 
 /** Returns any data associated with this stanza. */
 const char* xmpp_stanza_data(const struct xmpp_stanza *stanza);

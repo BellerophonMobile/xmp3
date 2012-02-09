@@ -82,6 +82,14 @@ struct jid* jid_new_from_jid(const struct jid *jid) {
     return newjid;
 }
 
+struct jid* jid_new_from_jid_bare(const struct jid *jid) {
+    struct jid *newjid = jid_new();
+    jid_set_local(newjid, jid_local(jid));
+    jid_set_domain(newjid, jid_domain(jid));
+
+    return newjid;
+}
+
 char* jid_to_str(const struct jid *jid) {
     // Domain part is required
     if (jid->domain == NULL) {

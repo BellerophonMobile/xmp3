@@ -189,11 +189,6 @@ struct xmpp_server {
 
     /** The MUC component. */
     //struct xep_muc *muc;
-
-    /** TODO: This should be available in another way.  We need a way for the
-     * parsers to get at the client who sent the stanza that is currently
-     * processing. */
-    struct xmpp_client *cur_client;
 };
 
 struct xmpp_client_iterator {
@@ -390,11 +385,6 @@ void xmpp_client_iterator_del(struct xmpp_client_iterator *iter) {
     free(iter);
 }
 
-struct xmpp_client* xmpp_server_get_cur_client(
-        const struct xmpp_server *server) {
-    return server->cur_client;
-}
-
 void xmpp_server_add_stanza_route(struct xmpp_server *server,
                                   const struct jid *jid,
                                   xmpp_server_stanza_callback cb, void *data) {
@@ -407,25 +397,28 @@ void xmpp_server_del_stanza_route(struct xmpp_server *server,
     DEL_CALLBACK(stanza_route, server->stanza_routes, jid, cb, data);
 }
 
-bool xmpp_server_route_stanza(struct xmpp_stanza *stanza) {
-    return false;
-#if 0
-    struct xmpp_server *server = xmpp_stanza_server(stanza);
-    const struct jid *search_jid = xmpp_stanza_jid_to(stanza);
+bool xmpp_server_route_stanza(struct xmpp_server *server,
+                              struct xmpp_stanza *stanza) {
+    struct jid *search_jid = jid_new_from_str(xmpp_stanza_attr(
+                stanza, XMPP_STANZA_ATTR_TO));
 
     bool was_handled = false;
 
+#if 0
     char *jidstr = jid_to_str(search_jid);
     debug("Looking for stanza route for '%s'", jidstr);
     free(jidstr);
+#endif
 
     struct stanza_route *route = NULL;
     DL_FOREACH(server->stanza_routes, route) {
+#if 0
         jidstr = jid_to_str(route->jid);
         debug("Is it '%s'?", jidstr);
         free(jidstr);
+#endif
         if (jid_cmp_wildcards(search_jid, route->jid) == 0) {
-            was_handled = route->cb(stanza, route->data);
+            was_handled = route->cb(stanza, server, route->data);
         }
     }
     if (!was_handled) {
@@ -438,7 +431,6 @@ bool xmpp_server_route_stanza(struct xmpp_stanza *stanza) {
         */
     }
     return was_handled;
-#endif
 }
 
 void xmpp_server_add_iq_route(struct xmpp_server *server, const char *ns,
@@ -527,10 +519,10 @@ error:
 
 static bool init_components(struct xmpp_server *server,
                             const struct xmp3_options *options) {
-#if 0
     xmpp_server_add_stanza_route(server, server->jid,
-                                 xmpp_core_stanza_handler, NULL);
+                                 xmpp_core_route_server, NULL);
 
+#if 0
     server->muc = xep_muc_new(server);
     check_mem(server->muc);
 
@@ -619,18 +611,8 @@ static void read_client(struct event_loop *loop, int fd, void *data) {
     free(addrstr);
     //xmpp_print_data(server->buffer, numrecv);
 
-    // XXX: HACK HACK HACK HACK
-    server->cur_client = client;
-    // XXX: HACK HACK HACK HACK
-
-    bool rv = xmpp_parser_parse(xmpp_client_parser(client), server->buffer,
-                                numrecv);
-
-    // XXX: HACK HACK HACK HACK
-    server->cur_client = NULL;
-    // XXX: HACK HACK HACK HACK
-
-    check(rv, "Error parsing XML");
+    check(xmpp_parser_parse(xmpp_client_parser(client), server->buffer,
+                            numrecv), "Error parsing XML");
 
     return;
 

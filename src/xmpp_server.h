@@ -27,6 +27,7 @@ struct xmpp_client_iterator;
  * @return True if message was handled, false if not.
  */
 typedef bool (*xmpp_server_stanza_callback)(struct xmpp_stanza *stanza,
+                                            struct xmpp_server *server,
                                             void *data);
 
 /**
@@ -110,16 +111,6 @@ struct xmpp_client* xmpp_client_iterator_next(
 void xmpp_client_iterator_del(struct xmpp_client_iterator *iter);
 
 /**
- * Gets the client reponsible for the current parse event.
- *
- * This should only be called by XML parsing callbacks.
- *
- * XXX: HACK HACK HACK HACK DONT USE THIS PRETEND ITS NOT HERE
- */
-struct xmpp_client* xmpp_server_get_cur_client(
-        const struct xmpp_server *server);
-
-/**
  * Add a callback to the list of routes for stanza delivery.
  *
  * You can use wildcards ("*") to be notified of stanzas for a range of JIDs.
@@ -164,10 +155,12 @@ void xmpp_server_del_stanza_route(struct xmpp_server *server,
 /**
  * Deliver a stanza to a registered callback function.
  *
+ * @param server The server to process the stanza.
  * @param stanza The XMPP stanza to route.
  * @return True if successfully handled, false if not.
  */
-bool xmpp_server_route_stanza(struct xmpp_stanza *stanza);
+bool xmpp_server_route_stanza(struct xmpp_server *server,
+                              struct xmpp_stanza *stanza);
 
 /**
  * Add a callback to handle IQ stanza to a particular namespace+tag name.

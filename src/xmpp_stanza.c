@@ -23,6 +23,8 @@ const char *XMPP_STANZA_MESSAGE = "message";
 const char *XMPP_STANZA_PRESENCE = "presence";
 const char *XMPP_STANZA_IQ = "iq";
 
+const char *XMPP_STANZA_ATTR_TO = "to";
+const char *XMPP_STANZA_ATTR_FROM = "from";
 const char *XMPP_STANZA_ATTR_ID = "id";
 const char *XMPP_STANZA_ATTR_TYPE = "type";
 
@@ -110,7 +112,7 @@ void xmpp_stanza_del(struct xmpp_stanza *stanza, bool recursive) {
     free(stanza);
 }
 
-char* xmpp_stanza_string(struct xmpp_stanza *stanza, int *len) {
+char* xmpp_stanza_string(struct xmpp_stanza *stanza, size_t *len) {
     UT_string str;
     utstring_init(&str);
     stanza_tostr(stanza, &str);
@@ -154,7 +156,7 @@ const char* xmpp_stanza_attr(const struct xmpp_stanza *stanza,
 }
 
 void xmpp_stanza_set_attr(struct xmpp_stanza *stanza, const char *name,
-                          const char *value) {
+                          char *value) {
     struct attribute *attr;
     HASH_FIND_STR(stanza->attributes, name, attr);
 
@@ -175,8 +177,18 @@ void xmpp_stanza_set_attr(struct xmpp_stanza *stanza, const char *name,
         }
         free(attr->value);
     }
-    attr->value = strdup(value);
-    check_mem(attr->value);
+    attr->value = value;
+}
+
+void xmpp_stanza_copy_attr(struct xmpp_stanza *stanza, const char *name,
+                          const char *value) {
+    if (value == NULL) {
+        xmpp_stanza_set_attr(stanza, name, NULL);
+    } else {
+        char *value_copy = strdup(value);
+        check_mem(value_copy);
+        xmpp_stanza_set_attr(stanza, name, value_copy);
+    }
 }
 
 const char* xmpp_stanza_data(const struct xmpp_stanza *stanza) {
