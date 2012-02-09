@@ -12,6 +12,17 @@
 // Forward declarations
 struct xmpp_stanza;
 
+extern const char *XMPP_STANZA_NS_CLIENT;
+
+extern const char *XMPP_STANZA_MESSAGE;
+extern const char *XMPP_STANZA_PRESENCE;
+extern const char *XMPP_STANZA_IQ;
+
+extern const char *XMPP_STANZA_ATTR_ID;
+extern const char *XMPP_STANZA_ATTR_TYPE;
+
+extern const char *XMPP_STANZA_IQ_TYPE_RESULT;
+
 /**
  * Allocate and initialize a new XMPP stanza structure.
  *

@@ -17,6 +17,17 @@
 
 #include "xmpp_stanza.h"
 
+const char *XMPP_STANZA_NS_CLIENT = "jabber:client"
+
+const char *XMPP_STANZA_MESSAGE = "message";
+const char *XMPP_STANZA_PRESENCE = "presence";
+const char *XMPP_STANZA_IQ = "iq";
+
+const char *XMPP_STANZA_ATTR_ID = "id";
+const char *XMPP_STANZA_ATTR_TYPE = "type";
+
+const char *XMPP_STANZA_IQ_TYPE_RESULT = "result";
+
 struct attribute {
     char *name;
     char *value;
