@@ -70,16 +70,31 @@ bool xmpp_parser_parse(struct xmpp_parser *parser, const char *buf, int len) {
     return XML_Parse(parser->parser, buf, len, 0) == XML_OK;
 }
 
-bool xmpp_parser_reset(struct xmppp_parser *parser) {
-    XML_ParserReset(parser->parser, NULL) == XML_TRUE;
+bool xmpp_parser_reset(struct xmppp_parser *parser, bool stream_start) {
+    if (XML_ParserReset(parser->parser, NULL) != XML_TRUE) {
+        return false;
+    }
+
+    XML_SetElementHandler(parser->parser, start, end);
+    XML_SetCharacterDataHandler(parser->parser, chardata);
+    XML_SetUserData(parser->parser, parser);
+
+    if (stream_start) {
+        XML_SetStartElementHandler(parser->parser, stream_start);
+    }
+    return true;
 }
 
 static void stream_start(void *data, const char *name, const char **attrs) {
     struct xmpp_parser *parser = (struct xmpp_parser*)data;
     struct xmpp_stanza *stanza = xmpp_stanza_new(name, attrs);
-    parser->handler(stanza, parser, parser->data);
-    xmpp_stanza_del(stanza, false);
-    XML_SetStartElementHandler(parser->parser, start);
+
+    if (!parser->handler(stanza, parser, parser->data)) {
+        XML_StopParser(parser, false);
+    } else {
+        xmpp_stanza_del(stanza, false);
+        XML_SetStartElementHandler(parser->parser, start);
+    }
 }
 
 static void start(void *data, const char *name, const char **attrs) {

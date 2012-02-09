@@ -15,7 +15,7 @@ struct xmpp_stanza;
 
 extern const char XMPP_PARSER_SEPARATOR;
 
-typedef void (*xmpp_parser_handler)(struct xmpp_stanza *stanza,
+typedef bool (*xmpp_parser_handler)(struct xmpp_stanza *stanza,
                                     struct xmpp_parser *parser,
                                     void *data);
 
@@ -35,4 +35,4 @@ void xmpp_parser_set_data(struct xmpp_parser *parser, void *data);
 
 bool xmpp_parser_parse(struct xmpp_parser *parser, const char *buf, int len);
 
-bool xmpp_parser_reset(struct xmppp_parser *parser);
+bool xmpp_parser_reset(struct xmppp_parser *parser, bool stream_start);
