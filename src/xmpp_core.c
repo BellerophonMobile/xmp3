@@ -106,8 +106,7 @@ bool xmpp_core_route_server(struct xmpp_stanza *stanza,
         log_warn("Ignoring presence stanza.");
         return true;
     } else if (strcmp(xmpp_stanza_name(stanza), XMPP_STANZA_IQ) == 0) {
-        log_warn("Ignoring iq stanza.");
-        return true;
+        return xmpp_server_route_iq(server, stanza);
     } else {
         log_warn("Unknown stanza");
         return false;

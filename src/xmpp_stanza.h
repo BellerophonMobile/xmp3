@@ -23,8 +23,8 @@ extern const char *XMPP_STANZA_ATTR_FROM;
 extern const char *XMPP_STANZA_ATTR_ID;
 extern const char *XMPP_STANZA_ATTR_TYPE;
 
-extern const char *XMPP_STANZA_IQ_TYPE_SET;
-extern const char *XMPP_STANZA_IQ_TYPE_RESULT;
+extern const char *XMPP_STANZA_TYPE_SET;
+extern const char *XMPP_STANZA_TYPE_RESULT;
 
 /**
  * Allocate and initialize a new XMPP stanza structure.

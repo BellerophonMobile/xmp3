@@ -28,8 +28,8 @@ const char *XMPP_STANZA_ATTR_FROM = "from";
 const char *XMPP_STANZA_ATTR_ID = "id";
 const char *XMPP_STANZA_ATTR_TYPE = "type";
 
-const char *XMPP_STANZA_IQ_TYPE_SET = "set";
-const char *XMPP_STANZA_IQ_TYPE_RESULT = "result";
+const char *XMPP_STANZA_TYPE_SET = "set";
+const char *XMPP_STANZA_TYPE_RESULT = "result";
 
 struct attribute {
     char *name;
@@ -78,13 +78,15 @@ struct xmpp_stanza* xmpp_stanza_new(const char *ns_name, const char **attrs) {
 
     utstring_init(&stanza->data);
 
-    for (int i = 0; attrs[i] != NULL; i += 2) {
-        struct attribute *attr = calloc(1, sizeof(*attr));
-        check_mem(attr);
-        STRDUP_CHECK(attr->name, attrs[i]);
-        STRDUP_CHECK(attr->value, attrs[i + 1]);
-        HASH_ADD_KEYPTR(hh, stanza->attributes, attr->name, strlen(attr->name),
-                        attr);
+    if (attrs != NULL) {
+        for (int i = 0; attrs[i] != NULL; i += 2) {
+            struct attribute *attr = calloc(1, sizeof(*attr));
+            check_mem(attr);
+            STRDUP_CHECK(attr->name, attrs[i]);
+            STRDUP_CHECK(attr->value, attrs[i + 1]);
+            HASH_ADD_KEYPTR(hh, stanza->attributes, attr->name, strlen(attr->name),
+                            attr);
+        }
     }
     return stanza;
 }

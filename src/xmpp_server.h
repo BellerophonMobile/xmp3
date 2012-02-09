@@ -169,8 +169,8 @@ bool xmpp_server_route_stanza(struct xmpp_server *server,
  * be called in the order they are registered.
  *
  * @param server An XMPP server instance.
- * @param ns     The namespace + name string to receive IQs for.  This string
- *               will be copied, you own the original.
+ * @param ns     The namespace string to receive IQs for.  This string will be
+ *               copied, you own the original.
  * @param cb     The callback to call when the server receives a iq stanza for
  *               this namespace.
  * @param data   Arbitrary data to be passed to the callback function.
@@ -193,4 +193,5 @@ void xmpp_server_del_iq_route(struct xmpp_server *server, const char *ns,
  * @param stanza The stanza to deliver.
  * @return True if successfully handled, false if not.
  */
-bool xmpp_server_route_iq(struct xmpp_stanza *stanza, const char *ns);
+bool xmpp_server_route_iq(struct xmpp_server *server,
+                          struct xmpp_stanza *stanza);

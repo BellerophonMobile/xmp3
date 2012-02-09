@@ -443,28 +443,33 @@ void xmpp_server_del_iq_route(struct xmpp_server *server, const char *ns,
     DEL_CALLBACK(iq_route, server->iq_routes, ns, cb, data);
 }
 
-bool xmpp_server_route_iq(struct xmpp_stanza *stanza, const char *ns_name) {
-    return false;
-#if 0
-    struct xmpp_server *server = xmpp_stanza_server(stanza);
+bool xmpp_server_route_iq(struct xmpp_server *server,
+                          struct xmpp_stanza *stanza) {
+    struct xmpp_stanza *child = xmpp_stanza_children(stanza);
+
+    if (child == NULL) {
+        log_err("IQ stanza has no child");
+        return false;
+    }
+
+    const char *search_ns = xmpp_stanza_namespace(child);
+    debug("Searching for IQ namespace: %s", search_ns);
 
     bool was_handled = false;
-
-    debug("Looking for IQ '%s'", ns_name);
-
     struct iq_route *route = NULL;
     DL_FOREACH(server->iq_routes, route) {
         debug("Is it '%s'?", route->ns);
-        if (strcmp(ns_name, route->ns) == 0) {
+        if (strcmp(search_ns, route->ns) == 0) {
             debug("Yes!");
-            was_handled = route->cb(stanza, route->data);
+            if (route->cb(stanza, server, route->data)) {
+                was_handled = true;
+            }
         }
     }
     if (!was_handled) {
         log_info("No route for destination");
     }
     return was_handled;
-#endif
 }
 
 static bool init_socket(struct xmpp_server *server,
@@ -521,13 +526,13 @@ static bool init_components(struct xmpp_server *server,
                             const struct xmp3_options *options) {
     xmpp_server_add_stanza_route(server, server->jid,
                                  xmpp_core_route_server, NULL);
+    xmpp_server_add_iq_route(server, XMPP_IQ_SESSION_NS,
+                             xmpp_im_iq_session, NULL);
 
 #if 0
     server->muc = xep_muc_new(server);
     check_mem(server->muc);
 
-    xmpp_server_add_iq_route(server, XMPP_IQ_SESSION,
-                             xmpp_im_iq_session, NULL);
     xmpp_server_add_iq_route(server, XMPP_IQ_QUERY_ROSTER,
                              xmpp_im_iq_roster_query, NULL);
     xmpp_server_add_iq_route(server, XMPP_IQ_DISCO_QUERY_INFO,

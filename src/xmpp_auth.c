@@ -370,7 +370,7 @@ static bool handle_bind_iq(struct xmpp_stanza *stanza,
 
     // Validate the correct attributes set on the start tag
     const char *type = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_TYPE);
-    check(type != NULL && strcmp(type, XMPP_STANZA_IQ_TYPE_SET) == 0,
+    check(type != NULL && strcmp(type, XMPP_STANZA_TYPE_SET) == 0,
           "Unexpected bind iq type.");
 
     const char *id = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_ID);

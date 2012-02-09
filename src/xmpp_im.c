@@ -5,24 +5,51 @@
  * @file
  */
 
-#include <expat.h>
-
 #include "utstring.h"
 
 #include "log.h"
-#include "utils.h"
 
-#include "client_socket.h"
-#include "jid.h"
-#include "xmp3_xml.h"
-#include "xmpp_client.h"
-#include "xmpp_common.h"
-#include "xmpp_core.h"
 #include "xmpp_server.h"
 #include "xmpp_stanza.h"
 
 #include "xmpp_im.h"
 
+const char *XMPP_IQ_SESSION_NS = "urn:ietf:params:xml:ns:xmpp-session";
+
+static const char *IQ_SESSION = "session";
+
+bool xmpp_im_iq_session(struct xmpp_stanza *stanza, struct xmpp_server *server,
+                        void *data) {
+    log_info("Session IQ");
+
+    const char *id = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_ID);
+    check(id != NULL, "Session IQ needs id attribute");
+    check(strcmp(xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_TYPE),
+                 XMPP_STANZA_TYPE_SET) == 0, "Session IQ type must be 'set'");
+
+    const char *from = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_FROM);
+    check(from != NULL, "Session IQ needs from attribute");
+
+    struct xmpp_stanza *child = xmpp_stanza_children(stanza);
+    check(child != NULL && strcmp(xmpp_stanza_name(child), IQ_SESSION) == 0,
+          "Unexpected stanza.");
+
+    struct xmpp_stanza *response = xmpp_stanza_new("iq", (const char*[]){
+            XMPP_STANZA_ATTR_ID, id,
+            XMPP_STANZA_ATTR_FROM, "localhost",
+            XMPP_STANZA_ATTR_TO, from,
+            XMPP_STANZA_ATTR_TYPE, XMPP_STANZA_TYPE_RESULT,
+            NULL});
+
+    xmpp_server_route_stanza(server, response);
+    xmpp_stanza_del(response, true);
+
+    return true;
+error:
+    return false;
+}
+
+#if 0
 const char *XMPP_IQ_SESSION = XMPP_NS_SESSION XMPP_NS_SEPARATOR "session";
 const char *XMPP_IQ_QUERY_ROSTER = XMPP_NS_ROSTER XMPP_NS_SEPARATOR "query";
 const char *XMPP_IQ_DISCO_QUERY_ITEMS =
@@ -249,3 +276,4 @@ static void disco_query_items_end(void *data, const char *name,
 error:
     xmp3_xml_stop_parser(parser, false);
 }
+#endif
