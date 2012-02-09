@@ -21,13 +21,13 @@
 #include "client_socket.h"
 #include "event.h"
 #include "jid.h"
-#include "xep_muc.h"
+//#include "xep_muc.h"
 #include "xmp3_options.h"
-#include "xmp3_xml.h"
 #include "xmpp_client.h"
-#include "xmpp_core.h"
 #include "xmpp_common.h"
+#include "xmpp_core.h"
 #include "xmpp_im.h"
+#include "xmpp_parser.h"
 #include "xmpp_stanza.h"
 
 #include "xmpp_server.h"
@@ -188,7 +188,7 @@ struct xmpp_server {
      * register with the server, probably a delegate model like in ontonet. */
 
     /** The MUC component. */
-    struct xep_muc *muc;
+    //struct xep_muc *muc;
 
     /** TODO: This should be available in another way.  We need a way for the
      * parsers to get at the client who sent the stanza that is currently
@@ -266,9 +266,11 @@ error:
 }
 
 void xmpp_server_del(struct xmpp_server *server) {
+#if 0
     if (server->muc != NULL) {
         xep_muc_del(server->muc);
     }
+#endif
 
     DELETE_LIST(stanza_route, server->stanza_routes);
     DELETE_LIST(iq_route, server->iq_routes);
@@ -406,6 +408,8 @@ void xmpp_server_del_stanza_route(struct xmpp_server *server,
 }
 
 bool xmpp_server_route_stanza(struct xmpp_stanza *stanza) {
+    return false;
+#if 0
     struct xmpp_server *server = xmpp_stanza_server(stanza);
     const struct jid *search_jid = xmpp_stanza_jid_to(stanza);
 
@@ -434,6 +438,7 @@ bool xmpp_server_route_stanza(struct xmpp_stanza *stanza) {
         */
     }
     return was_handled;
+#endif
 }
 
 void xmpp_server_add_iq_route(struct xmpp_server *server, const char *ns,
@@ -447,6 +452,8 @@ void xmpp_server_del_iq_route(struct xmpp_server *server, const char *ns,
 }
 
 bool xmpp_server_route_iq(struct xmpp_stanza *stanza, const char *ns_name) {
+    return false;
+#if 0
     struct xmpp_server *server = xmpp_stanza_server(stanza);
 
     bool was_handled = false;
@@ -465,6 +472,7 @@ bool xmpp_server_route_iq(struct xmpp_stanza *stanza, const char *ns_name) {
         log_info("No route for destination");
     }
     return was_handled;
+#endif
 }
 
 static bool init_socket(struct xmpp_server *server,
@@ -519,6 +527,7 @@ error:
 
 static bool init_components(struct xmpp_server *server,
                             const struct xmp3_options *options) {
+#if 0
     xmpp_server_add_stanza_route(server, server->jid,
                                  xmpp_core_stanza_handler, NULL);
 
@@ -533,6 +542,7 @@ static bool init_components(struct xmpp_server *server,
                              xmpp_im_iq_disco_query_info, NULL);
     xmpp_server_add_iq_route(server, XMPP_IQ_DISCO_QUERY_ITEMS,
                              xmpp_im_iq_disco_query_items, NULL);
+#endif
     return true;
 }
 
@@ -607,23 +617,20 @@ static void read_client(struct event_loop *loop, int fd, void *data) {
     check_mem(addrstr);
     log_info("%s - Read %zd bytes", addrstr, numrecv);
     free(addrstr);
-    xmpp_print_data(server->buffer, numrecv);
-
-    struct xmp3_xml *parser = xmpp_client_parser(client);
+    //xmpp_print_data(server->buffer, numrecv);
 
     // XXX: HACK HACK HACK HACK
     server->cur_client = client;
     // XXX: HACK HACK HACK HACK
 
-    enum XML_Status status = xmp3_xml_parse(parser, server->buffer, numrecv,
-                                            false);
+    bool rv = xmpp_parser_parse(xmpp_client_parser(client), server->buffer,
+                                numrecv);
 
     // XXX: HACK HACK HACK HACK
     server->cur_client = NULL;
     // XXX: HACK HACK HACK HACK
 
-    check(status != XML_STATUS_ERROR, "Error parsing XML: %s",
-          xmp3_xml_get_error_str(parser));
+    check(rv, "Error parsing XML");
 
     return;
 

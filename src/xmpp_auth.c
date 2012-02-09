@@ -14,18 +14,18 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
-#include <expat.h>
+#include <utstring.h>
 
 #include "log.h"
 #include "utils.h"
 
 #include "client_socket.h"
 #include "jid.h"
-#include "xmp3_xml.h"
 #include "xmpp_client.h"
 #include "xmpp_core.h"
 #include "xmpp_server.h"
 #include "xmpp_stanza.h"
+#include "xmpp_parser.h"
 
 #include "xmpp_auth.h"
 
@@ -37,7 +37,6 @@
 
 // Maximum size of the "resourcepart" in resource binding
 #define RESOURCEPART_BUFFER_SIZE 1024
-
 
 // XML string constants
 static const char *STREAM_NS = "http://etherx.jabber.org/streams";
@@ -146,21 +145,6 @@ static bool handle_sasl_plain(struct xmpp_stanza *stanza,
 
 static bool handle_bind_iq(struct xmpp_stanza *stanza,
                            struct xmpp_parser *parser, void *data);
-
-static void bind_iq_start(void *data, const char *name, const char **attrs,
-                          struct xmp3_xml *parser);
-static void bind_iq_end(void *data, const char *name, struct xmp3_xml *parser);
-
-static void bind_start(void *data, const char *name, const char **attrs,
-                       struct xmp3_xml *parser);
-static void bind_end(void *data, const char *name, struct xmp3_xml *parser);
-
-static void bind_resource_start(void *data, const char *name,
-                                const char **attrs, struct xmp3_xml *parser);
-static void bind_resource_data(void *data, const char *s, int len,
-                               struct xmp3_xml *parser);
-static void bind_resource_end(void *data, const char *name,
-                              struct xmp3_xml *parser);
 
 /**
  * Step 1: Client initiates stream to server.
@@ -293,11 +277,14 @@ static bool handle_starttls(struct xmpp_stanza *stanza,
           "Error initializing SSL socket.");
 
     // We expect a new stream from the client
-    check(xmpp_parser_reset(parser, true), "Error resetting parser.");
+    xmpp_parser_new_stream(parser);
     xmpp_parser_set_handler(parser, stream_sasl_start);
+
+    log_info("Done?");
     return true;
 
 error:
+    log_info("FAILED!");
     return false;
 }
 
@@ -314,7 +301,7 @@ static bool handle_sasl_plain(struct xmpp_stanza *stanza,
     check(strcmp(xmpp_stanza_name(stanza), AUTH) == 0,
           "Unexpected stanza");
 
-    char *mechanism = xmpp_stanza_attr(stanza, AUTH_MECHANISM);
+    const char *mechanism = xmpp_stanza_attr(stanza, AUTH_MECHANISM);
     check(mechanism != NULL && strcmp(mechanism, AUTH_MECHANISM_PLAIN) == 0,
           "Unexpected authentication mechanism.");
 
@@ -329,7 +316,7 @@ static bool handle_sasl_plain(struct xmpp_stanza *stanza,
     base64_decode_block(xmpp_stanza_data(stanza),
                         xmpp_stanza_data_length(stanza), plaintext, &state);
 
-    char *authzid = auth_data->plaintext;
+    char *authzid = plaintext;
     char *authcid = memchr(authzid, '\0', PLAIN_AUTH_BUFFER_SIZE) + 1;
     char *passwd = memchr(authcid, '\0', PLAIN_AUTH_BUFFER_SIZE) + 1;
 
@@ -353,7 +340,7 @@ static bool handle_sasl_plain(struct xmpp_stanza *stanza,
           "Error sending SASL success to client");
 
     // Go to step 7, the client needs to send us a new stream header.
-    check(xmpp_parser_reset(parser, true), "Error resetting parser.");
+    xmpp_parser_new_stream(parser);
     xmpp_parser_set_handler(parser, stream_bind_start);
     return true;
 
@@ -367,7 +354,6 @@ error:
 static bool handle_bind_iq(struct xmpp_stanza *stanza,
                            struct xmpp_parser *parser, void *data) {
     struct xmpp_client *client = (struct xmpp_client*)data;
-    struct xmpp_server *server = xmpp_client_server(client);
 
     UT_string success_msg;
     utstring_init(&success_msg);
@@ -379,16 +365,17 @@ static bool handle_bind_iq(struct xmpp_stanza *stanza,
           "Unexpected stanza");
 
     // Validate the correct attributes set on the start tag
-    char *type = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_TYPE);
-    check(type != NULL && strcmp(type, XMPP_STANZA_IQ_TYPE_RESULT) == 0,
+    const char *type = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_TYPE);
+    check(type != NULL && strcmp(type, XMPP_STANZA_IQ_TYPE_SET) == 0,
           "Unexpected bind iq type.");
 
-    char *id = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_ID);
+    const char *id = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_ID);
     check(id != NULL, "Bind iq has no id.");
 
     // Jump to the inner <bind> tag
     stanza = xmpp_stanza_children(stanza);
     check(stanza != NULL, "Bind iq has no child.");
+    log_info("IQ stanza namespace = %s", xmpp_stanza_namespace(stanza));
     check(strcmp(xmpp_stanza_namespace(stanza), BIND_NS) == 0,
           "Unexpected stanza");
     check(strcmp(xmpp_stanza_name(stanza), BIND) == 0,
@@ -421,9 +408,10 @@ static bool handle_bind_iq(struct xmpp_stanza *stanza,
 
     /* Resource binding, and thus authentication, is complete!  Continue to
      * process general messages. */
-    xmpp_parser_set_handler(parser, xmpp_core_handle_stanza);
-    xmpp_server_add_stanza_route(server, xmpp_client_jid(client),
-                                 xmpp_core_client_route, client);
+    //xmpp_parser_set_handler(parser, xmpp_core_handle_stanza);
+    //xmpp_server_add_stanza_route(xmpp_client_server(server),
+    //                             xmpp_client_jid(client),
+    //                             xmpp_core_client_route, client);
     return true;
 
 error:

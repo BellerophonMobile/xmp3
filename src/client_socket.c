@@ -146,6 +146,8 @@ error:
 
 int client_socket_sendxml(struct client_socket *socket,
                           struct xmp3_xml *parser) {
+    return -1;
+#if 0
     int offset, size;
     // Gets us Expat's buffer
     const char *buffer = xmp3_xml_get_buffer(parser, &offset, &size);
@@ -154,6 +156,7 @@ int client_socket_sendxml(struct client_socket *socket,
     int count = xmp3_xml_get_byte_count(parser);
 
     return client_socket_sendall(socket, buffer + offset, count);
+#endif
 }
 
 char* client_socket_addr_str(struct client_socket *socket) {

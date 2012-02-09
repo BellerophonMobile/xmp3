@@ -24,7 +24,7 @@ typedef bool (*xmpp_parser_handler)(struct xmpp_stanza *stanza,
  *                     start.  When true, the callback will be called initially
  *                     with a childless stanza representing the stream header.
  */
-struct xmpp_parser* xmpp_parser_new(bool stream_start);
+struct xmpp_parser* xmpp_parser_new(bool is_stream_start);
 
 void xmpp_parser_del(struct xmpp_parser *parser);
 
@@ -35,4 +35,6 @@ void xmpp_parser_set_data(struct xmpp_parser *parser, void *data);
 
 bool xmpp_parser_parse(struct xmpp_parser *parser, const char *buf, int len);
 
-bool xmpp_parser_reset(struct xmppp_parser *parser, bool stream_start);
+bool xmpp_parser_reset(struct xmpp_parser *parser, bool is_stream_start);
+
+void xmpp_parser_new_stream(struct xmpp_parser *parser);

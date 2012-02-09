@@ -10,10 +10,10 @@
 #include "client_socket.h"
 #include "event.h"
 #include "jid.h"
-#include "xmp3_xml.h"
 #include "xmpp_auth.h"
 #include "xmpp_common.h"
 #include "xmpp_core.h"
+#include "xmpp_parser.h"
 #include "xmpp_server.h"
 
 #include "xmpp_client.h"
@@ -58,8 +58,10 @@ error:
 
 void xmpp_client_del(struct xmpp_client *client) {
     if (client->jid) {
+#if 0
         xmpp_server_del_stanza_route(client->server, client->jid,
                 xmpp_core_message_handler, client);
+#endif
         jid_del(client->jid);
     }
 
@@ -86,7 +88,7 @@ struct client_socket* xmpp_client_socket(struct xmpp_client *client) {
     return client->socket;
 }
 
-struct xmp3_xml* xmpp_client_parser(struct xmpp_client *client) {
+struct xmpp_parser* xmpp_client_parser(struct xmpp_client *client) {
     return client->parser;
 }
 
