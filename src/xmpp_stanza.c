@@ -7,34 +7,15 @@
 
 #include <stdlib.h>
 
-#include "uthash.h"
-#include "utstring.h"
+#include <uthash.h>
+#include <utlist.h>
+#include <utstring.h>
 
 #include "log.h"
-#include "utils.h"
 
-#include "jid.h"
-#include "xmp3_xml.h"
-#include "xmpp_client.h"
-#include "xmpp_common.h"
-#include "xmpp_server.h"
+#include "xmpp_parser.h"
 
 #include "xmpp_stanza.h"
-
-const char *XMPP_STANZA_ATTR_TO = "to";
-const char *XMPP_STANZA_ATTR_FROM = "from";
-const char *XMPP_STANZA_ATTR_ID = "id";
-const char *XMPP_STANZA_ATTR_TYPE = "type";
-
-const char *XMPP_ATTR_TYPE_GET = "get";
-const char *XMPP_ATTR_TYPE_SET = "set";
-const char *XMPP_ATTR_TYPE_RESULT = "result";
-const char *XMPP_ATTR_TYPE_ERROR = "error";
-
-
-// Forward declarations
-static struct jid* copy_attr_jid(const struct xmpp_stanza *stanza,
-                                 const char *name);
 
 struct attribute {
     char *name;
@@ -45,107 +26,56 @@ struct attribute {
 };
 
 struct xmpp_stanza {
-    /** The server who who is processing this stanza. */
-    struct xmpp_server *server;
-
-    /** The XML parser that is parsing this stanza. */
-    struct xmp3_xml *parser;
-
-    /** The name + namespace string. */
-    char *ns_name;
+    /** The namespace of this tag. */
+    char *namespace;
 
     /** The name of this tag. */
     char *name;
 
-    /** The namespace of this tag. */
-    char *namespace;
-
-    /** The value of the "to" attribute, as a JID structure. */
-    struct jid *to_jid;
-
-    /** The value of the "from" attribute, as a JID structure. */
-    struct jid *from_jid;
-
     /** A hash table of stanza attributes. */
     struct attribute *attributes;
+
+    /** The data inside this node */
+    UT_string data;
+
+    /** A linked list of child nodes. */
+    struct xmpp_stanza *children;
+
+    struct xmpp_stanza *parent;
+
+    /** Stanzas are kept in a linked list. */
+    struct xmpp_stanza *prev;
+    struct xmpp_stanza *next;
 };
 
-struct xmpp_stanza* xmpp_stanza_new(struct xmpp_server *server,
-                                    struct xmp3_xml *parser,
-                                    struct xmpp_client *client,
-                                    const char *name, const char **attrs) {
+struct xmpp_stanza* xmpp_stanza_new(const char *ns_name, const char **attrs) {
     struct xmpp_stanza *stanza = calloc(1, sizeof(*stanza));
     check_mem(stanza);
 
-    stanza->server = server;
-    stanza->parser = parser;
-
-    STRDUP_CHECK(stanza->ns_name, name);
-
-    char *ns_delim = strrchr(name, *XMPP_NS_SEPARATOR);
-    if (ns_delim == NULL) {
-        STRDUP_CHECK(stanza->name, name);
+    char *separator = strchr(ns_name, XMPP_PARSER_SEPARATOR);
+    if (separator != NULL) {
+        STRNDUP_CHECK(stanza->namespace, ns_name, separator - ns_name);
+        STRDUP_CHECK(stanza->name, separator + 1);
     } else {
-        int ns_len = ns_delim - name;
-        STRNDUP_CHECK(stanza->namespace, name, ns_len);
-        STRDUP_CHECK(stanza->name, ns_delim + 1);
+        STRDUP_CHECK(stanza->name, name);
     }
+
+    utstring_init(&stanza->data);
 
     for (int i = 0; attrs[i] != NULL; i += 2) {
         struct attribute *attr = calloc(1, sizeof(*attr));
+        check_mem(attr);
         STRDUP_CHECK(attr->name, attrs[i]);
         STRDUP_CHECK(attr->value, attrs[i + 1]);
         HASH_ADD_KEYPTR(hh, stanza->attributes, attr->name, strlen(attr->name),
                         attr);
     }
-
-    // If there is no "from" attribute, add one.
-    const char *from = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_FROM);
-    if (from == NULL && client != NULL) {
-        struct attribute *attr = calloc(1, sizeof(*attr));
-        STRDUP_CHECK(attr->name, XMPP_STANZA_ATTR_FROM);
-        attr->value = jid_to_str(xmpp_client_jid(client));
-        check_mem(attr->value);
-        HASH_ADD_KEYPTR(hh, stanza->attributes, attr->name, strlen(attr->name),
-                        attr);
-    }
-
-    // If there is no "to" attribute, add one.
-    const char *to = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_TO);
-    if (to == NULL && client != NULL) {
-        struct attribute *attr = calloc(1, sizeof(*attr));
-        STRDUP_CHECK(attr->name, XMPP_STANZA_ATTR_TO);
-
-        if (strcmp(stanza->ns_name, XMPP_MESSAGE) == 0) {
-            /* If there is no "to" in a message, it is addressed to the bare
-             * JID of the sender. */
-            struct jid *jid = jid_new_from_jid(xmpp_client_jid(client));
-            check_mem(jid);
-            jid_set_resource(jid, NULL);
-            attr->value = jid_to_str(jid);
-            check_mem(attr->value);
-            free(jid);
-
-        } else {
-            /* Else it is addressed to the server. */
-            attr->value = jid_to_str(xmpp_server_jid(
-                                     xmpp_client_server(client)));
-            check_mem(attr->value);
-        }
-        HASH_ADD_KEYPTR(hh, stanza->attributes, attr->name, strlen(attr->name),
-                        attr);
-    }
-
-    // Create JID structures from the "to" and "from" attributes
-    stanza->to_jid = copy_attr_jid(stanza, XMPP_STANZA_ATTR_TO);
-    stanza->from_jid = copy_attr_jid(stanza, XMPP_STANZA_ATTR_FROM);
     return stanza;
 }
 
-void xmpp_stanza_del(struct xmpp_stanza *stanza) {
-    free(stanza->ns_name);
-    free(stanza->name);
+void xmpp_stanza_del(struct xmpp_stanza *stanza, bool recursive) {
     free(stanza->namespace);
+    free(stanza->name);
 
     struct attribute *attr, *tmp;
     HASH_ITER(hh, stanza->attributes, attr, tmp) {
@@ -153,35 +83,40 @@ void xmpp_stanza_del(struct xmpp_stanza *stanza) {
         free(attr);
     }
 
+    utstring_done(&stanza->data);
+
+    if (recursive) {
+        struct xmpp_stanza *s, *tmp;
+        DL_FOREACH_SAFE(stanza->children, s, tmp) {
+            DL_DELETE(stanza->children, s);
+            xmpp_stanza_del(s);
+        }
+    }
+
     free(stanza);
-}
-
-struct xmpp_server* xmpp_stanza_server(const struct xmpp_stanza *stanza) {
-    return stanza->server;
-}
-
-struct xmp3_xml* xmpp_stanza_parser(const struct xmpp_stanza *stanza) {
-    return stanza->parser;
-}
-
-const char* xmpp_stanza_name(const struct xmpp_stanza *stanza) {
-    return stanza->name;
 }
 
 const char* xmpp_stanza_namespace(const struct xmpp_stanza *stanza) {
     return stanza->namespace;
 }
 
-const char* xmpp_stanza_ns_name(const struct xmpp_stanza *stanza) {
-    return stanza->ns_name;
+void xmpp_stanza_copy_namespace(struct xmpp_stanza *stanza, const char *ns) {
+    if (stanza->namespace) {
+        free(stanza->namespace);
+    }
+    STRDUP_CHECK(stanza->namespace, ns);
 }
 
-struct jid* xmpp_stanza_jid_from(const struct xmpp_stanza *stanza) {
-    return stanza->from_jid;
+const char* xmpp_stanza_name(const struct xmpp_stanza *stanza) {
+    return stanza->name;
 }
 
-struct jid* xmpp_stanza_jid_to(const struct xmpp_stanza *stanza) {
-    return stanza->to_jid;
+void xmpp_stanza_copy_name(const struct xmpp_stanza *stanza,
+                           const char *name) {
+    if (stanza->name) {
+        free(stanza->name);
+    }
+    STRDUP_CHECK(stanza->name, name);
 }
 
 const char* xmpp_stanza_attr(const struct xmpp_stanza *stanza,
@@ -221,33 +156,46 @@ void xmpp_stanza_set_attr(struct xmpp_stanza *stanza, const char *name,
     check_mem(attr->value);
 }
 
-static struct jid* copy_attr_jid(const struct xmpp_stanza *stanza,
-                                       const char *name) {
-    struct attribute *attr;
-    HASH_FIND_STR(stanza->attributes, name, attr);
-    if (attr == NULL) {
-        return NULL;
-    } else {
-        return jid_new_from_str(attr->value);
-    }
+const char* xmpp_stanza_data(const struct xmpp_stanza *stanza) {
+    return utstring_body(stanza->data);
 }
 
-char* xmpp_stanza_create_tag(const struct xmpp_stanza *stanza) {
-    UT_string s;
-    utstring_init(&s);
+int xmpp_stanza_data_length(const struct xmpp_stanza *stanza) {
+    return utstring_len(stanza->data);
+}
 
-    utstring_printf(&s, "<%s", stanza->name);
+void xmpp_stanza_append_data(struct xmpp_stanza *stanza, const char *buf,
+                             int len) {
+    utstring_bincopy(stanza->data, buf, len);
+}
 
-    if (stanza->namespace != NULL) {
-        utstring_printf(&s, " xmlns='%s'", stanza->namespace);
+int xmpp_stanza_children_length(const struct xmpp_stanza *stanza) {
+    int count = 0;
+    struct xmpp_stanza *s;
+    DL_FOREACH(stanza->children, s) {
+        count++;
     }
+    return count;
+}
 
-    struct attribute *attr, *attr_tmp;
-    HASH_ITER(hh, stanza->attributes, attr, attr_tmp) {
-        utstring_printf(&s, " %s='%s'", attr->name, attr->value);
-    }
+struct xmpp_stanza* xmpp_stanza_children(struct xmpp_stanza *stanza) {
+    return stanza->children;
+}
 
-    utstring_printf(&s, ">");
+struct xmpp_stanza* xmpp_stanza_parent(struct xmpp_stanza *stanza) {
+    return stanza->parent;
+}
 
-    return utstring_body(&s);
+struct xmpp_stanza* xmpp_stanza_next(struct xmpp_stanza *stanza) {
+    return stanza->next;
+}
+
+struct xmpp_stanza* xmpp_stanza_prev(struct xmpp_stanza *stanza) {
+    return stanza->prev;
+}
+
+void xmpp_stanza_append_child(struct xmpp_stanza *stanza,
+                              struct xmpp_stanza *child) {
+    DL_APPEND(stanza->children, child);
+    child->parent = stanza;
 }
