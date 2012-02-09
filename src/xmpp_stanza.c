@@ -29,6 +29,7 @@ const char *XMPP_STANZA_ATTR_ID = "id";
 const char *XMPP_STANZA_ATTR_TYPE = "type";
 
 const char *XMPP_STANZA_TYPE_SET = "set";
+const char *XMPP_STANZA_TYPE_GET = "get";
 const char *XMPP_STANZA_TYPE_RESULT = "result";
 
 struct attribute {

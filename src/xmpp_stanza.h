@@ -24,6 +24,7 @@ extern const char *XMPP_STANZA_ATTR_ID;
 extern const char *XMPP_STANZA_ATTR_TYPE;
 
 extern const char *XMPP_STANZA_TYPE_SET;
+extern const char *XMPP_STANZA_TYPE_GET;
 extern const char *XMPP_STANZA_TYPE_RESULT;
 
 /**
