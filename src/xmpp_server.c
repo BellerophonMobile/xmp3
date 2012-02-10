@@ -63,6 +63,7 @@
     struct type *search = type ## _new(__VA_ARGS__); \
     struct type *match = NULL; \
     DL_SEARCH(list, match, search, type ## _cmp); \
+    type ## _del(search); \
     if (match == NULL) { \
         log_warn("Attempted to remove non-existent callback."); \
     } else { \
@@ -282,6 +283,10 @@ void xmpp_server_del(struct xmpp_server *server) {
         free(connected_client);
     }
 
+    if (server->jid){
+        jid_del(server->jid);
+    }
+
     if (server->fd != -1) {
         close(server->fd);
     }
@@ -433,6 +438,7 @@ bool xmpp_server_route_stanza(struct xmpp_server *server,
         }
         */
     }
+    jid_del(search_jid);
     return was_handled;
 }
 

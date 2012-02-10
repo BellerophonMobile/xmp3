@@ -101,6 +101,8 @@ void xmpp_stanza_del(struct xmpp_stanza *stanza, bool recursive) {
     struct attribute *attr, *tmp;
     HASH_ITER(hh, stanza->attributes, attr, tmp) {
         HASH_DEL(stanza->attributes, attr);
+        free(attr->name);
+        free(attr->value);
         free(attr);
     }
 

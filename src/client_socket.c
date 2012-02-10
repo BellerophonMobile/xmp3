@@ -106,6 +106,7 @@ error:
 
 void client_socket_del(struct client_socket *socket) {
     socket->del_func(socket);
+    free(socket);
 }
 
 void client_socket_close(struct client_socket *socket) {

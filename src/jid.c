@@ -26,7 +26,7 @@ struct jid {
 };
 
 struct jid* jid_new() {
-    struct jid *jid =  calloc(1, sizeof(*jid));
+    struct jid *jid = calloc(1, sizeof(*jid));
     return jid;
 }
 
