@@ -35,6 +35,11 @@
     check_mem(dst); \
 } while(0)
 
+/**
+ * Allocate and return a null-terminated string with a UUID.
+ */
+char* make_uuid();
+
 /*
  * These functions are from libb64, found at: http://libb64.sourceforge.net/
  *

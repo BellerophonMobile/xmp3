@@ -17,6 +17,7 @@
 
 #include <expat.h>
 #include <openssl/ssl.h>
+#include <openssl/err.h>
 
 #include "log.h"
 
@@ -30,6 +31,7 @@
 static struct option long_options[] = {
     {"addr",     required_argument, NULL, 'a'},
     {"port",     required_argument, NULL, 'p'},
+    {"no-ssl",   no_argument,       NULL, 'n'},
     {"ssl-key",  required_argument, NULL, 'k'},
     {"ssl-cert", required_argument, NULL, 'c'},
     {"help",     no_argument,       NULL, 'h'},
@@ -45,6 +47,7 @@ static void print_usage() {
     printf("  -p, --port     Port to listen for incoming XMPP client\n"
            "                        connections (Default: %d)\n",
            DEFAULT_PORT);
+    printf("  -n, --no-ssl   Disable SSL connection support\n");
     printf("  -k, --ssl-key  Path to the SSL private key to use"
            " (Default: %s)\n", DEFAULT_KEYFILE);
     printf("  -c, --ssl-cert Path to the SSL certificate to use"
@@ -66,7 +69,7 @@ int main(int argc, char *argv[]) {
 
     int c = 0;
     while (true) {
-        c = getopt_long(argc, argv, "a:p:k:c:h", long_options, NULL);
+        c = getopt_long(argc, argv, "a:p:k:nc:h", long_options, NULL);
 
         if (c < 0) {
             break;
@@ -81,6 +84,11 @@ int main(int argc, char *argv[]) {
             case 'p':
                 check(xmp3_options_set_port_str(options, optarg),
                       "Invalid client port \"%s\"", optarg);
+                break;
+
+            case 'n':
+                check(xmp3_options_set_ssl(options, false),
+                      "Failed to disable openssl.");
                 break;
 
             case 'k':
@@ -115,9 +123,11 @@ int main(int argc, char *argv[]) {
 
     loop = event_new_loop();
 
-    // Initialize OpenSSL
-    SSL_load_error_strings();
-    SSL_library_init();
+    if (xmp3_options_get_ssl(options)) {
+        // Initialize OpenSSL
+        SSL_load_error_strings();
+        SSL_library_init();
+    }
 
     struct xmpp_server *server = xmpp_server_new(loop, options);
     check(server != NULL, "XMPP server initialization failed");
@@ -125,6 +135,10 @@ int main(int argc, char *argv[]) {
     log_info("Starting event loop...");
     event_loop_start(loop);
     log_info("Event loop exited");
+
+    if (xmp3_options_get_ssl(options)) {
+        ERR_free_strings();
+    }
 
     xmpp_server_del(server);
     event_del_loop(loop);

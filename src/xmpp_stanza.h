@@ -7,56 +7,47 @@
 
 #pragma once
 
+#include <stdbool.h>
+
+// Forward declarations
+struct xmpp_stanza;
+
+extern const char *XMPP_STANZA_NS_CLIENT;
+extern const char *XMPP_STANZA_NS_STANZA;
+
+extern const char *XMPP_STANZA_MESSAGE;
+extern const char *XMPP_STANZA_PRESENCE;
+extern const char *XMPP_STANZA_IQ;
+
 extern const char *XMPP_STANZA_ATTR_TO;
 extern const char *XMPP_STANZA_ATTR_FROM;
 extern const char *XMPP_STANZA_ATTR_ID;
 extern const char *XMPP_STANZA_ATTR_TYPE;
 
-extern const char *XMPP_ATTR_TYPE_GET;
-extern const char *XMPP_ATTR_TYPE_SET;
-extern const char *XMPP_ATTR_TYPE_RESULT;
-extern const char *XMPP_ATTR_TYPE_ERROR;
-
-
-// Forward declarations
-struct xmpp_stanza;
-struct xmpp_server;
-struct xmpp_client;
-struct xmp3_xml;
+extern const char *XMPP_STANZA_TYPE_SET;
+extern const char *XMPP_STANZA_TYPE_GET;
+extern const char *XMPP_STANZA_TYPE_RESULT;
+extern const char *XMPP_STANZA_TYPE_ERROR;
 
 /**
  * Allocate and initialize a new XMPP stanza structure.
  *
- * @param server The server this message is being processed by.
- * @param parser The XML parser that is parsing this stanza.
- * @param client An optional client that sent this stanza, may be NULL.
- * @param name The name of the stanza start tag.
+ * @param ns_name The name of the stanza start tag.
  * @param attrs NULL terminated list attribute = value pairs.
  * @returns A new XMPP stanza structure.
  */
-struct xmpp_stanza* xmpp_stanza_new(struct xmpp_server *server,
-                                    struct xmp3_xml *parser,
-                                    struct xmpp_client *client,
-                                    const char *name, const char **attrs);
+struct xmpp_stanza* xmpp_stanza_new(const char *ns_name, const char **attrs);
 
 /** Cleans up and frees an XMPP stanza. */
-void xmpp_stanza_del(struct xmpp_stanza *stanza);
-
-/** Get the server who is processing this stanza. */
-struct xmpp_server* xmpp_stanza_server(const struct xmpp_stanza *stanza);
-
-/** Get the XML parser that is parsing this stanza. */
-struct xmp3_xml* xmpp_stanza_parser(const struct xmpp_stanza *stanza);
+void xmpp_stanza_del(struct xmpp_stanza *stanza, bool recursive);
 
 /**
- * Returns the name of the tag of this stanza (message/presence/IQ)
+ * Returns the stanza (and its children) packed into a null-terminated string.
  *
- * The string returned is owned by the stanza, and should not be freed.
- *
- * @param stanza The stanza structure.
- * @returns The name of this stanza.
+ * @param stanza The stanza to convert.
+ * @param len If not null, is filled in with the length of the string.
  */
-const char* xmpp_stanza_name(const struct xmpp_stanza *stanza);
+char* xmpp_stanza_string(struct xmpp_stanza *stanza, size_t *len);
 
 /**
  * Returns the namespace of this stanza.
@@ -68,34 +59,19 @@ const char* xmpp_stanza_name(const struct xmpp_stanza *stanza);
  */
 const char* xmpp_stanza_namespace(const struct xmpp_stanza *stanza);
 
-/**
- * Returns the namespace and name combined, separated by #.
- *
- * This is mostly for convenience, so you can strcmp both in one go.
- */
-const char* xmpp_stanza_ns_name(const struct xmpp_stanza *stanza);
+void xmpp_stanza_copy_namespace(struct xmpp_stanza *stanza, const char *ns);
 
 /**
- * Returns the JID structure from the string JID attribute "from".
+ * Returns the name of the tag of this stanza (message/presence/IQ)
  *
- * The JID returned is owned by the stanza, and should not be freed.
+ * The string returned is owned by the stanza, and should not be freed.
  *
  * @param stanza The stanza structure.
- * @returns A new JID structure based on the "from" attribute of the stanza.
- *          If not present, NULL is returned.
+ * @returns The name of this stanza.
  */
-struct jid* xmpp_stanza_jid_from(const struct xmpp_stanza *stanza);
+const char* xmpp_stanza_name(const struct xmpp_stanza *stanza);
 
-/**
- * Returns the JID structure from the string JID attribute "to".
- *
- * The JID returned is owned by the stanza, and should not be freed.
- *
- * @param stanza The stanza structure.
- * @returns A new JID structure based on the "from" attribute of the stanza.
- *          If not present, NULL is returned.
- */
-struct jid* xmpp_stanza_jid_to(const struct xmpp_stanza *stanza);
+void xmpp_stanza_copy_name(struct xmpp_stanza *stanza, const char *name);
 
 /**
  * Returns the value of an attribute of this stanza.
@@ -112,16 +88,47 @@ const char* xmpp_stanza_attr(const struct xmpp_stanza *stanza,
 /**
  * Sets the value of an attribute in a stanza.
  *
- * The name/value are copied if necessary.
+ * The name/value are NOT copied.
  */
 void xmpp_stanza_set_attr(struct xmpp_stanza *stanza, const char *name,
-                          const char *value);
+                          char *value);
 
 /**
- * Takes a stanza struct and recreates the string tag.
+ * Sets the value of an attribute in a stanza.
  *
- * @param stanza Stanza structure to create a tag for.
- * @return A newly allocated string representing the start stanza tag, with all
- *         attributes and their values.
+ * The name/value are copied.
  */
-char* xmpp_stanza_create_tag(const struct xmpp_stanza *stanza);
+void xmpp_stanza_copy_attr(struct xmpp_stanza *stanza, const char *name,
+                           const char *value);
+
+/** Returns any data associated with this stanza. */
+const char* xmpp_stanza_data(const struct xmpp_stanza *stanza);
+
+/** Returns the length of any data associated with this stanza. */
+unsigned int xmpp_stanza_data_length(const struct xmpp_stanza *stanza);
+
+/** Copies data. */
+void xmpp_stanza_append_data(struct xmpp_stanza *stanza, const char *buf,
+                             int len);
+
+/** Returns the number of children stanzas. */
+int xmpp_stanza_children_length(const struct xmpp_stanza *stanza);
+
+/** Returns a pointer to the first child stanza. */
+struct xmpp_stanza* xmpp_stanza_children(struct xmpp_stanza *stanza);
+
+/** Returns a pointer to the parent stanza. */
+struct xmpp_stanza* xmpp_stanza_parent(struct xmpp_stanza *stanza);
+
+/** Returns a pointer to the next sibling stanza. */
+struct xmpp_stanza* xmpp_stanza_next(struct xmpp_stanza *stanza);
+
+/** Returns a pointer to the previous sibling stanza. */
+struct xmpp_stanza* xmpp_stanza_prev(struct xmpp_stanza *stanza);
+
+/** Appends a child stanza. */
+void xmpp_stanza_append_child(struct xmpp_stanza *stanza,
+                              struct xmpp_stanza *child);
+
+void xmpp_stanza_remove_child(struct xmpp_stanza *stanza,
+                              struct xmpp_stanza *child);

@@ -11,8 +11,9 @@ def options(ctx):
 def configure(ctx):
     ctx.load('compiler_c')
 
-    # To compile for android...
-    # CC="/opt/android-ndk/toolchains/arm-linux-androideabi-4.4.3/prebuilt/linux-x86/bin/arm-linux-androideabi-gcc --sysroot=/opt/android-ndk/platforms/android-9/arch-arm/" ./waf configure
+    # Mac OSX's uuid stuff is built into its libc
+    if ctx.env.system == 'linux':
+        ctx.check_cc(lib='uuid')
 
     if not ctx.env.cross:
         ctx.check_cc(lib='expat')
@@ -30,18 +31,21 @@ def build(ctx):
             'src/utils.c',
             'src/xep_muc.c',
             'src/xmp3_options.c',
-            'src/xmp3_xml.c',
             'src/xmpp_auth.c',
             'src/xmpp_client.c',
-            'src/xmpp_common.c',
             'src/xmpp_core.c',
             'src/xmpp_im.c',
+            'src/xmpp_parser.c',
             'src/xmpp_server.c',
             'src/xmpp_stanza.c',
         ],
         export_includes = 'src',
         use = ['uthash', 'EXPAT', 'CRYPTO', 'SSL'],
     )
+
+    # Mac's uuid stuff is built into its libc
+    if ctx.env.system in ('linux', 'android'):
+        libxmp3.use += ['UUID']
 
     ctx.program(
         target = 'xmp3',

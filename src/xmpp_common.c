@@ -29,9 +29,9 @@ const char *XMPP_BIND = XMPP_NS_BIND XMPP_NS_SEPARATOR "bind";
 const char *XMPP_BIND_RESOURCE = XMPP_NS_BIND XMPP_NS_SEPARATOR "resource";
 
 const char *XMPP_MESSAGE = XMPP_NS_CLIENT XMPP_NS_SEPARATOR "message";
-const char *XMPP_MESSAGE_BODY = XMPP_NS_CLIENT XMPP_NS_SEPARATOR "body";
 const char *XMPP_PRESENCE = XMPP_NS_CLIENT XMPP_NS_SEPARATOR "presence";
 const char *XMPP_IQ = XMPP_NS_CLIENT XMPP_NS_SEPARATOR "iq";
+const char *XMPP_MESSAGE_BODY = XMPP_NS_CLIENT XMPP_NS_SEPARATOR "body";
 
 static const char *MSG_NOT_IMPLEMENTED =
     "<error type='cancel'>"

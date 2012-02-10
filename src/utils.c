@@ -5,7 +5,18 @@
  * @file
  */
 
+#include <stdlib.h>
+#include <uuid/uuid.h>
+
 #include "utils.h"
+
+char* make_uuid() {
+    uuid_t uuid;
+    uuid_generate(uuid);
+    char *rv = malloc(37 * sizeof(char));
+    uuid_unparse(uuid, rv);
+    return rv;
+}
 
 /*
  * These functions are from libb64, found at: http://libb64.sourceforge.net/

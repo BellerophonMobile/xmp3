@@ -7,6 +7,9 @@
 
 #pragma once
 
+struct xmpp_stanza;
+struct xmpp_parser;
+
 /**
  * Handler for the inital stream start to begin authentication.
  *
@@ -18,10 +21,9 @@
  *       else begins resource binding.  On failure (parse error, etc.), closes
  *       the connection and stops parsing.
  *
- * @param data A struct xmpp_client for the newly connected client.
- * @param name The name of the starting tag that caused this event.
- * @param attrs The attributes of the starting tag that caused this event.
+ * @param stanza The parsed stanza
  * @param parser The XML parser instance.
+ * @param data   An xmpp_client instance.
  */
-void xmpp_auth_stream_start(void *data, const char *name, const char **attrs,
-                            struct xmp3_xml *parser);
+bool xmpp_auth_stream_start(struct xmpp_stanza *stanza,
+                            struct xmpp_parser *parser, void *data);

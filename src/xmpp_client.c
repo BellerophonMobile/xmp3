@@ -10,10 +10,10 @@
 #include "client_socket.h"
 #include "event.h"
 #include "jid.h"
-#include "xmp3_xml.h"
 #include "xmpp_auth.h"
 #include "xmpp_common.h"
 #include "xmpp_core.h"
+#include "xmpp_parser.h"
 #include "xmpp_server.h"
 
 #include "xmpp_client.h"
@@ -27,7 +27,7 @@ struct xmpp_client {
     struct client_socket *socket;
 
     /** An XML parser instance for this client. */
-    struct xmp3_xml *parser;
+    struct xmpp_parser *parser;
 
     /** The JID of this client. */
     struct jid *jid;
@@ -42,12 +42,12 @@ struct xmpp_client* xmpp_client_new(struct xmpp_server *server,
     client->socket = socket;
 
     // Create the XML parser we'll use to parse stanzas from the client.
-    client->parser = xmp3_xml_new();
+    client->parser = xmpp_parser_new(true);
     check(client->parser != NULL, "Error creating XML parser");
 
     // Set initial handlers to begin authentication.
-    xmp3_xml_add_handlers(client->parser, xmpp_auth_stream_start,
-                          xmpp_error_end, xmpp_error_data, client);
+    xmpp_parser_set_handler(client->parser, xmpp_auth_stream_start);
+    xmpp_parser_set_data(client->parser, client);
 
     return client;
 
@@ -59,7 +59,7 @@ error:
 void xmpp_client_del(struct xmpp_client *client) {
     if (client->jid) {
         xmpp_server_del_stanza_route(client->server, client->jid,
-                xmpp_core_message_handler, client);
+                xmpp_core_route_client, client);
         jid_del(client->jid);
     }
 
@@ -72,7 +72,7 @@ void xmpp_client_del(struct xmpp_client *client) {
     }
 
     if (client->parser) {
-        xmp3_xml_del(client->parser);
+        xmpp_parser_del(client->parser);
     }
 
     free(client);
@@ -86,7 +86,7 @@ struct client_socket* xmpp_client_socket(struct xmpp_client *client) {
     return client->socket;
 }
 
-struct xmp3_xml* xmpp_client_parser(struct xmpp_client *client) {
+struct xmpp_parser* xmpp_client_parser(struct xmpp_client *client) {
     return client->parser;
 }
 

@@ -17,8 +17,6 @@
 #include "utstring.h"
 #include "log.h"
 
-#include "xmp3_xml.h"
-
 #include "client_socket.h"
 
 struct fd_socket {
@@ -108,6 +106,7 @@ error:
 
 void client_socket_del(struct client_socket *socket) {
     socket->del_func(socket);
+    free(socket);
 }
 
 void client_socket_close(struct client_socket *socket) {
@@ -142,18 +141,6 @@ ssize_t client_socket_sendall(struct client_socket *socket, const void *buf,
     return numsent;
 error:
     return -1;
-}
-
-int client_socket_sendxml(struct client_socket *socket,
-                          struct xmp3_xml *parser) {
-    int offset, size;
-    // Gets us Expat's buffer
-    const char *buffer = xmp3_xml_get_buffer(parser, &offset, &size);
-    check_mem(buffer);
-    // Returns how much of the buffer is about the current event
-    int count = xmp3_xml_get_byte_count(parser);
-
-    return client_socket_sendall(socket, buffer + offset, count);
 }
 
 char* client_socket_addr_str(struct client_socket *socket) {
@@ -224,10 +211,6 @@ static void ssl_close(struct client_socket *socket) {
     } else {
         log_err("Can't ignore SIGPIPE.");
     }
-
-    socket->self = self->fd_socket;
-    fd_close(socket);
-    socket->self = self;
 }
 
 static int ssl_fd(struct client_socket *socket) {

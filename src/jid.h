@@ -38,6 +38,16 @@ struct jid* jid_new_from_str(const char *jidstr);
 struct jid* jid_new_from_jid(const struct jid *jid);
 
 /**
+ * Allocate and initialize a new JID from an existing JID without the resource.
+ *
+ * This copies a JID structure.
+ *
+ * @param jid The JID to copy.
+ * @returns A new JID structure.
+ */
+struct jid* jid_new_from_jid_bare(const struct jid *jid);
+
+/**
  * Converts a JID to a newly allocated string.
  *
  * String is of the form "localpart@domainpart/resourcepart".

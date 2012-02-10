@@ -26,7 +26,7 @@ struct jid {
 };
 
 struct jid* jid_new() {
-    struct jid *jid =  calloc(1, sizeof(*jid));
+    struct jid *jid = calloc(1, sizeof(*jid));
     return jid;
 }
 
@@ -78,6 +78,14 @@ struct jid* jid_new_from_jid(const struct jid *jid) {
     jid_set_local(newjid, jid_local(jid));
     jid_set_domain(newjid, jid_domain(jid));
     jid_set_resource(newjid, jid_resource(jid));
+
+    return newjid;
+}
+
+struct jid* jid_new_from_jid_bare(const struct jid *jid) {
+    struct jid *newjid = jid_new();
+    jid_set_local(newjid, jid_local(jid));
+    jid_set_domain(newjid, jid_domain(jid));
 
     return newjid;
 }

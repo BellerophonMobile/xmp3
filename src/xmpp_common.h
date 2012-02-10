@@ -12,11 +12,6 @@
 
 #define XMPP_NS_STREAM "http://etherx.jabber.org/streams"
 #define XMPP_NS_SASL "urn:ietf:params:xml:ns:xmpp-sasl"
-#define XMPP_NS_BIND "urn:ietf:params:xml:ns:xmpp-bind"
-#define XMPP_NS_CLIENT "jabber:client"
-#define XMPP_NS_SESSION "urn:ietf:params:xml:ns:xmpp-session"
-#define XMPP_NS_DISCO_ITEMS "http://jabber.org/protocol/disco#items"
-#define XMPP_NS_DISCO_INFO "http://jabber.org/protocol/disco#info"
 #define XMPP_NS_ROSTER "jabber:iq:roster"
 
 extern const char *SERVER_DOMAIN;

@@ -23,11 +23,11 @@
 #include "jid.h"
 #include "xep_muc.h"
 #include "xmp3_options.h"
-#include "xmp3_xml.h"
 #include "xmpp_client.h"
-#include "xmpp_core.h"
 #include "xmpp_common.h"
+#include "xmpp_core.h"
 #include "xmpp_im.h"
+#include "xmpp_parser.h"
 #include "xmpp_stanza.h"
 
 #include "xmpp_server.h"
@@ -63,6 +63,7 @@
     struct type *search = type ## _new(__VA_ARGS__); \
     struct type *match = NULL; \
     DL_SEARCH(list, match, search, type ## _cmp); \
+    type ## _del(search); \
     if (match == NULL) { \
         log_warn("Attempted to remove non-existent callback."); \
     } else { \
@@ -189,11 +190,6 @@ struct xmpp_server {
 
     /** The MUC component. */
     struct xep_muc *muc;
-
-    /** TODO: This should be available in another way.  We need a way for the
-     * parsers to get at the client who sent the stanza that is currently
-     * processing. */
-    struct xmpp_client *cur_client;
 };
 
 struct xmpp_client_iterator {
@@ -210,6 +206,9 @@ static bool init_components(struct xmpp_server *server,
 
 static void connect_client(struct event_loop *loop, int fd, void *data);
 static void read_client(struct event_loop *loop, int fd, void *data);
+
+static void send_service_unavailable(struct xmpp_server *server,
+                                     struct xmpp_stanza *stanza);
 
 static struct client_listener* client_listener_new(struct xmpp_client *client,
         xmpp_server_client_callback cb, void *data);
@@ -266,22 +265,26 @@ error:
 }
 
 void xmpp_server_del(struct xmpp_server *server) {
-    if (server->muc != NULL) {
+    struct c_client *connected_client = NULL;
+    struct c_client *connected_client_tmp = NULL;
+
+    if (server->muc) {
         xep_muc_del(server->muc);
     }
 
-    DELETE_LIST(stanza_route, server->stanza_routes);
-    DELETE_LIST(iq_route, server->iq_routes);
-    DELETE_LIST(client_listener, server->client_listeners);
-
-    struct c_client *connected_client = NULL;
-    struct c_client *connected_client_tmp = NULL;
     DL_FOREACH_SAFE(server->clients, connected_client, connected_client_tmp) {
         DL_DELETE(server->clients, connected_client);
         xmpp_client_del(connected_client->client);
         free(connected_client);
     }
 
+    DELETE_LIST(stanza_route, server->stanza_routes);
+    DELETE_LIST(iq_route, server->iq_routes);
+    DELETE_LIST(client_listener, server->client_listeners);
+
+    if (server->jid) {
+        jid_del(server->jid);
+    }
     if (server->fd != -1) {
         close(server->fd);
     }
@@ -388,11 +391,6 @@ void xmpp_client_iterator_del(struct xmpp_client_iterator *iter) {
     free(iter);
 }
 
-struct xmpp_client* xmpp_server_get_cur_client(
-        const struct xmpp_server *server) {
-    return server->cur_client;
-}
-
 void xmpp_server_add_stanza_route(struct xmpp_server *server,
                                   const struct jid *jid,
                                   xmpp_server_stanza_callback cb, void *data) {
@@ -405,34 +403,24 @@ void xmpp_server_del_stanza_route(struct xmpp_server *server,
     DEL_CALLBACK(stanza_route, server->stanza_routes, jid, cb, data);
 }
 
-bool xmpp_server_route_stanza(struct xmpp_stanza *stanza) {
-    struct xmpp_server *server = xmpp_stanza_server(stanza);
-    const struct jid *search_jid = xmpp_stanza_jid_to(stanza);
+bool xmpp_server_route_stanza(struct xmpp_server *server,
+                              struct xmpp_stanza *stanza) {
+    struct jid *search_jid = jid_new_from_str(xmpp_stanza_attr(
+                stanza, XMPP_STANZA_ATTR_TO));
 
     bool was_handled = false;
-
-    char *jidstr = jid_to_str(search_jid);
-    debug("Looking for stanza route for '%s'", jidstr);
-    free(jidstr);
-
     struct stanza_route *route = NULL;
     DL_FOREACH(server->stanza_routes, route) {
-        jidstr = jid_to_str(route->jid);
-        debug("Is it '%s'?", jidstr);
-        free(jidstr);
         if (jid_cmp_wildcards(search_jid, route->jid) == 0) {
-            was_handled = route->cb(stanza, route->data);
+            if (route->cb(stanza, server, route->data)) {
+                was_handled = true;
+            }
         }
     }
     if (!was_handled) {
         log_info("No route for destination");
-        // If its an IQ, we must respond if nobody handled it.
-        /*
-        if (strcmp(xmpp_stanza_ns_name(stanza), XMPP_IQ) == 0) {
-            xmpp_send_service_unavailable(stanza);
-        }
-        */
     }
+    jid_del(search_jid);
     return was_handled;
 }
 
@@ -446,23 +434,42 @@ void xmpp_server_del_iq_route(struct xmpp_server *server, const char *ns,
     DEL_CALLBACK(iq_route, server->iq_routes, ns, cb, data);
 }
 
-bool xmpp_server_route_iq(struct xmpp_stanza *stanza, const char *ns_name) {
-    struct xmpp_server *server = xmpp_stanza_server(stanza);
+bool xmpp_server_route_iq(struct xmpp_server *server,
+                          struct xmpp_stanza *stanza) {
 
     bool was_handled = false;
+    check(xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_ID) != NULL,
+          "IQ stanza without ID");
+    check(xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_TYPE) != NULL,
+          "IQ stanza without ID");
+    check(xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_FROM) != NULL,
+          "IQ stanza without ID");
 
-    debug("Looking for IQ '%s'", ns_name);
+    struct xmpp_stanza *child = xmpp_stanza_children(stanza);
+
+    if (child == NULL) {
+        log_err("IQ stanza has no child");
+        return false;
+    }
+
+    const char *search_ns = xmpp_stanza_namespace(child);
+    debug("Searching for IQ namespace: %s", search_ns);
 
     struct iq_route *route = NULL;
     DL_FOREACH(server->iq_routes, route) {
         debug("Is it '%s'?", route->ns);
-        if (strcmp(ns_name, route->ns) == 0) {
+        if (strcmp(search_ns, route->ns) == 0) {
             debug("Yes!");
-            was_handled = route->cb(stanza, route->data);
+            if (route->cb(stanza, server, route->data)) {
+                was_handled = true;
+            }
         }
     }
+
+error:
     if (!was_handled) {
         log_info("No route for destination");
+        send_service_unavailable(server, stanza);
     }
     return was_handled;
 }
@@ -520,19 +527,17 @@ error:
 static bool init_components(struct xmpp_server *server,
                             const struct xmp3_options *options) {
     xmpp_server_add_stanza_route(server, server->jid,
-                                 xmpp_core_stanza_handler, NULL);
+                                 xmpp_core_route_server, NULL);
+    xmpp_server_add_iq_route(server, XMPP_IQ_SESSION_NS,
+                             xmpp_im_iq_session, NULL);
+    xmpp_server_add_iq_route(server, XMPP_IQ_DISCO_ITEMS_NS,
+                             xmpp_im_iq_disco_items, NULL);
+    xmpp_server_add_iq_route(server, XMPP_IQ_DISCO_INFO_NS,
+                             xmpp_im_iq_disco_info, NULL);
+    xmpp_server_add_iq_route(server, XMPP_IQ_ROSTER_NS,
+                             xmpp_im_iq_roster, NULL);
 
     server->muc = xep_muc_new(server);
-    check_mem(server->muc);
-
-    xmpp_server_add_iq_route(server, XMPP_IQ_SESSION,
-                             xmpp_im_iq_session, NULL);
-    xmpp_server_add_iq_route(server, XMPP_IQ_QUERY_ROSTER,
-                             xmpp_im_iq_roster_query, NULL);
-    xmpp_server_add_iq_route(server, XMPP_IQ_DISCO_QUERY_INFO,
-                             xmpp_im_iq_disco_query_info, NULL);
-    xmpp_server_add_iq_route(server, XMPP_IQ_DISCO_QUERY_ITEMS,
-                             xmpp_im_iq_disco_query_items, NULL);
     return true;
 }
 
@@ -607,28 +612,48 @@ static void read_client(struct event_loop *loop, int fd, void *data) {
     check_mem(addrstr);
     log_info("%s - Read %zd bytes", addrstr, numrecv);
     free(addrstr);
-    xmpp_print_data(server->buffer, numrecv);
+    //xmpp_print_data(server->buffer, numrecv);
 
-    struct xmp3_xml *parser = xmpp_client_parser(client);
-
-    // XXX: HACK HACK HACK HACK
-    server->cur_client = client;
-    // XXX: HACK HACK HACK HACK
-
-    enum XML_Status status = xmp3_xml_parse(parser, server->buffer, numrecv,
-                                            false);
-
-    // XXX: HACK HACK HACK HACK
-    server->cur_client = NULL;
-    // XXX: HACK HACK HACK HACK
-
-    check(status != XML_STATUS_ERROR, "Error parsing XML: %s",
-          xmp3_xml_get_error_str(parser));
-
+    struct xmpp_parser *parser = xmpp_client_parser(client);
+    check(xmpp_parser_parse(parser, server->buffer, numrecv),
+          "Error parsing XML: %s", xmpp_parser_strerror(parser));
     return;
 
 error:
     xmpp_server_disconnect_client(client);
+}
+
+static void send_service_unavailable(struct xmpp_server *server,
+                                     struct xmpp_stanza *stanza) {
+    log_info("Sending service unavailable.");
+
+    const char *id = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_ID);
+    check(id != NULL, "Disco IQ needs id attribute");
+
+    const char *from = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_FROM);
+    check(from != NULL, "Disco IQ needs from attribute");
+
+    struct xmpp_stanza *response = xmpp_stanza_new("iq", (const char*[]){
+            XMPP_STANZA_ATTR_ID, id,
+            XMPP_STANZA_ATTR_FROM, "localhost",
+            XMPP_STANZA_ATTR_TO, from,
+            XMPP_STANZA_ATTR_TYPE, XMPP_STANZA_TYPE_ERROR,
+            NULL});
+
+    struct xmpp_stanza *error = xmpp_stanza_new("error", (const char*[]){
+            "type", "cancel",
+            NULL});
+    xmpp_stanza_append_child(response, error);
+
+    struct xmpp_stanza *unavail = xmpp_stanza_new("service-unavailable",
+            (const char*[]){"xmlns", XMPP_STANZA_NS_STANZA, NULL});
+    xmpp_stanza_append_child(error, unavail);
+
+    xmpp_server_route_stanza(server, response);
+    xmpp_stanza_del(response, true);
+
+error:
+    return;
 }
 
 static struct client_listener* client_listener_new(struct xmpp_client *client,
