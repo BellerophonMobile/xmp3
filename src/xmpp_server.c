@@ -270,11 +270,6 @@ void xmpp_server_del(struct xmpp_server *server) {
         xep_muc_del(server->muc);
     }
 #endif
-
-    DELETE_LIST(stanza_route, server->stanza_routes);
-    DELETE_LIST(iq_route, server->iq_routes);
-    DELETE_LIST(client_listener, server->client_listeners);
-
     struct c_client *connected_client = NULL;
     struct c_client *connected_client_tmp = NULL;
     DL_FOREACH_SAFE(server->clients, connected_client, connected_client_tmp) {
@@ -282,6 +277,10 @@ void xmpp_server_del(struct xmpp_server *server) {
         xmpp_client_del(connected_client->client);
         free(connected_client);
     }
+
+    DELETE_LIST(stanza_route, server->stanza_routes);
+    DELETE_LIST(iq_route, server->iq_routes);
+    DELETE_LIST(client_listener, server->client_listeners);
 
     if (server->jid){
         jid_del(server->jid);
