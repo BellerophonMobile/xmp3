@@ -312,6 +312,7 @@ static bool handle_sasl_plain(struct xmpp_stanza *stanza,
     base64_init_decodestate(&state);
 
     char plaintext[PLAIN_AUTH_BUFFER_SIZE];
+    memset(plaintext, 0, PLAIN_AUTH_BUFFER_SIZE);
 
     check(xmpp_stanza_data_length(stanza) * 0.75 <= PLAIN_AUTH_BUFFER_SIZE,
           "Auth plaintext buffer overflow");
