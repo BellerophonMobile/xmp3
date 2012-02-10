@@ -9,9 +9,10 @@
 
 #include <stdbool.h>
 
-const char *XMPP_IQ_SESSION_NS;
-const char *XMPP_IQ_DISCO_ITEMS_NS;
-const char *XMPP_IQ_DISCO_INFO_NS;
+extern const char *XMPP_IQ_SESSION_NS;
+extern const char *XMPP_IQ_DISCO_ITEMS_NS;
+extern const char *XMPP_IQ_DISCO_INFO_NS;
+extern const char *XMPP_IQ_ROSTER_NS;
 
 #if 0
 const char *XMPP_IQ_QUERY_ROSTER;
@@ -32,6 +33,9 @@ bool xmpp_im_iq_disco_items(struct xmpp_stanza *stanza,
 
 bool xmpp_im_iq_disco_info(struct xmpp_stanza *stanza,
                            struct xmpp_server *server, void *data);
+
+bool xmpp_im_iq_roster(struct xmpp_stanza *stanza, struct xmpp_server *server,
+                       void *data);
 
 #if 0
 /** IQ stanza callback for handling a roster query. */

@@ -17,26 +17,26 @@
 const char *XMPP_IQ_SESSION_NS = "urn:ietf:params:xml:ns:xmpp-session";
 const char *XMPP_IQ_DISCO_ITEMS_NS = "http://jabber.org/protocol/disco#items";
 const char *XMPP_IQ_DISCO_INFO_NS = "http://jabber.org/protocol/disco#info";
+const char *XMPP_IQ_ROSTER_NS = "jabber:iq:roster";
 
 static const char *IQ_SESSION = "session";
 static const char *IQ_QUERY = "query";
+
+static bool get_roster(struct xmpp_stanza *stanza, struct xmpp_server *server);
 
 bool xmpp_im_iq_session(struct xmpp_stanza *stanza, struct xmpp_server *server,
                         void *data) {
     log_info("Session IQ");
 
-    const char *id = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_ID);
-    check(id != NULL, "Session IQ needs id attribute");
     check(strcmp(xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_TYPE),
                  XMPP_STANZA_TYPE_SET) == 0, "Session IQ type must be 'set'");
 
-    const char *from = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_FROM);
-    check(from != NULL, "Session IQ needs from attribute");
-
     struct xmpp_stanza *child = xmpp_stanza_children(stanza);
-    check(child != NULL && strcmp(xmpp_stanza_name(child), IQ_SESSION) == 0,
+    check(strcmp(xmpp_stanza_name(child), IQ_SESSION) == 0,
           "Unexpected stanza.");
 
+    const char *id = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_ID);
+    const char *from = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_FROM);
     struct xmpp_stanza *response = xmpp_stanza_new("iq", (const char*[]){
             XMPP_STANZA_ATTR_ID, id,
             XMPP_STANZA_ATTR_FROM, "localhost",
@@ -56,18 +56,15 @@ bool xmpp_im_iq_disco_items(struct xmpp_stanza *stanza,
                             struct xmpp_server *server, void *data) {
     log_info("Disco Items IQ");
 
-    const char *id = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_ID);
-    check(id != NULL, "Disco IQ needs id attribute");
     check(strcmp(xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_TYPE),
                  XMPP_STANZA_TYPE_GET) == 0, "Disco IQ type must be 'get'");
 
-    const char *from = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_FROM);
-    check(from != NULL, "Disco IQ needs from attribute");
-
     struct xmpp_stanza *child = xmpp_stanza_children(stanza);
-    check(child != NULL && strcmp(xmpp_stanza_name(child), IQ_QUERY) == 0,
+    check(strcmp(xmpp_stanza_name(child), IQ_QUERY) == 0,
           "Unexpected stanza.");
 
+    const char *id = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_ID);
+    const char *from = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_FROM);
     struct xmpp_stanza *response = xmpp_stanza_new("iq", (const char*[]){
             XMPP_STANZA_ATTR_ID, id,
             XMPP_STANZA_ATTR_FROM, "localhost",
@@ -94,18 +91,15 @@ bool xmpp_im_iq_disco_info(struct xmpp_stanza *stanza,
                            struct xmpp_server *server, void *data) {
     log_info("Disco Info IQ");
 
-    const char *id = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_ID);
-    check(id != NULL, "Disco IQ needs id attribute");
     check(strcmp(xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_TYPE),
                  XMPP_STANZA_TYPE_GET) == 0, "Disco IQ type must be 'get'");
 
-    const char *from = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_FROM);
-    check(from != NULL, "Disco IQ needs from attribute");
-
     struct xmpp_stanza *child = xmpp_stanza_children(stanza);
-    check(child != NULL && strcmp(xmpp_stanza_name(child), IQ_QUERY) == 0,
+    check(strcmp(xmpp_stanza_name(child), IQ_QUERY) == 0,
           "Unexpected stanza.");
 
+    const char *id = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_ID);
+    const char *from = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_FROM);
     struct xmpp_stanza *response = xmpp_stanza_new("iq", (const char*[]){
             XMPP_STANZA_ATTR_ID, id,
             XMPP_STANZA_ATTR_FROM, "localhost",
@@ -141,6 +135,44 @@ bool xmpp_im_iq_disco_info(struct xmpp_stanza *stanza,
     return true;
 error:
     return false;
+}
+
+bool xmpp_im_iq_roster(struct xmpp_stanza *stanza, struct xmpp_server *server,
+                       void *data) {
+    log_info("Roster IQ");
+
+    const char *type = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_TYPE);
+
+    if (strcmp(type, XMPP_STANZA_TYPE_GET) == 0) {
+        return get_roster(stanza, server);
+    } else {
+        log_warn("Only getting roster IQs is supported for now.");
+        return false;
+    }
+}
+
+static bool get_roster(struct xmpp_stanza *stanza,
+                       struct xmpp_server *server) {
+    const char *id = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_ID);
+    const char *from = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_FROM);
+
+    struct xmpp_stanza *response = xmpp_stanza_new("iq", (const char*[]){
+            XMPP_STANZA_ATTR_ID, id,
+            XMPP_STANZA_ATTR_FROM, "localhost",
+            XMPP_STANZA_ATTR_TO, from,
+            XMPP_STANZA_ATTR_TYPE, XMPP_STANZA_TYPE_RESULT,
+            NULL});
+
+    struct xmpp_stanza *query = xmpp_stanza_new("query", (const char*[]){
+            "xmlns", XMPP_IQ_ROSTER_NS,
+            NULL});
+    xmpp_stanza_append_child(response, query);
+
+    // TODO: Iterate over user's roster here.
+
+    xmpp_server_route_stanza(server, response);
+    xmpp_stanza_del(response, true);
+    return true;
 }
 
 #if 0
