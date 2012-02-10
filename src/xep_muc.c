@@ -500,7 +500,7 @@ static bool handle_items_query(struct xmpp_stanza *stanza,
     struct room *room, *room_tmp;
     HASH_ITER(hh, muc->rooms, room, room_tmp) {
         struct xmpp_stanza *item = xmpp_stanza_new("item", (const char*[]){
-                "name", room->name});
+                "name", room->name, NULL});
         xmpp_stanza_set_attr(item, "jid", jid_to_str(room->jid));
         xmpp_stanza_append_child(query, item);
     }
