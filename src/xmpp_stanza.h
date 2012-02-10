@@ -129,3 +129,6 @@ struct xmpp_stanza* xmpp_stanza_prev(struct xmpp_stanza *stanza);
 /** Appends a child stanza. */
 void xmpp_stanza_append_child(struct xmpp_stanza *stanza,
                               struct xmpp_stanza *child);
+
+void xmpp_stanza_remove_child(struct xmpp_stanza *stanza,
+                              struct xmpp_stanza *child);

@@ -242,6 +242,12 @@ void xmpp_stanza_append_child(struct xmpp_stanza *stanza,
     child->parent = stanza;
 }
 
+void xmpp_stanza_remove_child(struct xmpp_stanza *stanza,
+                              struct xmpp_stanza *child) {
+    DL_DELETE(stanza->children, child);
+    child->parent = NULL;
+}
+
 static void stanza_tostr(struct xmpp_stanza *stanza, UT_string *str) {
     utstring_printf(str, "<%s", stanza->name);
     if (stanza->namespace != NULL) {

@@ -7,12 +7,8 @@
 
 #pragma once
 
-// Forward declarations
-struct xmpp_server;
-struct xmpp_stanza;
-
-/** Opaque type for a MUC component. */
 struct xep_muc;
+struct xmpp_server;
 
 /** Allocates and initializes a new MUC component. */
 struct xep_muc* xep_muc_new(struct xmpp_server *server);
