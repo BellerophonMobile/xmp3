@@ -28,6 +28,8 @@ struct xmpp_parser* xmpp_parser_new(bool is_stream_start);
 
 void xmpp_parser_del(struct xmpp_parser *parser);
 
+const char* xmpp_parser_strerror(struct xmpp_parser *parser);
+
 void xmpp_parser_set_handler(struct xmpp_parser *parser,
                              xmpp_parser_handler handler);
 

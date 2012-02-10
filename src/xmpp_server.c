@@ -630,9 +630,9 @@ static void read_client(struct event_loop *loop, int fd, void *data) {
     free(addrstr);
     //xmpp_print_data(server->buffer, numrecv);
 
-    check(xmpp_parser_parse(xmpp_client_parser(client), server->buffer,
-                            numrecv), "Error parsing XML");
-
+    struct xmpp_parser *parser = xmpp_client_parser(client);
+    check(xmpp_parser_parse(parser, server->buffer, numrecv),
+          "Error parsing XML: %s", xmpp_parser_strerror(parser));
     return;
 
 error:

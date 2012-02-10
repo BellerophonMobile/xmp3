@@ -58,10 +58,8 @@ error:
 
 void xmpp_client_del(struct xmpp_client *client) {
     if (client->jid) {
-#if 0
         xmpp_server_del_stanza_route(client->server, client->jid,
-                xmpp_core_message_handler, client);
-#endif
+                xmpp_core_route_client, client);
         jid_del(client->jid);
     }
 

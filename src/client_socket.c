@@ -210,10 +210,6 @@ static void ssl_close(struct client_socket *socket) {
     } else {
         log_err("Can't ignore SIGPIPE.");
     }
-
-    socket->self = self->fd_socket;
-    fd_close(socket);
-    socket->self = self;
 }
 
 static int ssl_fd(struct client_socket *socket) {
