@@ -408,17 +408,13 @@ bool xmpp_server_route_stanza(struct xmpp_server *server,
     struct stanza_route *route = NULL;
     DL_FOREACH(server->stanza_routes, route) {
         if (jid_cmp_wildcards(search_jid, route->jid) == 0) {
-            was_handled = route->cb(stanza, server, route->data);
+            if (route->cb(stanza, server, route->data)) {
+                was_handled = true;
+            }
         }
     }
     if (!was_handled) {
         log_info("No route for destination");
-        // If its an IQ, we must respond if nobody handled it.
-        /*
-        if (strcmp(xmpp_stanza_ns_name(stanza), XMPP_IQ) == 0) {
-            xmpp_send_service_unavailable(stanza);
-        }
-        */
     }
     jid_del(search_jid);
     return was_handled;
