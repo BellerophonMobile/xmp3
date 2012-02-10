@@ -265,11 +265,6 @@ error:
 }
 
 void xmpp_server_del(struct xmpp_server *server) {
-#if 0
-    if (server->muc != NULL) {
-        xep_muc_del(server->muc);
-    }
-#endif
     struct c_client *connected_client = NULL;
     struct c_client *connected_client_tmp = NULL;
     DL_FOREACH_SAFE(server->clients, connected_client, connected_client_tmp) {
@@ -410,20 +405,8 @@ bool xmpp_server_route_stanza(struct xmpp_server *server,
                 stanza, XMPP_STANZA_ATTR_TO));
 
     bool was_handled = false;
-
-#if 0
-    char *jidstr = jid_to_str(search_jid);
-    debug("Looking for stanza route for '%s'", jidstr);
-    free(jidstr);
-#endif
-
     struct stanza_route *route = NULL;
     DL_FOREACH(server->stanza_routes, route) {
-#if 0
-        jidstr = jid_to_str(route->jid);
-        debug("Is it '%s'?", jidstr);
-        free(jidstr);
-#endif
         if (jid_cmp_wildcards(search_jid, route->jid) == 0) {
             was_handled = route->cb(stanza, server, route->data);
         }
@@ -553,12 +536,6 @@ static bool init_components(struct xmpp_server *server,
                              xmpp_im_iq_disco_info, NULL);
     xmpp_server_add_iq_route(server, XMPP_IQ_ROSTER_NS,
                              xmpp_im_iq_roster, NULL);
-
-#if 0
-    server->muc = xep_muc_new(server);
-    check_mem(server->muc);
-#endif
-
     return true;
 }
 
