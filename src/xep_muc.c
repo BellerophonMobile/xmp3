@@ -132,6 +132,7 @@ void xep_muc_del(struct xep_muc *muc) {
         }
         room_del(room);
     }
+    jid_del(muc->jid);
     free(muc);
 }
 
