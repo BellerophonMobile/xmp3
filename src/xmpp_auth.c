@@ -98,36 +98,6 @@ static const char *MSG_BIND_SUCCESS =
         "</bind>"
     "</iq>";
 
-/** Temporary structure used during SASL PLAIN authentication. */
-struct auth_plain_tmp {
-    /** Pointer back to the client this is for. */
-    struct xmpp_client *client;
-
-    /** Keeps track of the state of the base64 decoding. */
-    struct base64_decodestate state;
-
-    /** How far in our buffer we've written so far. */
-    int length;
-
-    /** Buffer to write our decoded base64 string to. */
-    char plaintext[PLAIN_AUTH_BUFFER_SIZE];
-};
-
-/** Temporary structure used during resource binding. */
-struct resource_bind_tmp {
-    /** Pointer back to the client this is for. */
-    struct xmpp_client *client;
-
-    /** ID of the <iq> tag we are responding to. */
-    char id[ID_BUFFER_SIZE];
-
-    /** How far in our buffer we've written so far. */
-    int length;
-
-    /** Buffer to write our resource part. */
-    char resource[RESOURCEPART_BUFFER_SIZE];
-};
-
 // Forward declarations
 /* Inital authentication handlers
  * See: http://tools.ietf.org/html/rfc6120#section-9.1 */
