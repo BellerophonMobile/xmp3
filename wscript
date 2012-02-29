@@ -10,10 +10,6 @@ import platform
 def options(ctx):
     ctx.load('compiler_c')
 
-    opts = ctx.add_option_group('XMP3 Options')
-    opts.add_option('--disable-ssl', action='store_true',
-                    help='Disable SSL support.')
-
 def configure(ctx):
     ctx.load('compiler_c')
 
@@ -25,11 +21,8 @@ def configure(ctx):
         ctx.check_cc(lib='uuid')
 
     ctx.check_cc(lib='expat')
-
-    ctx.env.disable_ssl = ctx.options.disable_ssl
-    if not ctx.env.disable_ssl:
-        ctx.check_cc(lib='crypto')
-        ctx.check_cc(lib='ssl')
+    ctx.check_cc(lib='crypto')
+    ctx.check_cc(lib='ssl')
 
 def build(ctx):
     libxmp3 = ctx.stlib(
