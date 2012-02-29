@@ -24,7 +24,6 @@
 #include "xep_muc.h"
 #include "xmp3_options.h"
 #include "xmpp_client.h"
-#include "xmpp_common.h"
 #include "xmpp_core.h"
 #include "xmpp_im.h"
 #include "xmpp_parser.h"

@@ -9,6 +9,9 @@ import platform
 
 def options(ctx):
     ctx.load('compiler_c')
+    opts = ctx.add_option_group('XMP3 Options')
+    opts.add_option('--debug', action='store_true',
+                    help='Build with debugging flags (default optimized).')
 
 def configure(ctx):
     ctx.load('compiler_c')
@@ -23,6 +26,9 @@ def configure(ctx):
     ctx.check_cc(lib='expat')
     ctx.check_cc(lib='crypto')
     ctx.check_cc(lib='ssl')
+
+    if ctx.env.CC_NAME == 'gcc':
+        ctx.env.CFLAGS += ['-std=gnu99']
 
 def build(ctx):
     libxmp3 = ctx.stlib(

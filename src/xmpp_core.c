@@ -13,7 +13,6 @@
 #include "jid.h"
 #include "log.h"
 #include "xmpp_client.h"
-#include "xmpp_common.h"
 #include "xmpp_parser.h"
 #include "xmpp_server.h"
 #include "xmpp_stanza.h"

@@ -11,7 +11,6 @@
 #include "event.h"
 #include "jid.h"
 #include "xmpp_auth.h"
-#include "xmpp_common.h"
 #include "xmpp_core.h"
 #include "xmpp_parser.h"
 #include "xmpp_server.h"
