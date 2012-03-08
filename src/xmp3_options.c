@@ -10,8 +10,9 @@
 #include <errno.h>
 #include <arpa/inet.h>
 
-#include "log.h"
+#include <ini.h>
 
+#include "log.h"
 #include "xmp3_options.h"
 
 // Default address is loopback
@@ -42,6 +43,8 @@ struct xmp3_options {
 // Forward declarations
 static bool read_int(const char *arg, long int *output);
 static bool copy_string(char *dest, const char *src);
+static int ini_handler(void *data, const char *section, const char *name,
+                        const char *value);
 
 struct xmp3_options* xmp3_options_new() {
     struct xmp3_options *options = calloc(1, sizeof(*options));
@@ -70,6 +73,11 @@ void xmp3_options_del(struct xmp3_options *options) {
     free(options->certfile);
     free(options->server_name);
     free(options);
+}
+
+bool xmp3_options_load_conf_file(struct xmp3_options *options,
+                                 const char *file) {
+    return ini_parse(file, ini_handler, options) == 0;
 }
 
 bool xmp3_options_set_addr_str(struct xmp3_options *options, const char *addr)
@@ -184,4 +192,50 @@ static bool copy_string(char *dest, const char *src) {
     dest = strdup(src);
     check_mem(dest);
     return true;
+}
+
+static int ini_handler(void *data, const char *section, const char *name,
+                        const char *value) {
+    struct xmp3_options *options = (struct xmp3_options*)data;
+
+    if (strcmp(section, "") == 0) {
+        // Main XMP3 options
+        if (strcmp(name, "address") == 0) {
+            return xmp3_options_set_addr_str(options, value);
+        }
+
+        if (strcmp(name, "port") == 0) {
+            return xmp3_options_set_port_str(options, value);
+        }
+
+        if (strcmp(name, "ssl") == 0) {
+            if (strcmp(value, "true") == 0) {
+                return xmp3_options_set_ssl(options, true);
+            } else if (strcmp(value, "false") == 0) {
+                return xmp3_options_set_ssl(options, false);
+            } else {
+                log_err("Invalid value for ssl option: '%s'", value);
+                return false;
+            }
+        }
+
+        if (strcmp(name, "keyfile") == 0) {
+            return xmp3_options_set_keyfile(options, value);
+        }
+
+        if (strcmp(name, "certificate") == 0) {
+            return xmp3_options_set_certificate(options, value);
+        }
+
+        if (strcmp(name, "name") == 0) {
+            return xmp3_options_set_server_name(options, value);
+        }
+
+        log_err("Unknown config item '%s = %s'", name, value);
+        return false;
+
+    } else {
+        log_err("Unknown config section '%s'", section);
+        return false;
+    }
 }

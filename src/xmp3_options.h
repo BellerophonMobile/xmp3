@@ -28,6 +28,10 @@ struct xmp3_options* xmp3_options_new();
 /** Cleans up and frees an XMP3 options instance. */
 void xmp3_options_del(struct xmp3_options *options);
 
+/** Load a configuration from an ini-style config. */
+bool xmp3_options_load_conf_file(struct xmp3_options *options,
+                                 const char *file);
+
 /**
  * Set the address that the server should bind to.
  *

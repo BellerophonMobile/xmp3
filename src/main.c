@@ -29,6 +29,7 @@
 #include "xmpp_stanza.h"
 
 static struct option long_options[] = {
+    {"config",   required_argument, NULL, 'f'},
     {"addr",     required_argument, NULL, 'a'},
     {"port",     required_argument, NULL, 'p'},
     {"no-ssl",   no_argument,       NULL, 'n'},
@@ -41,12 +42,13 @@ static struct option long_options[] = {
 static void print_usage() {
     printf("./xmp3 [OPTIONS]\nOptions:\n");
 
-    printf("  -a, --addr     Address to listen for incoming XMPP\n"
-           "                        client connections (Default: %s)\n",
+    printf("  -f, --config   Config file to load.  Arguments override values"
+           " in config file.\n");
+    printf("  -a, --addr     Address to listen for incoming XMPP"
+           " client connections (Default: %s)\n",
            inet_ntoa(DEFAULT_ADDR));
-    printf("  -p, --port     Port to listen for incoming XMPP client\n"
-           "                        connections (Default: %d)\n",
-           DEFAULT_PORT);
+    printf("  -p, --port     Port to listen for incoming XMPP client"
+           " connections (Default: %d)\n", DEFAULT_PORT);
     printf("  -n, --no-ssl   Disable SSL connection support\n");
     printf("  -k, --ssl-key  Path to the SSL private key to use"
            " (Default: %s)\n", DEFAULT_KEYFILE);
@@ -65,51 +67,76 @@ static void signal_handler(int signal) {
 }
 
 int main(int argc, char *argv[]) {
-    struct xmp3_options *options = xmp3_options_new();
+    char *conffile = NULL;
+    char *address = NULL;
+    char *port = NULL;
+    bool ssl = true;
+    char *keyfile = NULL;
+    char *certfile = NULL;
 
     int c = 0;
     while (true) {
-        c = getopt_long(argc, argv, "a:p:k:nc:h", long_options, NULL);
+        c = getopt_long(argc, argv, "f:a:p:k:nc:h", long_options, NULL);
 
         if (c < 0) {
             break;
         }
 
         switch (c) {
+            case 'f':
+                conffile = optarg;
+                break;
             case 'a':
-                check(xmp3_options_set_addr_str(options, optarg),
-                      "Invalid client address \"%s\"", optarg);
+                address = optarg;
                 break;
-
             case 'p':
-                check(xmp3_options_set_port_str(options, optarg),
-                      "Invalid client port \"%s\"", optarg);
+                port = optarg;
                 break;
-
             case 'n':
-                check(xmp3_options_set_ssl(options, false),
-                      "Failed to disable openssl.");
+                ssl = false;
                 break;
-
             case 'k':
-                check(xmp3_options_set_keyfile(options, optarg),
-                      "Invalid keyfile \"%s\"", optarg);
+                keyfile = optarg;
                 break;
-
             case 'c':
-                check(xmp3_options_set_certificate(options, optarg),
-                      "Invalid certificate \"%s\"", optarg);
+                certfile = optarg;
                 break;
-
             case 'h':
                 print_usage();
                 return EXIT_SUCCESS;
-
             default:
                 log_err("Invaid option");
                 print_usage();
                 return EXIT_FAILURE;
         }
+    }
+
+    struct xmp3_options *options = xmp3_options_new();
+    check_mem(options);
+
+    if (conffile) {
+        check(xmp3_options_load_conf_file(options, conffile),
+              "Error loading configuration file \"%s\"", conffile);
+    }
+    if (address) {
+        check(xmp3_options_set_addr_str(options, address),
+              "Invalid client address \"%s\"", address);
+    }
+    if (port) {
+        check(xmp3_options_set_port_str(options, port),
+              "Invalid client port \"%s\"", port);
+    }
+    if (!ssl) {
+        check(xmp3_options_set_ssl(options, false),
+              "Failed to disable openssl.");
+    }
+    if (keyfile) {
+        check(xmp3_options_set_keyfile(options, keyfile),
+              "Invalid keyfile \"%s\"", keyfile);
+    }
+    if (certfile) {
+        check(xmp3_options_set_certificate(options, certfile),
+              "Invalid certificate \"%s\"", certfile);
     }
 
     printf("Starting xmp3...\n");
