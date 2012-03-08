@@ -130,7 +130,7 @@ ssize_t client_socket_recv(struct client_socket *socket, void *buf,
 ssize_t client_socket_sendall(struct client_socket *socket, const void *buf,
                               size_t len) {
     // Keep track of how much we've sent so far
-    ssize_t numsent = 0;
+    size_t numsent = 0;
     do {
         ssize_t newsent = client_socket_send(socket, buf + numsent,
                                              len - numsent);

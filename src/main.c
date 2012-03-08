@@ -35,7 +35,7 @@ static struct option long_options[] = {
     {"ssl-key",  required_argument, NULL, 'k'},
     {"ssl-cert", required_argument, NULL, 'c'},
     {"help",     no_argument,       NULL, 'h'},
-    { NULL },
+    { NULL, 0, NULL, 0},
 };
 
 static void print_usage() {
