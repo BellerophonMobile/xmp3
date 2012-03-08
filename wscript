@@ -40,16 +40,21 @@ def build(ctx):
     libxmp3 = ctx.stlib(
         target = 'xmp3',
         name = 'libxmp3',
-        includes = ['src', 'lib/uthash/src', 'lib/inih'],
-        export_includes = ['src', 'lib/uthash/src', 'lib/inih'],
+        includes = [
+            'src',
+            'lib/uthash/src',
+            'lib/inih',
+            'lib/tj-tools/src',
+        ],
         use = ['EXPAT', 'CRYPTO', 'SSL'],
         source = [
             'lib/inih/ini.c',
+            'lib/tj-tools/src/tj_searchpathlist.c',
+            'lib/tj-tools/src/tj_solibrary.c',
             'src/client_socket.c',
             'src/event.c',
             'src/jid.c',
             'src/utils.c',
-            'src/xep_muc.c',
             'src/xmp3_options.c',
             'src/xmpp_auth.c',
             'src/xmpp_client.c',
@@ -60,10 +65,18 @@ def build(ctx):
             'src/xmpp_stanza.c',
         ],
     )
+    libxmp3.export_includes = libxmp3.includes
 
     # Mac's uuid stuff is built into its libc
     if ctx.env.target != 'darwin':
         libxmp3.use += ['UUID']
+
+    # Don't need to link modules with libxmp3, bind symbols at runtime.
+    ctx.shlib(
+        target = 'xmp3_muc',
+        includes = libxmp3.includes,
+        source = ['src/xep_muc.c'],
+    )
 
     ctx.program(
         target = 'xmp3',

@@ -21,7 +21,6 @@
 #include "client_socket.h"
 #include "event.h"
 #include "jid.h"
-#include "xep_muc.h"
 #include "xmp3_options.h"
 #include "xmpp_client.h"
 #include "xmpp_core.h"
@@ -186,9 +185,6 @@ struct xmpp_server {
 
     /* TODO: There should be a more generic interface for components to
      * register with the server, probably a delegate model like in ontonet. */
-
-    /** The MUC component. */
-    struct xep_muc *muc;
 };
 
 struct xmpp_client_iterator {
@@ -266,10 +262,6 @@ error:
 void xmpp_server_del(struct xmpp_server *server) {
     struct c_client *connected_client = NULL;
     struct c_client *connected_client_tmp = NULL;
-
-    if (server->muc) {
-        xep_muc_del(server->muc);
-    }
 
     DL_FOREACH_SAFE(server->clients, connected_client, connected_client_tmp) {
         DL_DELETE(server->clients, connected_client);
@@ -545,8 +537,6 @@ static bool init_components(struct xmpp_server *server,
                              xmpp_im_iq_disco_info, NULL);
     xmpp_server_add_iq_route(server, XMPP_IQ_ROSTER_NS,
                              xmpp_im_iq_roster, NULL);
-
-    server->muc = xep_muc_new(server);
     return true;
 }
 
