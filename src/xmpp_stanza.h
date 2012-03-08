@@ -11,6 +11,7 @@
 
 // Forward declarations
 struct xmpp_stanza;
+struct xmpp_parser_namespace;
 
 extern const char *XMPP_STANZA_NS_CLIENT;
 extern const char *XMPP_STANZA_NS_STANZA;
@@ -32,11 +33,15 @@ extern const char *XMPP_STANZA_TYPE_ERROR;
 /**
  * Allocate and initialize a new XMPP stanza structure.
  *
- * @param ns_name The name of the stanza start tag.
+ * @param ns_name The name of the stanza start tag (possibly with URI and prefix).
  * @param attrs NULL terminated list attribute = value pairs.
+ * @param namespaces The XML namespaces defined on this tag (can be NULL).
  * @returns A new XMPP stanza structure.
  */
 struct xmpp_stanza* xmpp_stanza_new(const char *ns_name, const char **attrs);
+
+struct xmpp_stanza* xmpp_stanza_ns_new(const char *ns_name, const char **attrs,
+                                     struct xmpp_parser_namespace *namespaces);
 
 /** Cleans up and frees an XMPP stanza. */
 void xmpp_stanza_del(struct xmpp_stanza *stanza, bool recursive);
@@ -50,16 +55,28 @@ void xmpp_stanza_del(struct xmpp_stanza *stanza, bool recursive);
 char* xmpp_stanza_string(struct xmpp_stanza *stanza, size_t *len);
 
 /**
- * Returns the namespace of this stanza.
+ * Returns the namespace URI of this stanza.
  *
  * The string returned is owned by the stanza, and should not be freed.
  *
  * @param stanza The stanza structure.
- * @returns The the namespace of this stanza.
+ * @returns The the namespace URI of this stanza.
  */
-const char* xmpp_stanza_namespace(const struct xmpp_stanza *stanza);
+const char* xmpp_stanza_uri(const struct xmpp_stanza *stanza);
 
-void xmpp_stanza_copy_namespace(struct xmpp_stanza *stanza, const char *ns);
+void xmpp_stanza_copy_uri(struct xmpp_stanza *stanza, const char *uri);
+
+/**
+ * Returns the namespace prefix of this stanza.
+ *
+ * The string returned is owned by the stanza, and should not be freed.
+ *
+ * @param stanza The stanza structure.
+ * @returns The the namespace prefix of this stanza.
+ */
+const char* xmpp_stanza_prefix(const struct xmpp_stanza *stanza);
+
+void xmpp_stanza_copy_prefix(struct xmpp_stanza *stanza, const char *prefix);
 
 /**
  * Returns the name of the tag of this stanza (message/presence/IQ)
@@ -80,26 +97,43 @@ void xmpp_stanza_copy_name(struct xmpp_stanza *stanza, const char *name);
  *
  * @param stanza The stanza structure.
  * @param name The name of the attribute to look up
+ * @param uri The namespace URI of the attribute to look up, can be NULL.
  * @returns The value of the attribute, or NULL if it doesn't exist.
  */
 const char* xmpp_stanza_attr(const struct xmpp_stanza *stanza,
                              const char *name);
 
+const char* xmpp_stanza_ns_attr(const struct xmpp_stanza *stanza,
+                                const char *name, const char *uri);
+
 /**
  * Sets the value of an attribute in a stanza.
  *
- * The name/value are NOT copied.
+ * The value is NOT copied.
+ *
+ * @param prefix Not used in search.  If attribute doesn't exist, new attribute
+ *               will be created with this prefix.
  */
 void xmpp_stanza_set_attr(struct xmpp_stanza *stanza, const char *name,
                           char *value);
+
+void xmpp_stanza_set_ns_attr(struct xmpp_stanza *stanza, const char *name,
+                             const char *uri, const char *prefix, char *value);
 
 /**
  * Sets the value of an attribute in a stanza.
  *
  * The name/value are copied.
+ *
+ * @param prefix Not used in search.  If attribute doesn't exist, new attribute
+ *               will be created with this prefix.
  */
 void xmpp_stanza_copy_attr(struct xmpp_stanza *stanza, const char *name,
                            const char *value);
+
+void xmpp_stanza_copy_ns_attr(struct xmpp_stanza *stanza, const char *name,
+                              const char *uri, const char *prefix,
+                              const char *value);
 
 /** Returns any data associated with this stanza. */
 const char* xmpp_stanza_data(const struct xmpp_stanza *stanza);

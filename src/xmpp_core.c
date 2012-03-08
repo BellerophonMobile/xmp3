@@ -53,6 +53,10 @@ bool xmpp_core_route_client(struct xmpp_stanza *stanza,
                             struct xmpp_server *server, void *data) {
     struct xmpp_client *client = (struct xmpp_client*)data;
 
+    char *strjid = jid_to_str(xmpp_client_jid(client));
+    debug("Routing to local client '%s'", strjid);
+    free(strjid);
+
     size_t length;
     char *msg = xmpp_stanza_string(stanza, &length);
     if (client_socket_sendall(xmpp_client_socket(client), msg, length) <= 0) {

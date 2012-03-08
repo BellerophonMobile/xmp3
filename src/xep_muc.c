@@ -244,15 +244,15 @@ static bool handle_iq(struct xmpp_stanza *stanza, struct xep_muc *muc) {
     struct xmpp_stanza *child = xmpp_stanza_children(stanza);
     check(child != NULL, "MUC IQ with no child.");
 
-    const char *namespace = xmpp_stanza_namespace(child);
-    check(namespace != NULL, "MUC IQ with no namespace.");
+    const char *uri = xmpp_stanza_uri(child);
+    check(uri != NULL, "MUC IQ with no namespace URI.");
 
-    if (strcmp(namespace, XMPP_IQ_DISCO_ITEMS_NS) == 0) {
+    if (strcmp(uri, XMPP_IQ_DISCO_ITEMS_NS) == 0) {
         return handle_items_query(stanza, muc);
-    } else if (strcmp(namespace, XMPP_IQ_DISCO_INFO_NS) == 0) {
+    } else if (strcmp(uri, XMPP_IQ_DISCO_INFO_NS) == 0) {
         return handle_info_query(stanza, muc);
     } else {
-        log_err("Unknown MUC IQ namespace");
+        log_err("Unknown MUC IQ namespace URI");
         return false;
     }
 

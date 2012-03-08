@@ -407,13 +407,23 @@ bool xmpp_server_route_stanza(struct xmpp_server *server,
     struct jid *search_jid = jid_new_from_str(xmpp_stanza_attr(
                 stanza, XMPP_STANZA_ATTR_TO));
 
+    char *strjid = jid_to_str(search_jid);
+    debug("Searching for route to: '%s'", strjid);
+    free(strjid);
+
     bool was_handled = false;
     struct stanza_route *route = NULL;
     DL_FOREACH(server->stanza_routes, route) {
+        strjid = jid_to_str(route->jid);
+        debug("Is it '%s'", strjid);
+        free(strjid);
         if (jid_cmp_wildcards(search_jid, route->jid) == 0) {
+            debug("Yes");
             if (route->cb(stanza, server, route->data)) {
                 was_handled = true;
             }
+        } else {
+            debug("No");
         }
     }
     if (!was_handled) {
@@ -440,9 +450,9 @@ bool xmpp_server_route_iq(struct xmpp_server *server,
     check(xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_ID) != NULL,
           "IQ stanza without ID");
     check(xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_TYPE) != NULL,
-          "IQ stanza without ID");
+          "IQ stanza without type");
     check(xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_FROM) != NULL,
-          "IQ stanza without ID");
+          "IQ stanza without from");
 
     struct xmpp_stanza *child = xmpp_stanza_children(stanza);
 
@@ -451,13 +461,13 @@ bool xmpp_server_route_iq(struct xmpp_server *server,
         return false;
     }
 
-    const char *search_ns = xmpp_stanza_namespace(child);
-    debug("Searching for IQ namespace: %s", search_ns);
+    const char *search_uri = xmpp_stanza_uri(child);
+    debug("Searching for IQ namespace: %s", search_uri);
 
     struct iq_route *route = NULL;
     DL_FOREACH(server->iq_routes, route) {
         debug("Is it '%s'?", route->ns);
-        if (strcmp(search_ns, route->ns) == 0) {
+        if (strcmp(search_uri, route->ns) == 0) {
             debug("Yes!");
             if (route->cb(stanza, server, route->data)) {
                 was_handled = true;

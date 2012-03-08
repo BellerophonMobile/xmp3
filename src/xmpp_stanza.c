@@ -17,6 +17,21 @@
 
 #include "xmpp_stanza.h"
 
+#define MAKE_KEY(K, N, U) \
+    /* + 1 for null terminator */ \
+    int LEN = strlen(N) + 1; \
+    if (U) { \
+        /* + 1 for space separator */ \
+        LEN += strlen(U) + 1; \
+    } \
+    char K[LEN]; \
+    K[0] = '\0'; \
+    if (U) { \
+        strcat(K, U); \
+        strncat(K, &XMPP_PARSER_SEPARATOR, 1); \
+    } \
+    strcat(K, N)
+
 const char *XMPP_STANZA_NS_CLIENT = "jabber:client";
 const char *XMPP_STANZA_NS_STANZA = "urn:ietf:params:xml:ns:xmpp-stanzas";
 
@@ -35,21 +50,31 @@ const char *XMPP_STANZA_TYPE_RESULT = "result";
 const char *XMPP_STANZA_TYPE_ERROR = "error";
 
 struct attribute {
+    char *key;
+
     char *name;
+    char *uri;
+    char *prefix;
+
     char *value;
 
     /** These are stored in a hash table. */
     UT_hash_handle hh;
 };
 
+static void parse_ns(const char *ns_name, char **name, char **prefix, char **uri);
 static void stanza_tostr(struct xmpp_stanza *stanza, UT_string *str);
+static void attribute_del(struct attribute *attr);
 
 struct xmpp_stanza {
-    /** The namespace of this tag. */
-    char *namespace;
-
     /** The name of this tag. */
     char *name;
+
+    /** The namespace URI of this tag. */
+    char *uri;
+
+    /** The namespace prefix of this tag. */
+    char *prefix;
 
     /** A hash table of stanza attributes. */
     struct attribute *attributes;
@@ -61,6 +86,7 @@ struct xmpp_stanza {
     struct xmpp_stanza *children;
 
     struct xmpp_stanza *parent;
+    struct xmpp_parser_namespace *namespaces;
 
     /** Stanzas are kept in a linked list. */
     struct xmpp_stanza *prev;
@@ -71,41 +97,51 @@ struct xmpp_stanza* xmpp_stanza_new(const char *ns_name, const char **attrs) {
     struct xmpp_stanza *stanza = calloc(1, sizeof(*stanza));
     check_mem(stanza);
 
-    char *separator = strchr(ns_name, XMPP_PARSER_SEPARATOR);
-    if (separator != NULL) {
-        STRNDUP_CHECK(stanza->namespace, ns_name, separator - ns_name);
-        STRDUP_CHECK(stanza->name, separator + 1);
-    } else {
-        STRDUP_CHECK(stanza->name, ns_name);
-    }
-
+    parse_ns(ns_name, &stanza->name, &stanza->prefix, &stanza->uri);
     utstring_init(&stanza->data);
 
     if (attrs != NULL) {
         for (int i = 0; attrs[i] != NULL; i += 2) {
             struct attribute *attr = calloc(1, sizeof(*attr));
             check_mem(attr);
-            STRDUP_CHECK(attr->name, attrs[i]);
+
+            parse_ns(attrs[i], &attr->name, &attr->prefix, &attr->uri);
             STRDUP_CHECK(attr->value, attrs[i + 1]);
-            HASH_ADD_KEYPTR(hh, stanza->attributes, attr->name, strlen(attr->name),
-                            attr);
+
+            MAKE_KEY(key, attr->name, attr->uri);
+            STRDUP_CHECK(attr->key, key);
+            HASH_ADD_KEYPTR(hh, stanza->attributes, attr->key,
+                            strlen(attr->key), attr);
         }
     }
     return stanza;
 }
 
+struct xmpp_stanza* xmpp_stanza_ns_new(const char *ns_name, const char **attrs,
+                                    struct xmpp_parser_namespace *namespaces) {
+    struct xmpp_stanza *stanza = xmpp_stanza_new(ns_name, attrs);
+    stanza->namespaces = namespaces;
+    return stanza;
+}
+
 void xmpp_stanza_del(struct xmpp_stanza *stanza, bool recursive) {
-    free(stanza->namespace);
+    if (stanza->uri) {
+        free(stanza->uri);
+    }
+    if (stanza->prefix) {
+        free(stanza->prefix);
+    }
     free(stanza->name);
 
     struct attribute *attr, *tmp;
     HASH_ITER(hh, stanza->attributes, attr, tmp) {
         HASH_DEL(stanza->attributes, attr);
-        free(attr->name);
-        free(attr->value);
-        free(attr);
+        attribute_del(attr);
     }
 
+    if (stanza->namespaces) {
+        xmpp_parser_namespace_del(stanza->namespaces);
+    }
     utstring_done(&stanza->data);
 
     if (recursive) {
@@ -129,15 +165,26 @@ char* xmpp_stanza_string(struct xmpp_stanza *stanza, size_t *len) {
     return utstring_body(&str);
 }
 
-const char* xmpp_stanza_namespace(const struct xmpp_stanza *stanza) {
-    return stanza->namespace;
+const char* xmpp_stanza_uri(const struct xmpp_stanza *stanza) {
+    return stanza->uri;
 }
 
-void xmpp_stanza_copy_namespace(struct xmpp_stanza *stanza, const char *ns) {
-    if (stanza->namespace) {
-        free(stanza->namespace);
+void xmpp_stanza_copy_uri(struct xmpp_stanza *stanza, const char *uri) {
+    if (stanza->uri) {
+        free(stanza->uri);
     }
-    STRDUP_CHECK(stanza->namespace, ns);
+    STRDUP_CHECK(stanza->uri, uri);
+}
+
+const char* xmpp_stanza_prefix(const struct xmpp_stanza *stanza) {
+    return stanza->prefix;
+}
+
+void xmpp_stanza_copy_prefix(struct xmpp_stanza *stanza, const char *prefix) {
+    if (stanza->prefix) {
+        free(stanza->prefix);
+    }
+    STRDUP_CHECK(stanza->prefix, prefix);
 }
 
 const char* xmpp_stanza_name(const struct xmpp_stanza *stanza) {
@@ -162,6 +209,12 @@ const char* xmpp_stanza_attr(const struct xmpp_stanza *stanza,
     }
 }
 
+const char* xmpp_stanza_ns_attr(const struct xmpp_stanza *stanza,
+                                const char *name, const char *uri) {
+    MAKE_KEY(key, name, uri);
+    return xmpp_stanza_attr(stanza, key);
+}
+
 void xmpp_stanza_set_attr(struct xmpp_stanza *stanza, const char *name,
                           char *value) {
     struct attribute *attr;
@@ -169,17 +222,17 @@ void xmpp_stanza_set_attr(struct xmpp_stanza *stanza, const char *name,
 
     if (attr == NULL) {
         if (value == NULL) {
+            debug("B");
             return;
         }
         attr = calloc(1, sizeof(*attr));
         check_mem(attr);
-        attr->name = strdup(name);
-        check_mem(attr->name);
+        STRDUP_CHECK(attr->name, name);
         HASH_ADD_KEYPTR(hh, stanza->attributes, name, strlen(name), attr);
     } else {
         if (value == NULL) {
             HASH_DEL(stanza->attributes, attr);
-            free(attr);
+            attribute_del(attr);
             return;
         }
         free(attr->value);
@@ -187,14 +240,46 @@ void xmpp_stanza_set_attr(struct xmpp_stanza *stanza, const char *name,
     attr->value = value;
 }
 
+void xmpp_stanza_set_ns_attr(struct xmpp_stanza *stanza, const char *name,
+                            const char *uri, const char *prefix, char *value) {
+    MAKE_KEY(key, name, uri);
+    xmpp_stanza_set_attr(stanza, key, value);
+    if (value != NULL) {
+        struct attribute *attr;
+        HASH_FIND_STR(stanza->attributes, key, attr);
+        if (attr == NULL) {
+            log_err("Setting uri/prefix of nonexistant attribute, this shouldn't happen!");
+            return;
+        }
+        if (uri) {
+            STRDUP_CHECK(attr->uri, uri);
+        }
+        if (prefix) {
+            STRDUP_CHECK(attr->prefix, prefix);
+        }
+    }
+}
+
 void xmpp_stanza_copy_attr(struct xmpp_stanza *stanza, const char *name,
-                          const char *value) {
+                           const char *value) {
     if (value == NULL) {
         xmpp_stanza_set_attr(stanza, name, NULL);
     } else {
-        char *value_copy = strdup(value);
-        check_mem(value_copy);
+        char *value_copy;
+        STRDUP_CHECK(value_copy, value);
         xmpp_stanza_set_attr(stanza, name, value_copy);
+    }
+}
+
+void xmpp_stanza_copy_ns_attr(struct xmpp_stanza *stanza, const char *name,
+                              const char *uri, const char *prefix,
+                              const char *value) {
+    if (value == NULL) {
+        xmpp_stanza_set_ns_attr(stanza, name, uri, prefix, NULL);
+    } else {
+        char *value_copy;
+        STRDUP_CHECK(value_copy, value);
+        xmpp_stanza_set_ns_attr(stanza, name, uri, prefix, value_copy);
     }
 }
 
@@ -248,15 +333,64 @@ void xmpp_stanza_remove_child(struct xmpp_stanza *stanza,
     child->parent = NULL;
 }
 
+static void parse_ns(const char *ns_name, char **name, char **prefix,
+                     char **uri) {
+    char *separator = strchr(ns_name, XMPP_PARSER_SEPARATOR);
+    if (separator == NULL) {
+        // No namespace or prefix
+        STRDUP_CHECK(*name, ns_name);
+
+    } else {
+        // There is a namespace URI
+        STRNDUP_CHECK(*uri, ns_name, separator - ns_name);
+
+        char *tmp = separator + 1;
+        separator = strchr(tmp, XMPP_PARSER_SEPARATOR);
+        if (separator == NULL) {
+            // There is no namespace prefix
+            STRDUP_CHECK(*name, tmp);
+        } else {
+            // There is a namespace prefix
+            STRNDUP_CHECK(*name, tmp, separator - tmp);
+            STRDUP_CHECK(*prefix, separator + 1);
+        }
+    }
+}
+
 static void stanza_tostr(struct xmpp_stanza *stanza, UT_string *str) {
-    utstring_printf(str, "<%s", stanza->name);
-    if (stanza->namespace != NULL) {
-        utstring_printf(str, " xmlns='%s'", stanza->namespace);
+    if (stanza->prefix) {
+        utstring_printf(str, "<%s:%s", stanza->prefix, stanza->name);
+    } else {
+        utstring_printf(str, "<%s", stanza->name);
+    }
+
+    struct xmpp_parser_namespace *ns = stanza->namespaces;
+    while (ns != NULL) {
+        const char *prefix = xmpp_parser_namespace_prefix(ns);
+        const char *uri = xmpp_parser_namespace_uri(ns);
+        if (prefix) {
+            utstring_printf(str, " xmlns:%s='%s'", prefix, uri);
+        } else {
+            utstring_printf(str, " xmlns='%s'", uri);
+        }
+        ns = xmpp_parser_namespace_next(ns);
     }
 
     struct attribute *attr, *tmp;
     HASH_ITER(hh, stanza->attributes, attr, tmp) {
-        utstring_printf(str, " %s='%s'", attr->name, attr->value);
+        char quot;
+        if (strchr(attr->value, '\'') != NULL) {
+            quot = '"';
+        } else {
+            quot = '\'';
+        }
+        if (attr->prefix) {
+            utstring_printf(str, " %s:%s=%c%s%c", attr->prefix, attr->name,
+                            quot, attr->value, quot);
+        } else {
+            utstring_printf(str, " %s=%c%s%c", attr->name, quot, attr->value,
+                            quot);
+        }
     }
 
     if (stanza->children != NULL || utstring_len(&stanza->data) > 0) {
@@ -266,8 +400,25 @@ static void stanza_tostr(struct xmpp_stanza *stanza, UT_string *str) {
         DL_FOREACH(stanza->children, child) {
             stanza_tostr(child, str);
         }
-        utstring_printf(str, "</%s>", stanza->name);
+        if (stanza->prefix) {
+            utstring_printf(str, "</%s:%s>", stanza->prefix, stanza->name);
+        } else {
+            utstring_printf(str, "</%s>", stanza->name);
+        }
     } else {
         utstring_printf(str, "/>");
     }
+}
+
+static void attribute_del(struct attribute *attr) {
+    if (attr->uri) {
+        free(attr->uri);
+    }
+    if (attr->prefix) {
+        free(attr->prefix);
+    }
+    free(attr->name);
+    free(attr->value);
+    free(attr->key);
+    free(attr);
 }

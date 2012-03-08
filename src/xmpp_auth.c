@@ -128,7 +128,7 @@ bool xmpp_auth_stream_start(struct xmpp_stanza *stanza,
     log_info("New stream start");
 
     // name and attrs are guaranteed to be null terminated, so strcmp is OK.
-    check(strcmp(xmpp_stanza_namespace(stanza), STREAM_NS) == 0,
+    check(strcmp(xmpp_stanza_uri(stanza), STREAM_NS) == 0,
           "Unexpected stanza");
     check(strcmp(xmpp_stanza_name(stanza), STREAM_NAME) == 0,
           "Unexpected stanza");
@@ -173,7 +173,7 @@ static bool stream_sasl_start(struct xmpp_stanza *stanza,
 
     /* Step 7: If TLS negotiation is successful, client initiates a new stream
      * to server over the TLS-protected TCP connection. */
-    check(strcmp(xmpp_stanza_namespace(stanza), STREAM_NS) == 0,
+    check(strcmp(xmpp_stanza_uri(stanza), STREAM_NS) == 0,
           "Unexpected stanza");
     check(strcmp(xmpp_stanza_name(stanza), STREAM_NAME) == 0,
           "Unexpected stanza");
@@ -202,7 +202,7 @@ static bool stream_bind_start(struct xmpp_stanza *stanza,
 
     log_info("Resource bind stream start");
 
-    check(strcmp(xmpp_stanza_namespace(stanza), STREAM_NS) == 0,
+    check(strcmp(xmpp_stanza_uri(stanza), STREAM_NS) == 0,
           "Unexpected stanza");
     check(strcmp(xmpp_stanza_name(stanza), STREAM_NAME) == 0,
           "Unexpected stanza");
@@ -234,7 +234,7 @@ static bool handle_starttls(struct xmpp_stanza *stanza,
 
     log_info("Start TLS");
 
-    check(strcmp(xmpp_stanza_namespace(stanza), STARTTLS_NS) == 0,
+    check(strcmp(xmpp_stanza_uri(stanza), STARTTLS_NS) == 0,
           "Unexpected stanza");
     check(strcmp(xmpp_stanza_name(stanza), STARTTLS) == 0,
           "Unexpected stanza");
@@ -269,7 +269,7 @@ static bool handle_sasl_plain(struct xmpp_stanza *stanza,
 
     log_info("SASL plain authentication");
 
-    check(strcmp(xmpp_stanza_namespace(stanza), SASL_NS) == 0,
+    check(strcmp(xmpp_stanza_uri(stanza), SASL_NS) == 0,
           "Unexpected stanza");
     check(strcmp(xmpp_stanza_name(stanza), AUTH) == 0,
           "Unexpected stanza");
@@ -334,7 +334,7 @@ static bool handle_bind_iq(struct xmpp_stanza *stanza,
     UT_string success_msg;
     utstring_init(&success_msg);
 
-    check(strcmp(xmpp_stanza_namespace(stanza), XMPP_STANZA_NS_CLIENT) == 0,
+    check(strcmp(xmpp_stanza_uri(stanza), XMPP_STANZA_NS_CLIENT) == 0,
           "Unexpected stanza");
     check(strcmp(xmpp_stanza_name(stanza), XMPP_STANZA_IQ) == 0,
           "Unexpected stanza");
@@ -350,7 +350,7 @@ static bool handle_bind_iq(struct xmpp_stanza *stanza,
     // Jump to the inner <bind> tag
     stanza = xmpp_stanza_children(stanza);
     check(stanza != NULL, "Bind iq has no child.");
-    check(strcmp(xmpp_stanza_namespace(stanza), BIND_NS) == 0,
+    check(strcmp(xmpp_stanza_uri(stanza), BIND_NS) == 0,
           "Unexpected stanza");
     check(strcmp(xmpp_stanza_name(stanza), BIND) == 0,
           "Unexpected stanza");
@@ -358,7 +358,7 @@ static bool handle_bind_iq(struct xmpp_stanza *stanza,
     // Jump to the inner <resource> tag
     stanza = xmpp_stanza_children(stanza);
     check(stanza != NULL, "Bind has no child.");
-    check(strcmp(xmpp_stanza_namespace(stanza), BIND_NS) == 0,
+    check(strcmp(xmpp_stanza_uri(stanza), BIND_NS) == 0,
           "Unexpected stanza");
     check(strcmp(xmpp_stanza_name(stanza), RESOURCE) == 0,
           "Unexpected stanza");
