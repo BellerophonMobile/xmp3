@@ -1,0 +1,63 @@
+
+                               tj-tools
+                  http://code.google.com/p/tj-tools/
+
+tj-tools is essentially a collection of C code snippets providing
+small, reusable data structures or functionality.
+
+Current functionality includes:
+
+* A macro-ized, compile time type checked heap array.
+* An expandable data or string buffer.
+* Template variable expansion within a buffer.
+
+
+[ Use ]
+
+Copy the appropriate files into your project.  There is not a single
+tj-tools[.a|.so] library or such.
+
+
+[ Documentation ]
+
+Each of the .h files are reasonably commented.  Further documentation
+is available in the tj-tools wiki:
+
+           http://code.google.com/p/tj-tools/wiki/Home?tm=6
+
+
+[ Contact ]
+
+For questions or problems with tj-tools, or just to let us know you're
+using it, contact Joe Kopena <tjkopena@cs.drexel.edu>.
+
+
+[ License ]
+
+tj-tools is released under the MIT license.  In essence, you can do
+anything you want with it, commercial or not, and the authors and
+contributors assume no liability for its use.  Specific terms are:
+
+  ------------------------------------------------------------------
+  Copyright (c) 2011 Joe Kopena <tjkopena@gmail.com>
+
+  Permission is hereby granted, free of charge, to any person
+  obtaining a copy of this software and associated documentation
+  files (the "Software"), to deal in the Software without
+  restriction, including without limitation the rights to use, copy,
+  modify, merge, publish, distribute, sublicense, and/or sell copies
+  of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be
+  included in all copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+  BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+  ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  SOFTWARE.
+  ------------------------------------------------------------------
