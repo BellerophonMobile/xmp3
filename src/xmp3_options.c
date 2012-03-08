@@ -5,12 +5,14 @@
  * @file
  */
 
-#include <stdlib.h>
-#include <stdint.h>
-#include <errno.h>
 #include <arpa/inet.h>
+#include <errno.h>
+#include <limits.h>
+#include <stdint.h>
+#include <stdlib.h>
 
 #include <ini.h>
+#include <tj_searchpathlist.h>
 
 #include "log.h"
 #include "xmp3_options.h"
@@ -38,6 +40,8 @@ struct xmp3_options {
     char *certfile;
 
     char *server_name;
+
+    tj_searchpathlist *search_path;
 };
 
 // Forward declarations
@@ -65,6 +69,9 @@ struct xmp3_options* xmp3_options_new() {
     options->server_name = strdup(DEFAULT_SERVER_NAME);
     check_mem(options->server_name);
 
+    options->search_path = tj_searchpathlist_create();
+    check_mem(options->search_path);
+
     return options;
 }
 
@@ -72,6 +79,7 @@ void xmp3_options_del(struct xmp3_options *options) {
     free(options->keyfile);
     free(options->certfile);
     free(options->server_name);
+    tj_searchpathlist_finalize(options->search_path);
     free(options);
 }
 
@@ -166,6 +174,19 @@ const char* xmp3_options_get_server_name(const struct xmp3_options *options) {
     return options->server_name;
 }
 
+bool xmp3_options_add_module_path(struct xmp3_options *options,
+                                  const char *path) {
+    char full_path[PATH_MAX];
+    check(realpath(path, full_path) != NULL,
+          "Unable to determine absolute path for: '%s'", path);
+    check(tj_searchpathlist_add(options->search_path, full_path),
+          "Unable to add '%s' to search path", full_path);
+    return true;
+
+error:
+    return false;
+}
+
 /**
  * Converts a string to an integer with error checking.
  *
@@ -229,6 +250,10 @@ static int ini_handler(void *data, const char *section, const char *name,
 
         if (strcmp(name, "name") == 0) {
             return xmp3_options_set_server_name(options, value);
+        }
+
+        if (strcmp(name, "modpath") == 0) {
+            return xmp3_options_add_module_path(options, value);
         }
 
         log_err("Unknown config item '%s = %s'", name, value);
