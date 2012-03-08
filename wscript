@@ -40,10 +40,11 @@ def build(ctx):
     libxmp3 = ctx.stlib(
         target = 'xmp3',
         name = 'libxmp3',
-        includes = ['src', 'lib/uthash/src'],
-        export_includes = ['src', 'lib/uthash/src'],
-        use = ['uthash', 'EXPAT', 'CRYPTO', 'SSL'],
+        includes = ['src', 'lib/uthash/src', 'lib/inih'],
+        export_includes = ['src', 'lib/uthash/src', 'lib/inih'],
+        use = ['EXPAT', 'CRYPTO', 'SSL'],
         source = [
+            'lib/inih/ini.c',
             'src/client_socket.c',
             'src/event.c',
             'src/jid.c',
