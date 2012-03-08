@@ -28,7 +28,13 @@ def configure(ctx):
     ctx.check_cc(lib='ssl')
 
     if ctx.env.CC_NAME == 'gcc':
-        ctx.env.CFLAGS += ['-std=gnu99']
+        ctx.env.CFLAGS += ['-std=gnu99', '-Wall', '-Wextra', '-Werror',
+                           '-Wno-unused-parameter']
+
+        if ctx.options.debug:
+            ctx.env.CFLAGS += ['-O0', '-g']
+        else:
+            ctx.env.CFLAGS += ['-O3', '-g']
 
 def build(ctx):
     libxmp3 = ctx.stlib(
