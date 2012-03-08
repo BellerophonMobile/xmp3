@@ -42,6 +42,7 @@ struct xmp3_options {
     char *server_name;
 
     tj_searchpathlist *search_path;
+    tj_solibrary *modules;
 };
 
 // Forward declarations
@@ -72,6 +73,9 @@ struct xmp3_options* xmp3_options_new() {
     options->search_path = tj_searchpathlist_create();
     check_mem(options->search_path);
 
+    options->modules = tj_solibrary_create();
+    check_mem(options->modules);
+
     return options;
 }
 
@@ -80,6 +84,7 @@ void xmp3_options_del(struct xmp3_options *options) {
     free(options->certfile);
     free(options->server_name);
     tj_searchpathlist_finalize(options->search_path);
+    tj_solibrary_finalize(options->modules);
     free(options);
 }
 
@@ -187,6 +192,19 @@ error:
     return false;
 }
 
+bool xmp3_options_load_module(struct xmp3_options *options,
+                              const char *module) {
+    char mod_path[PATH_MAX];
+    check(tj_searchpathlist_locate(options->search_path, module, mod_path,
+                                   PATH_MAX),
+          "Cannot find module '%s' on module search path.", module);
+
+    return true;
+
+error:
+    return false;
+}
+
 /**
  * Converts a string to an integer with error checking.
  *
@@ -260,7 +278,9 @@ static int ini_handler(void *data, const char *section, const char *name,
         return false;
 
     } else {
-        log_err("Unknown config section '%s'", section);
-        return false;
+        if (!xmp3_options_load_module(options, section)) {
+            log_err("Error loading module: '%s'", section);
+            return false;
+        }
     }
 }
