@@ -31,6 +31,9 @@ def configure(ctx):
         ctx.env.CFLAGS += ['-std=gnu99', '-Wall', '-Wextra', '-Werror',
                            '-Wno-unused-parameter']
 
+        if ctx.env.target == 'darwin':
+            ctx.env.CFLAGS += ['-Wno-deprecated-declarations']
+
         if ctx.options.debug:
             ctx.env.CFLAGS += ['-O0', '-g']
         else:
