@@ -15,6 +15,7 @@
 #include <tj_searchpathlist.h>
 
 #include "log.h"
+#include "xmp3_module.h"
 #include "xmp3_options.h"
 
 // Default address is loopback
@@ -42,7 +43,7 @@ struct xmp3_options {
     char *server_name;
 
     tj_searchpathlist *search_path;
-    tj_solibrary *modules;
+    struct xmp3_modules *modules;
 };
 
 // Forward declarations
@@ -73,7 +74,7 @@ struct xmp3_options* xmp3_options_new() {
     options->search_path = tj_searchpathlist_create();
     check_mem(options->search_path);
 
-    options->modules = tj_solibrary_create();
+    options->modules = xmp3_modules_new();
     check_mem(options->modules);
 
     return options;
@@ -84,7 +85,7 @@ void xmp3_options_del(struct xmp3_options *options) {
     free(options->certfile);
     free(options->server_name);
     tj_searchpathlist_finalize(options->search_path);
-    tj_solibrary_finalize(options->modules);
+    xmp3_modules_del(options->modules);
     free(options);
 }
 
@@ -192,17 +193,8 @@ error:
     return false;
 }
 
-bool xmp3_options_load_module(struct xmp3_options *options,
-                              const char *module) {
-    char mod_path[PATH_MAX];
-    check(tj_searchpathlist_locate(options->search_path, module, mod_path,
-                                   PATH_MAX),
-          "Cannot find module '%s' on module search path.", module);
-
-    return true;
-
-error:
-    return false;
+struct xmp3_modules* xmp3_options_get_modules(struct xmp3_options *options) {
+    return options->modules;
 }
 
 /**
@@ -235,7 +227,7 @@ static bool copy_string(char *dest, const char *src) {
 
 static int ini_handler(void *data, const char *section, const char *name,
                         const char *value) {
-    struct xmp3_options *options = (struct xmp3_options*)data;
+    struct xmp3_options *options = data;
 
     if (strcmp(section, "") == 0) {
         // Main XMP3 options
@@ -277,10 +269,20 @@ static int ini_handler(void *data, const char *section, const char *name,
         log_err("Unknown config item '%s = %s'", name, value);
         return false;
 
+    } else if (strcmp(section, "modules") == 0) {
+        // Loading modules
+        char path[PATH_MAX];
+        tj_searchpathlist_locate(options->search_path, value, path, PATH_MAX);
+        if (!xmp3_modules_load(options->modules, path, name)) {
+            log_err("Error loading module '%s' (%s)", path, value);
+            return false;
+        }
+
     } else {
-        if (!xmp3_options_load_module(options, section)) {
-            log_err("Error loading module: '%s'", section);
+        if (!xmp3_modules_config(options->modules, section, name, value)) {
+            log_err("Error configuring module '%s'", section);
             return false;
         }
     }
+    return true;
 }

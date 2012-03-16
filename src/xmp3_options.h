@@ -125,6 +125,4 @@ const char* xmp3_options_get_server_name(const struct xmp3_options *options);
 bool xmp3_options_add_module_path(struct xmp3_options *options,
                                   const char *path);
 
-/** Loads a shared library module from the module search path. */
-bool xmp3_options_load_module(struct xmp3_options *options,
-                              const char *module);
+struct xmp3_modules* xmp3_options_get_modules(struct xmp3_options *options);
