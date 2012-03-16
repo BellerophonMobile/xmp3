@@ -98,6 +98,12 @@ static const char *MSG_BIND_SUCCESS =
         "</bind>"
     "</iq>";
 
+static const char *MSG_NOT_AUTHORIZED =
+    "<failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"
+        "<not-authorized/>"
+    "</failure>"
+    "</stream:stream>";
+
 // Forward declarations
 /* Inital authentication handlers
  * See: http://tools.ietf.org/html/rfc6120#section-9.1 */
@@ -297,8 +303,17 @@ static bool handle_sasl_plain(struct xmpp_stanza *stanza,
     debug("authzid = '%s', authcid = '%s', passwd = '%s'",
           authzid, authcid, passwd);
 
-    // TODO: If we wanted to do any authentication, do it here.
-    log_info("User authenticated");
+    if (!xmpp_server_authenticate(xmpp_client_server(client), authzid, authcid,
+                                  passwd)) {
+        log_warn("User '%s' failed to authenticate, disconnecting.", authcid);
+        check(client_socket_sendall(xmpp_client_socket(client),
+                                    MSG_NOT_AUTHORIZED, 
+                                    strlen(MSG_NOT_AUTHORIZED)) > 0,
+              "Error sending not authorized message to client");
+        goto error;
+    } else {
+        log_info("User authenticated");
+    }
 
     struct jid *jid = jid_new();
     check_mem(jid);

@@ -40,6 +40,19 @@ typedef void (*xmpp_server_client_callback)(struct xmpp_client *client,
                                             void *data);
 
 /**
+ * Callback to perform authentication for a newly connected local client.
+ *
+ * @param data Data from when this callback was registered.
+ * @param authzid The authorization identity, usually blank.
+ * @param authcid The authentication identity
+ * @param password The password
+ * @returns True if authentication succeeded, false if not.
+ */
+typedef bool (*xmpp_server_auth_callback)(const char *authzid,
+                                          const char *authcid,
+                                          const char *password, void *data);
+
+/**
  * Allocates and initializes the XMPP server.
  *
  * @param loop An event loop instance that the server can register callbacks.
@@ -64,6 +77,31 @@ const struct jid* xmpp_server_jid(const struct xmpp_server *server);
 
 /** Gets the SSL context if there is one, else NULL. */
 SSL_CTX* xmpp_server_ssl_context(const struct xmpp_server *server);
+
+/**
+ * Set the current authentication callback.
+ *
+ * If no callback is set, server accepts all connections.
+ *
+ * @param cb   The callback to call when authentication is needed.
+ * @param del  A callback to clean up auth data (if needed).
+ * @param data Data passed to the authentication callback.
+ */
+void xmpp_server_set_auth_callback(struct xmpp_server *server,
+                                   xmpp_server_auth_callback cb,
+                                   void (*del)(void*),
+                                   void *data);
+
+/**
+ * Authenticate a user with the currently set authentication callback.
+ *
+ * If no callback is set, always returns true.
+ *
+ * @returns true if authenticated, false if not.
+ */
+bool xmpp_server_authenticate(const struct xmpp_server *server,
+                              const char *authzid, const char *authcid,
+                              const char *password);
 
 /**
  * Add a callback to be notified when a client disconnects.

@@ -161,6 +161,13 @@ struct disco_item {
     /** @} */
 };
 
+/** Holds data for an authentication callback. */
+struct auth_callback {
+    xmpp_server_auth_callback cb;
+    void (*del)(void*);
+    void *data;
+};
+
 /** Holds data on a XMPP server (connected clients, routes, etc.). */
 struct xmpp_server {
     /** The bound and listening file descriptor. */
@@ -195,7 +202,11 @@ struct xmpp_server {
     /** Linked list of client disconnect callbacks. */
     struct client_listener *client_listeners;
 
+    /** The list of items to report for a disco items query. */
     struct disco_item *disco_items;
+
+    /** The currently configured authentication callback. */
+    struct auth_callback auth_callback;
 };
 
 struct xmpp_client_iterator {
@@ -276,6 +287,11 @@ void xmpp_server_del(struct xmpp_server *server) {
     struct c_client *connected_client = NULL;
     struct c_client *connected_client_tmp = NULL;
 
+    if (server->auth_callback.data != NULL
+            && server->auth_callback.del != NULL) {
+        server->auth_callback.del(server->auth_callback.data);
+    }
+
     DL_FOREACH_SAFE(server->clients, connected_client, connected_client_tmp) {
         DL_DELETE(server->clients, connected_client);
         xmpp_client_del(connected_client->client);
@@ -312,6 +328,29 @@ const struct jid* xmpp_server_jid(const struct xmpp_server *server) {
 
 SSL_CTX* xmpp_server_ssl_context(const struct xmpp_server *server) {
     return server->ssl_context;
+}
+
+void xmpp_server_set_auth_callback(struct xmpp_server *server,
+                                   xmpp_server_auth_callback cb,
+                                   void (*del)(void*),
+                                   void *data) {
+    if (server->auth_callback.data != NULL
+            && server->auth_callback.del != NULL) {
+        server->auth_callback.del(server->auth_callback.data);
+    }
+    server->auth_callback.cb = cb;
+    server->auth_callback.del = del;
+    server->auth_callback.data = data;
+}
+
+bool xmpp_server_authenticate(const struct xmpp_server *server,
+                              const char *authzid, const char *authcid,
+                              const char *password) {
+    if (server->auth_callback.cb == NULL) {
+        return true;
+    }
+    return server->auth_callback.cb(authzid, authcid, password,
+                                    server->auth_callback.data);
 }
 
 void xmpp_server_add_client_listener(struct xmpp_client *client,
