@@ -77,15 +77,7 @@ bool xmpp_im_iq_disco_items(struct xmpp_stanza *stanza,
             NULL});
     xmpp_stanza_append_child(response, res_query);
 
-    // TODO: Loop over components here
-    // Hard code MUC for now...
-
-    struct xmpp_stanza *item = xmpp_stanza_new("item", (const char*[]){
-            "jid", "conference.localhost",
-            "name", "Public Chatrooms",
-            NULL});
-    xmpp_stanza_append_child(res_query, item);
-
+    xmpp_server_append_disco_items(server, res_query);
     xmpp_server_route_stanza(server, response);
     xmpp_stanza_del(response, true);
 
