@@ -27,7 +27,8 @@ CFLAGS+=-g -Wall
 
 TESTS=test-tj_buffer   \
       test-tj_template \
-      test-tj_heap
+      test-tj_heap     \
+      test-tj_error
 
 TEST_SRCS=$(addsuffix .c,$(addprefix test/,$(TESTS)))
 TEST_TGTS=$(addprefix bin/,$(TESTS))
@@ -51,6 +52,8 @@ bin/test-tj_template: test/test-tj_template.c src/tj_template.c src/tj_buffer.c\
 bin/test-tj_heap: test/test-tj_heap.c src/tj_heap.h
 	$(CC) $(CFLAGS) -o $@ $^ $(INCS)
 
+bin/test-tj_error: test/test-tj_error.c src/tj_error.c src/tj_error.h
+	$(CC) $(CFLAGS) -o $@ $^ $(INCS)
 
 #-----------------------------------------------------------------------
 .PHONY: clean doxygen attribute

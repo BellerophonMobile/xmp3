@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011 Joe Kopena <tjkopena@gmail.com>
+ * Copyright (c) 2011, 2012 Joe Kopena <tjkopena@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -21,4 +21,3 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-

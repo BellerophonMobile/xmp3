@@ -39,9 +39,9 @@ tj_solibrary_getNext(tj_solibrary *x, tj_solibrary_entry *e);
 
 
 tj_solibrary_entry *
-tj_solibrary_load(tj_solibrary *x, char *fn);
+tj_solibrary_load(tj_solibrary *x, const char *fn);
 
 void *
-tj_solibrary_entry_getSymbol(tj_solibrary_entry *x, char *func);
+tj_solibrary_entry_getSymbol(tj_solibrary_entry *x, const char *func);
 
 #endif // __tj_solibrary_h__

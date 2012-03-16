@@ -34,9 +34,10 @@ void
 tj_searchpathlist_finalize(tj_searchpathlist *x);
 
 int
-tj_searchpathlist_add(tj_searchpathlist *x, char *path);
+tj_searchpathlist_add(tj_searchpathlist *x, const char *path);
 
 int
-tj_searchpathlist_locate(tj_searchpathlist *x, char *fn, char *result, int n);
+tj_searchpathlist_locate(tj_searchpathlist *x, const char *fn, char *result,
+                         int n);
 
 #endif // __tj_searchpathlist_h__

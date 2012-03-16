@@ -22,14 +22,10 @@
  * SOFTWARE.
  */
 
+#ifndef __tj_error_h__
+#define __tj_error_h__
+
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-
-#include <utlist.h>
-
-#include "tj_searchpathlist.h"
 
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
@@ -53,91 +49,44 @@
 #define TJ_ERROR(M, ...) fprintf(TJ_ERROR_STREAM, "[ERROR] %s:%s:%d: " M "\n", __FUNCTION__, __FILE__, __LINE__, ##__VA_ARGS__)
 #endif
 
+//----------------------------------------------------------------------
+//----------------------------------------------------------------------
 
-//----------------------------------------------
-typedef struct tj_searchpathlist_entry tj_searchpathlist_entry;
-struct tj_searchpathlist_entry {
-  char *m_path;
-  tj_searchpathlist_entry *next;
-};
+#define TJ_ERROR_OK (0)
 
-struct tj_searchpathlist {
-  tj_searchpathlist_entry *m_list;
+typedef enum tj_error_code tj_error_code;
+enum tj_error_code {
+  TJ_ERROR_NO_ERROR,
+  TJ_ERROR_FAILURE,
+  TJ_ERROR_NO_MEMORY,
+  TJ_ERROR_API_MISUSE,
+  TJ_ERROR_MISSING_RESOURCE,
+  TJ_ERROR_SERVICE,
+  TJ_ERROR_MISSING_SERVICE,
+  TJ_ERROR_PARSING,
+  TJ_ERROR_SOCKET,
+  TJ_ERROR_DATABASE,
+  TJ_ERROR_THREAD
 };
 
 
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
-tj_searchpathlist *
-tj_searchpathlist_create(void)
-{
-  TJ_LOG("Create.");
-  tj_searchpathlist *x;
-  if ((x = malloc(sizeof(tj_searchpathlist))) == 0) {
-    TJ_ERROR("Could not malloc tj_searchpathlist.");
-    return 0;
-  }
+typedef struct tj_error tj_error;
 
-  x->m_list = 0;
-
-  return x;
-  // end tj_searchpathlist_create
-}
+tj_error *
+tj_error_create(tj_error_code code, char *fmt, ...);
 
 void
-tj_searchpathlist_finalize(tj_searchpathlist *x)
-{
-  TJ_LOG("Finalize.");
-  tj_searchpathlist_entry *e;
-  while ((e = x->m_list) != 0) {
-    x->m_list = x->m_list->next;
-    TJ_LOG("  %s", e->m_path);
-    free(e->m_path);
-    free(e);
-  }
+tj_error_finalize(tj_error *x);
 
-  free(x);
-  // end tj_searchpathlist_finalize
-}
+void
+tj_error_appendMessage(tj_error *x, char *fmt, ...);
 
-int
-tj_searchpathlist_add(tj_searchpathlist *x, const char *path)
-{
-  TJ_LOG("Add %s", path);
+const char *
+tj_error_getMessage(tj_error *x);
 
-  tj_searchpathlist_entry *e;
 
-  if ((e = malloc(sizeof(tj_searchpathlist_entry))) == 0) {
-    TJ_ERROR("Could not allocate tj_searchpathlist_entry.");
-    return 0;
-  }
+//----------------------------------------------------------------------
 
-  if ((e->m_path = strdup(path)) == 0) {
-    TJ_ERROR("Could not strdup tj_searchpathlist_entry path.");
-    free(e);
-    return 0;
-  }
-
-  LL_APPEND(x->m_list, e);
-
-  return 1;
-
-  // end tj_searchpathlist_add
-}
-
-int
-tj_searchpathlist_locate(tj_searchpathlist *x, const char *fn, char *result,
-                         int n)
-{
-  tj_searchpathlist_entry *e = x->m_list;
-  while (e != 0) {
-    snprintf(result, n, "%s/%s", e->m_path, fn);
-    TJ_LOG("Found %s at %s.", fn, result);
-    if (access(result, R_OK) == 0)
-      return 1;
-    e = e->next;
-  }
-
-  return 0;
-  // end tj_searchpathlist_locate
-}
+#endif // __tj_error_h__
