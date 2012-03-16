@@ -23,6 +23,7 @@ def configure(ctx):
     if ctx.env.target != 'darwin':
         ctx.check_cc(lib='uuid')
 
+    ctx.check_cc(lib='dl')
     ctx.check_cc(lib='expat')
     ctx.check_cc(lib='crypto')
     ctx.check_cc(lib='ssl')
@@ -30,6 +31,8 @@ def configure(ctx):
     if ctx.env.CC_NAME == 'gcc':
         ctx.env.CFLAGS += ['-std=gnu99', '-Wall', '-Wextra', '-Werror',
                            '-Wno-unused-parameter']
+
+        ctx.env.LINKFLAGS_DYNAMIC += ['-export-dynamic']
 
         if ctx.options.debug:
             ctx.env.CFLAGS += ['-O0', '-g']
@@ -46,7 +49,7 @@ def build(ctx):
             'lib/inih',
             'lib/tj-tools/src',
         ],
-        use = ['EXPAT', 'CRYPTO', 'SSL'],
+        use = ['DYNAMIC', 'DL', 'EXPAT', 'CRYPTO', 'SSL'],
         source = [
             'lib/inih/ini.c',
             'lib/tj-tools/src/tj_searchpathlist.c',
@@ -55,6 +58,7 @@ def build(ctx):
             'src/event.c',
             'src/jid.c',
             'src/utils.c',
+            'src/xmp3_module.c',
             'src/xmp3_options.c',
             'src/xmpp_auth.c',
             'src/xmpp_client.c',
@@ -73,7 +77,7 @@ def build(ctx):
 
     # Don't need to link modules with libxmp3, bind symbols at runtime.
     ctx.shlib(
-        target = 'xmp3_muc',
+        target = 'xep_muc',
         includes = libxmp3.includes,
         source = ['src/xep_muc.c'],
     )
