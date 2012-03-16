@@ -23,6 +23,7 @@
 
 #include "event.h"
 #include "jid.h"
+#include "xmp3_module.h"
 #include "xmp3_options.h"
 #include "xmpp_client.h"
 #include "xmpp_server.h"
@@ -159,6 +160,8 @@ int main(int argc, char *argv[]) {
     struct xmpp_server *server = xmpp_server_new(loop, options);
     check(server != NULL, "XMPP server initialization failed");
 
+    xmp3_modules_start(xmp3_options_get_modules(options), server);
+
     log_info("Starting event loop...");
     event_loop_start(loop);
     log_info("Event loop exited");
@@ -167,9 +170,11 @@ int main(int argc, char *argv[]) {
         ERR_free_strings();
     }
 
+    xmp3_modules_stop(xmp3_options_get_modules(options));
+
+    xmp3_options_del(options);
     xmpp_server_del(server);
     event_del_loop(loop);
-    xmp3_options_del(options);
 
     return EXIT_SUCCESS;
 

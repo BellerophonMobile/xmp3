@@ -120,3 +120,9 @@ bool xmp3_options_set_server_name(struct xmp3_options *options,
 
 /** Gets the name of the XMPP server. */
 const char* xmp3_options_get_server_name(const struct xmp3_options *options);
+
+/** Adds a path to the extension module search path. */
+bool xmp3_options_add_module_path(struct xmp3_options *options,
+                                  const char *path);
+
+struct xmp3_modules* xmp3_options_get_modules(struct xmp3_options *options);

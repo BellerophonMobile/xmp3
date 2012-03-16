@@ -21,7 +21,7 @@
 #include "client_socket.h"
 #include "event.h"
 #include "jid.h"
-#include "xep_muc.h"
+#include "utils.h"
 #include "xmp3_options.h"
 #include "xmpp_client.h"
 #include "xmpp_core.h"
@@ -150,6 +150,17 @@ struct client_listener {
     /** @} */
 };
 
+/** Holds data for items to report during a DISCO items query. */
+struct disco_item {
+    char *name;
+    struct jid *jid;
+
+    /** @{ These are kept in a doubly-linked list. */
+    struct disco_item *prev;
+    struct disco_item *next;
+    /** @} */
+};
+
 /** Holds data on a XMPP server (connected clients, routes, etc.). */
 struct xmpp_server {
     /** The bound and listening file descriptor. */
@@ -184,11 +195,7 @@ struct xmpp_server {
     /** Linked list of client disconnect callbacks. */
     struct client_listener *client_listeners;
 
-    /* TODO: There should be a more generic interface for components to
-     * register with the server, probably a delegate model like in ontonet. */
-
-    /** The MUC component. */
-    struct xep_muc *muc;
+    struct disco_item *disco_items;
 };
 
 struct xmpp_client_iterator {
@@ -225,6 +232,8 @@ static struct iq_route* iq_route_new(const char *ns,
         xmpp_server_stanza_callback cb, void *data);
 static void iq_route_del(struct iq_route *route);
 static int iq_route_cmp(const struct iq_route *a, const struct iq_route *b);
+
+static void disco_item_del(struct disco_item *item);
 
 struct xmpp_server* xmpp_server_new(struct event_loop *loop,
                                     const struct xmp3_options *options) {
@@ -267,10 +276,6 @@ void xmpp_server_del(struct xmpp_server *server) {
     struct c_client *connected_client = NULL;
     struct c_client *connected_client_tmp = NULL;
 
-    if (server->muc) {
-        xep_muc_del(server->muc);
-    }
-
     DL_FOREACH_SAFE(server->clients, connected_client, connected_client_tmp) {
         DL_DELETE(server->clients, connected_client);
         xmpp_client_del(connected_client->client);
@@ -280,6 +285,7 @@ void xmpp_server_del(struct xmpp_server *server) {
     DELETE_LIST(stanza_route, server->stanza_routes);
     DELETE_LIST(iq_route, server->iq_routes);
     DELETE_LIST(client_listener, server->client_listeners);
+    DELETE_LIST(disco_item, server->disco_items);
 
     if (server->jid) {
         jid_del(server->jid);
@@ -483,6 +489,43 @@ error:
     return was_handled;
 }
 
+void xmpp_server_add_disco_item(struct xmpp_server *server,
+                                const char *name, const struct jid *jid) {
+    struct disco_item *item = calloc(1, sizeof(*item));
+    check_mem(item);
+
+    STRDUP_CHECK(item->name, name);
+    item->jid = jid_new_from_jid(jid);
+
+    DL_APPEND(server->disco_items, item);
+}
+
+void xmpp_server_del_disco_item(struct xmpp_server *server,
+                                const char *name, const struct jid *jid) {
+    struct disco_item *item;
+    DL_FOREACH(server->disco_items, item) {
+        if (strcmp(name, item->name) == 0 && jid_cmp(jid, item->jid) == 0) {
+            DL_DELETE(server->disco_items, item);
+            disco_item_del(item);
+            return;
+        }
+    }
+}
+
+void xmpp_server_append_disco_items(struct xmpp_server *server,
+                                    struct xmpp_stanza *stanza) {
+    struct disco_item *item;
+    DL_FOREACH(server->disco_items, item) {
+        char *strjid = jid_to_str(item->jid);
+        struct xmpp_stanza *item_stanza = xmpp_stanza_new("item", (const char*[]){
+                "name", item->name,
+                "jid", strjid,
+                NULL,});
+        xmpp_stanza_append_child(stanza, item_stanza);
+        free(strjid);
+    }
+}
+
 static bool init_socket(struct xmpp_server *server,
                         const struct xmp3_options *options) {
     server->fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -545,8 +588,6 @@ static bool init_components(struct xmpp_server *server,
                              xmpp_im_iq_disco_info, NULL);
     xmpp_server_add_iq_route(server, XMPP_IQ_ROSTER_NS,
                              xmpp_im_iq_roster, NULL);
-
-    server->muc = xep_muc_new(server);
     return true;
 }
 
@@ -758,4 +799,10 @@ static int iq_route_cmp(const struct iq_route *a, const struct iq_route *b) {
         return a->data - b->data;
     }
     return 0;
+}
+
+static void disco_item_del(struct disco_item *item) {
+    jid_del(item->jid);
+    free(item->name);
+    free(item);
 }
