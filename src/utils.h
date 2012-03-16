@@ -38,7 +38,7 @@
 /**
  * Allocate and return a null-terminated string with a UUID.
  */
-char* make_uuid();
+char* make_uuid(void);
 
 /*
  * These functions are from libb64, found at: http://libb64.sourceforge.net/

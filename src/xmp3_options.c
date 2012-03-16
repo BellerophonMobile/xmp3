@@ -52,7 +52,7 @@ static bool copy_string(char *dest, const char *src);
 static int ini_handler(void *data, const char *section, const char *name,
                         const char *value);
 
-struct xmp3_options* xmp3_options_new() {
+struct xmp3_options* xmp3_options_new(void) {
     struct xmp3_options *options = calloc(1, sizeof(*options));
     check_mem(options);
 

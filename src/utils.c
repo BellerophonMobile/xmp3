@@ -10,7 +10,7 @@
 
 #include "utils.h"
 
-char* make_uuid() {
+char* make_uuid(void) {
     uuid_t uuid;
     uuid_generate(uuid);
     char *rv = malloc(37 * sizeof(char));

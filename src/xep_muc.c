@@ -58,7 +58,7 @@ struct xep_muc {
 };
 
 // Forward declarations
-static void* xep_muc_new();
+static void* xep_muc_new(void);
 static void xep_muc_del(void *data);
 static bool xep_muc_conf(void *data, const char *key, const char *value);
 static bool xep_muc_start(void *data, struct xmpp_server *server);
@@ -106,7 +106,7 @@ struct xmp3_module XMP3_MODULE = {
     .mod_stop = xep_muc_stop,
 };
 
-static void* xep_muc_new() {
+static void* xep_muc_new(void) {
     struct xep_muc *muc = calloc(1, sizeof(*muc));
     check_mem(muc);
 

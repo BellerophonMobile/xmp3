@@ -23,7 +23,7 @@ extern const char *DEFAULT_SERVER_NAME;
 struct xmp3_options;
 
 /** Allocate and initialize a new XMP3 options instance. */
-struct xmp3_options* xmp3_options_new();
+struct xmp3_options* xmp3_options_new(void);
 
 /** Cleans up and frees an XMP3 options instance. */
 void xmp3_options_del(struct xmp3_options *options);

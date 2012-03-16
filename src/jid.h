@@ -11,7 +11,7 @@
 struct jid;
 
 /** Allocate and initialize a new blank JID. */
-struct jid* jid_new();
+struct jid* jid_new(void);
 
 /** Cleans up and frees an existing JID. */
 void jid_del(struct jid *jid);

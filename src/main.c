@@ -40,7 +40,7 @@ static struct option long_options[] = {
     { NULL, 0, NULL, 0},
 };
 
-static void print_usage() {
+static void print_usage(void) {
     printf("./xmp3 [OPTIONS]\nOptions:\n");
 
     printf("  -f, --config   Config file to load.  Arguments override values"

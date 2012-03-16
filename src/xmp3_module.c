@@ -30,7 +30,7 @@ struct xmp3_modules {
     tj_solibrary *solibrary;
 };
 
-struct xmp3_modules* xmp3_modules_new() {
+struct xmp3_modules* xmp3_modules_new(void) {
     struct xmp3_modules *modules = calloc(1, sizeof(*modules));
     check_mem(modules);
 
