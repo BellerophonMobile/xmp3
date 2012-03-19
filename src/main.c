@@ -115,6 +115,8 @@ int main(int argc, char *argv[]) {
     struct xmp3_options *options = xmp3_options_new();
     check_mem(options);
 
+    /* Load the config file first, then have the rest of the command line
+     * options override settings in it. */
     if (conffile) {
         check(xmp3_options_load_conf_file(options, conffile),
               "Error loading configuration file \"%s\"", conffile);

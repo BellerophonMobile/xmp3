@@ -22,11 +22,14 @@ struct xmp3_xml;
 bool xmpp_im_iq_session(struct xmpp_stanza *stanza, struct xmpp_server *server,
                         void *data);
 
+/** IQ stanza callback for handling a disco items query. */
 bool xmpp_im_iq_disco_items(struct xmpp_stanza *stanza,
                             struct xmpp_server *server, void *data);
 
+/** IQ stanza callback for handling a disco info query. */
 bool xmpp_im_iq_disco_info(struct xmpp_stanza *stanza,
                            struct xmpp_server *server, void *data);
 
+/** IQ stanza callback for handing a roster query. */
 bool xmpp_im_iq_roster(struct xmpp_stanza *stanza, struct xmpp_server *server,
                        void *data);

@@ -15,6 +15,7 @@
 #include <tj_searchpathlist.h>
 
 #include "log.h"
+#include "utils.h"
 #include "xmp3_module.h"
 #include "xmp3_options.h"
 
@@ -30,25 +31,44 @@ const char *DEFAULT_SERVER_NAME = "localhost";
 
 /** Hold all the options used to configure the XMP3 server. */
 struct xmp3_options {
+    /** Address to listen on. */
     struct in_addr addr;
+
+    /** Port to listen on. */
     uint16_t port;
 
+    /** Backlog of connections for the "listen" function. */
     int backlog;
+
+    /** Size of the incoming message buffer. */
     size_t buffer_size;
 
+    /** Whether or not to use SSL. */
     bool use_ssl;
+
+    /** The path to the OpenSSL key file. */
     char *keyfile;
+
+    /** The path to the OpenSSL certificate file. */
     char *certfile;
 
+    /**
+     * The name of the server (domainpart of JID).
+     *
+     * TODO: Not currently used anywhere.
+     */
     char *server_name;
 
+    /** List of directories to search for loadable modules. */
     tj_searchpathlist *search_path;
+
+    /** Structure holding currently loaded modules. */
     struct xmp3_modules *modules;
 };
 
 // Forward declarations
 static bool read_int(const char *arg, long int *output);
-static bool copy_string(char *dest, const char *src);
+static bool copy_string(char **dest, const char *src);
 static int ini_handler(void *data, const char *section, const char *name,
                         const char *value);
 
@@ -56,6 +76,7 @@ struct xmp3_options* xmp3_options_new(void) {
     struct xmp3_options *options = calloc(1, sizeof(*options));
     check_mem(options);
 
+    /* Set default parameters. */
     options->addr = DEFAULT_ADDR;
     options->port = DEFAULT_PORT;
     options->backlog = DEFAULT_BACKLOG;
@@ -110,6 +131,7 @@ bool xmp3_options_set_port_str(struct xmp3_options *options, const char *str) {
         return false;
     }
 
+    /* Check that port number is within bounds. */
     if (port > 65535 || port < 0) {
         return false;
     }
@@ -178,6 +200,7 @@ const char* xmp3_options_get_server_name(const struct xmp3_options *options) {
 
 bool xmp3_options_add_module_path(struct xmp3_options *options,
                                   const char *path) {
+    /* Calculate the absolute path before adding it to the list. */
     char full_path[PATH_MAX];
     check(realpath(path, full_path) != NULL,
           "Unable to determine absolute path for: '%s'", path);
@@ -222,10 +245,12 @@ static bool copy_string(char **dest, const char *src) {
     return true;
 }
 
+/** Callback used by config file parser. */
 static int ini_handler(void *data, const char *section, const char *name,
                         const char *value) {
     struct xmp3_options *options = data;
 
+    /* The top of the file (no section) is for configuring core XMP3. */
     if (strcmp(section, "") == 0) {
         // Main XMP3 options
         if (strcmp(name, "address") == 0) {
@@ -266,8 +291,10 @@ static int ini_handler(void *data, const char *section, const char *name,
         log_err("Unknown config item '%s = %s'", name, value);
         return false;
 
+    /* The "modules" section is for loading modules.  Modules get assigned
+     * to "name".  This name can then be used as sections to specify options
+     * to the module. */
     } else if (strcmp(section, "modules") == 0) {
-        // Loading modules
         char path[PATH_MAX];
         tj_searchpathlist_locate(options->search_path, value, path, PATH_MAX);
         if (!xmp3_modules_load(options->modules, path, name)) {
@@ -275,6 +302,8 @@ static int ini_handler(void *data, const char *section, const char *name,
             return false;
         }
 
+    /* Any other section is used to configure a module loaded in the "modules"
+     * section. */
     } else {
         if (!xmp3_modules_config(options->modules, section, name, value)) {
             log_err("Error configuring module '%s'", section);

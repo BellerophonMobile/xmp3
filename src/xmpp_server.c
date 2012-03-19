@@ -152,7 +152,10 @@ struct client_listener {
 
 /** Holds data for items to report during a DISCO items query. */
 struct disco_item {
+    /** The "name" attribute for the response. */
     char *name;
+
+    /** The "jid" attribute for the response. */
     struct jid *jid;
 
     /** @{ These are kept in a doubly-linked list. */
@@ -163,9 +166,19 @@ struct disco_item {
 
 /** Holds data for an authentication callback. */
 struct auth_callback {
+    /** The function to call for authentication. */
     xmpp_server_auth_callback cb;
+
+    /** A function to delete the data when finished. */
     void (*del)(void*);
+
+    /** Data that is passed to the callback when it is called. */
     void *data;
+};
+
+/** Simple structure to allow users to iterate over connected clients. */
+struct xmpp_client_iterator {
+    struct c_client *client;
 };
 
 /** Holds data on a XMPP server (connected clients, routes, etc.). */
@@ -207,10 +220,6 @@ struct xmpp_server {
 
     /** The currently configured authentication callback. */
     struct auth_callback auth_callback;
-};
-
-struct xmpp_client_iterator {
-    struct c_client *client;
 };
 
 // Forward declarations
@@ -573,6 +582,7 @@ void xmpp_server_append_disco_items(struct xmpp_server *server,
     }
 }
 
+/** Simple function to create and bind the server socket. */
 static bool init_socket(struct xmpp_server *server,
                         const struct xmp3_options *options) {
     server->fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -600,6 +610,7 @@ error:
     return false;
 }
 
+/** Initializes the OpenSSL context, setting up the key and certificate. */
 static bool init_ssl(struct xmpp_server *server,
                      const struct xmp3_options *options) {
     server->ssl_context = SSL_CTX_new(SSLv23_server_method());
@@ -623,6 +634,11 @@ error:
     return false;
 }
 
+/**
+ * Callback for new client connections.
+ *
+ * Handles accepting the connection, and setting up XMPP stream parsing.
+ */
 static void connect_client(struct event_loop *loop, int fd, void *data) {
     struct xmpp_server *server = (struct xmpp_server*)data;
     struct client_socket *socket = NULL;
@@ -667,6 +683,11 @@ error:
     }
 }
 
+/**
+ * Callback for new data from a client.
+ *
+ * Handles feeding the data to the XML parser.
+ */
 static void read_client(struct event_loop *loop, int fd, void *data) {
     struct xmpp_client *client = (struct xmpp_client*)data;
     struct xmpp_server *server = xmpp_client_server(client);
@@ -694,7 +715,6 @@ static void read_client(struct event_loop *loop, int fd, void *data) {
     check_mem(addrstr);
     log_info("%s - Read %zd bytes", addrstr, numrecv);
     free(addrstr);
-    //xmpp_print_data(server->buffer, numrecv);
 
     struct xmpp_parser *parser = xmpp_client_parser(client);
     check(xmpp_parser_parse(parser, server->buffer, numrecv),
@@ -705,6 +725,11 @@ error:
     xmpp_server_disconnect_client(client);
 }
 
+/**
+ * Sends a <service-unavailable> error stanza to a client.
+ *
+ * Sent when there is no handler for an IQ stanza.
+ */
 static void send_service_unavailable(struct xmpp_server *server,
                                      struct xmpp_stanza *stanza) {
     log_info("Sending service unavailable.");

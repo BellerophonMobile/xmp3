@@ -231,6 +231,7 @@ void jid_set_resource(struct jid *jid, const char *resourcepart) {
     copy_jid_field(&jid->resource, resourcepart);
 }
 
+/** Convenience function to copy a string, and freeing the first. */
 static void copy_jid_field(char **jidfield, const char *arg) {
     free(*jidfield);
     if (arg == NULL) {

@@ -17,6 +17,7 @@
 
 const char XMPP_PARSER_SEPARATOR = ' ';
 
+/** Structure representing an XML namespace. */
 struct xmpp_parser_namespace {
     char *prefix;
     char *uri;
@@ -24,6 +25,7 @@ struct xmpp_parser_namespace {
     struct xmpp_parser_namespace *next;
 };
 
+/** Structure holding state for the XML parser. */
 struct xmpp_parser {
     XML_Parser parser;
     xmpp_parser_handler handler;
@@ -47,7 +49,6 @@ struct xmpp_parser* xmpp_parser_new(bool is_stream_start) {
     parser->parser = XML_ParserCreateNS(NULL, XMPP_PARSER_SEPARATOR);
     check(parser->parser != NULL, "Error creating XML parser");
 
-    // TODO: Parse namespace prefixes properly
     XML_SetReturnNSTriplet(parser->parser, true);
 
     XML_SetElementHandler(parser->parser, start, end);
@@ -133,6 +134,7 @@ void xmpp_parser_namespace_del(struct xmpp_parser_namespace *ns) {
     }
 }
 
+/** Expat callback for the start of an XMPP stream. */
 static void stream_start(void *data, const char *ns_name, const char **attrs) {
     struct xmpp_parser *parser = (struct xmpp_parser*)data;
     struct xmpp_stanza *stanza = xmpp_stanza_ns_new(ns_name, attrs,
@@ -152,6 +154,7 @@ static void stream_start(void *data, const char *ns_name, const char **attrs) {
     xmpp_stanza_del(stanza, false);
 }
 
+/** Expat callback for the start of any other element. */
 static void start(void *data, const char *ns_name, const char **attrs) {
     struct xmpp_parser *parser = (struct xmpp_parser*)data;
     struct xmpp_stanza *stanza = xmpp_stanza_ns_new(ns_name, attrs,
@@ -165,6 +168,7 @@ static void start(void *data, const char *ns_name, const char **attrs) {
     parser->depth++;
 }
 
+/** Expat callback for XML data. */
 static void chardata(void *data, const char *s, int len) {
     struct xmpp_parser *parser = (struct xmpp_parser*)data;
     if (parser->cur_stanza) {
@@ -172,6 +176,7 @@ static void chardata(void *data, const char *s, int len) {
     }
 }
 
+/** Expat callback for end elements. */
 static void end(void *data, const char *name) {
     struct xmpp_parser *parser = (struct xmpp_parser*)data;
     parser->depth--;
@@ -193,6 +198,7 @@ static void end(void *data, const char *name) {
     }
 }
 
+/** Expat callback for namespace declarations. */
 static void ns_start(void *data, const char *prefix, const char *uri) {
     struct xmpp_parser *parser = (struct xmpp_parser*)data;
 

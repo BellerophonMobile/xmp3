@@ -17,6 +17,10 @@
 
 #include "xmpp_stanza.h"
 
+/** Convenience macro to build a key for the attribute hash table.
+ *
+ * This is to take care of attributes that have namespace qualifiers.
+ */
 #define MAKE_KEY(K, N, U) \
     /* + 1 for null terminator */ \
     int LEN = strlen(N) + 1; \
@@ -49,13 +53,21 @@ const char *XMPP_STANZA_TYPE_GET = "get";
 const char *XMPP_STANZA_TYPE_RESULT = "result";
 const char *XMPP_STANZA_TYPE_ERROR = "error";
 
+/** Structure to store a stanza attribute. */
 struct attribute {
+    /** Key for use in the hash table. */
     char *key;
 
+    /** The name of this attribute. */
     char *name;
+
+    /** The namespace URI of this attribute (may be NULL). */
     char *uri;
+
+    /** The namespace prefix used on this attribute (may be null). */
     char *prefix;
 
+    /** The value of this attribute. */
     char *value;
 
     /** These are stored in a hash table. */
@@ -85,7 +97,10 @@ struct xmpp_stanza {
     /** A linked list of child nodes. */
     struct xmpp_stanza *children;
 
+    /** Pointer to the parent stanza. */
     struct xmpp_stanza *parent;
+
+    /** A list of namespaces defined with this stanza. */
     struct xmpp_parser_namespace *namespaces;
 
     /** Stanzas are kept in a linked list. */
@@ -221,8 +236,9 @@ void xmpp_stanza_set_attr(struct xmpp_stanza *stanza, const char *name,
     HASH_FIND_STR(stanza->attributes, name, attr);
 
     if (attr == NULL) {
+        /* If value is NULL, we want to delete an attribute that is already
+         * gone. */
         if (value == NULL) {
-            debug("B");
             return;
         }
         attr = calloc(1, sizeof(*attr));
@@ -230,6 +246,7 @@ void xmpp_stanza_set_attr(struct xmpp_stanza *stanza, const char *name,
         STRDUP_CHECK(attr->name, name);
         HASH_ADD_KEYPTR(hh, stanza->attributes, name, strlen(name), attr);
     } else {
+        /* If value is NULL, we want to delete this attribute. */
         if (value == NULL) {
             HASH_DEL(stanza->attributes, attr);
             attribute_del(attr);
@@ -333,6 +350,11 @@ void xmpp_stanza_remove_child(struct xmpp_stanza *stanza,
     child->parent = NULL;
 }
 
+/**
+ * Parse the namespace triple that Expat gives us.
+ *
+ * Format is <URI> <NAME> <PREFIX>
+ */
 static void parse_ns(const char *ns_name, char **name, char **prefix,
                      char **uri) {
     char *separator = strchr(ns_name, XMPP_PARSER_SEPARATOR);
@@ -357,6 +379,11 @@ static void parse_ns(const char *ns_name, char **name, char **prefix,
     }
 }
 
+/**
+ * Function that gets called recursively to convert a stanza to a string.
+ *
+ * Also prints child stanzas.
+ */
 static void stanza_tostr(struct xmpp_stanza *stanza, UT_string *str) {
     if (stanza->prefix) {
         utstring_printf(str, "<%s:%s", stanza->prefix, stanza->name);

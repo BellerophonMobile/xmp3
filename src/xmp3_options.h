@@ -125,4 +125,5 @@ const char* xmp3_options_get_server_name(const struct xmp3_options *options);
 bool xmp3_options_add_module_path(struct xmp3_options *options,
                                   const char *path);
 
+/** Returns a list of currently loaded modules. */
 struct xmp3_modules* xmp3_options_get_modules(struct xmp3_options *options);

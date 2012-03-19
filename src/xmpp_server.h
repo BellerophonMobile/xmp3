@@ -234,11 +234,14 @@ void xmpp_server_del_iq_route(struct xmpp_server *server, const char *ns,
 bool xmpp_server_route_iq(struct xmpp_server *server,
                           struct xmpp_stanza *stanza);
 
+/** Add an item to the response for disco item queries. */
 void xmpp_server_add_disco_item(struct xmpp_server *server,
                                 const char *name, const struct jid *jid);
 
+/** Remove an item from the response for disco item queries. */
 void xmpp_server_del_disco_item(struct xmpp_server *server,
                                 const char *name, const struct jid *jid);
 
+/** Append to the given stanza all the items set on this server. */
 void xmpp_server_append_disco_items(struct xmpp_server *server,
                                     struct xmpp_stanza *stanza);

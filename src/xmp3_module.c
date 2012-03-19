@@ -16,12 +16,21 @@
 
 static const char *SYMBOL_NAME = "XMP3_MODULE";
 
+/** Structure representing a loaded module. */
 struct module {
+    /** The name of this module instance. */
     char *name;
+
+    /** The functions to interact with this module. */
     struct xmp3_module *functions;
+
+    /** The module instance. */
     void *data;
+
+    /** Whether this module has been started or not. */
     bool started;
 
+    /** These are kept in a hash table. */
     UT_hash_handle hh;
 };
 

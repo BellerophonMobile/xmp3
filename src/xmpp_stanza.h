@@ -40,6 +40,7 @@ extern const char *XMPP_STANZA_TYPE_ERROR;
  */
 struct xmpp_stanza* xmpp_stanza_new(const char *ns_name, const char **attrs);
 
+/** Allocate stanza with namespace information. */
 struct xmpp_stanza* xmpp_stanza_ns_new(const char *ns_name, const char **attrs,
                                      struct xmpp_parser_namespace *namespaces);
 
@@ -64,6 +65,7 @@ char* xmpp_stanza_string(struct xmpp_stanza *stanza, size_t *len);
  */
 const char* xmpp_stanza_uri(const struct xmpp_stanza *stanza);
 
+/** Set the URI of the stanza, copy the URI. */
 void xmpp_stanza_copy_uri(struct xmpp_stanza *stanza, const char *uri);
 
 /**
@@ -76,6 +78,7 @@ void xmpp_stanza_copy_uri(struct xmpp_stanza *stanza, const char *uri);
  */
 const char* xmpp_stanza_prefix(const struct xmpp_stanza *stanza);
 
+/** Set the prefix of the stanza, copy the prefix. */
 void xmpp_stanza_copy_prefix(struct xmpp_stanza *stanza, const char *prefix);
 
 /**
@@ -88,6 +91,7 @@ void xmpp_stanza_copy_prefix(struct xmpp_stanza *stanza, const char *prefix);
  */
 const char* xmpp_stanza_name(const struct xmpp_stanza *stanza);
 
+/** Set the name of the stanza, copy the name. */
 void xmpp_stanza_copy_name(struct xmpp_stanza *stanza, const char *name);
 
 /**
@@ -103,6 +107,7 @@ void xmpp_stanza_copy_name(struct xmpp_stanza *stanza, const char *name);
 const char* xmpp_stanza_attr(const struct xmpp_stanza *stanza,
                              const char *name);
 
+/** Return the value of an atribute qualified by a namespace. */
 const char* xmpp_stanza_ns_attr(const struct xmpp_stanza *stanza,
                                 const char *name, const char *uri);
 
@@ -117,6 +122,7 @@ const char* xmpp_stanza_ns_attr(const struct xmpp_stanza *stanza,
 void xmpp_stanza_set_attr(struct xmpp_stanza *stanza, const char *name,
                           char *value);
 
+/** Set the value of an attribute qualified by a namespace. */
 void xmpp_stanza_set_ns_attr(struct xmpp_stanza *stanza, const char *name,
                              const char *uri, const char *prefix, char *value);
 
@@ -131,6 +137,7 @@ void xmpp_stanza_set_ns_attr(struct xmpp_stanza *stanza, const char *name,
 void xmpp_stanza_copy_attr(struct xmpp_stanza *stanza, const char *name,
                            const char *value);
 
+/** Set the value of an attribute qualified by a namespace, copies value. */
 void xmpp_stanza_copy_ns_attr(struct xmpp_stanza *stanza, const char *name,
                               const char *uri, const char *prefix,
                               const char *value);
@@ -164,5 +171,6 @@ struct xmpp_stanza* xmpp_stanza_prev(struct xmpp_stanza *stanza);
 void xmpp_stanza_append_child(struct xmpp_stanza *stanza,
                               struct xmpp_stanza *child);
 
+/** Removes a child stanza. */
 void xmpp_stanza_remove_child(struct xmpp_stanza *stanza,
                               struct xmpp_stanza *child);

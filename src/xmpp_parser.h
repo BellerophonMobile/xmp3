@@ -16,6 +16,7 @@ struct xmpp_stanza;
 
 extern const char XMPP_PARSER_SEPARATOR;
 
+/** Callback to be notified of new XMPP stanza. */
 typedef bool (*xmpp_parser_handler)(struct xmpp_stanza *stanza,
                                     struct xmpp_parser *parser,
                                     void *data);
@@ -38,6 +39,7 @@ void xmpp_parser_set_data(struct xmpp_parser *parser, void *data);
 
 bool xmpp_parser_parse(struct xmpp_parser *parser, const char *buf, int len);
 
+/** Reset the state of the parser as if it was just created. */
 bool xmpp_parser_reset(struct xmpp_parser *parser, bool is_stream_start);
 
 void xmpp_parser_new_stream(struct xmpp_parser *parser);
@@ -46,6 +48,7 @@ const char* xmpp_parser_namespace_uri(struct xmpp_parser_namespace *ns);
 
 const char* xmpp_parser_namespace_prefix(struct xmpp_parser_namespace *ns);
 
+/** Return the next namespace in the namespace list. */
 struct xmpp_parser_namespace* xmpp_parser_namespace_next(
         struct xmpp_parser_namespace *ns);
 

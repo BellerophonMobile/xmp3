@@ -18,12 +18,16 @@ struct xmpp_client* xmpp_client_new(struct xmpp_server *server,
 
 void xmpp_client_del(struct xmpp_client *client);
 
+/** Return the server this client is connected to. */
 struct xmpp_server* xmpp_client_server(struct xmpp_client *client);
 
+/** Return the socket used to communicate with this client. */
 struct client_socket* xmpp_client_socket(struct xmpp_client *client);
 
+/** Return the XMPP parser instance for this client. */
 struct xmpp_parser* xmpp_client_parser(struct xmpp_client *client);
 
+/** Return the JID for this client. */
 struct jid* xmpp_client_jid(const struct xmpp_client *client);
 
 /**
