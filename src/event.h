@@ -23,13 +23,13 @@ typedef void (*event_callback)(struct event_loop *loop, int fd, void *data);
  *
  * @return A new event loop ready to use.
  */
-struct event_loop* event_new_loop(void);
+struct event_loop* event_loop_new(void);
 
 /** Free an existing event loop.
  *
  * @param loop An event loop.
  */
-void event_del_loop(struct event_loop *loop);
+void event_loop_del(struct event_loop *loop);
 
 /**
  * Register a callback function for read events on a file-descriptor.

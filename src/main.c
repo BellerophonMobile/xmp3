@@ -151,7 +151,7 @@ int main(int argc, char *argv[]) {
 
     check(sigaction(SIGINT, &sa, NULL) != -1, "Cannot set signal handler.");
 
-    loop = event_new_loop();
+    loop = event_loop_new();
 
     if (xmp3_options_get_ssl(options)) {
         // Initialize OpenSSL
@@ -176,13 +176,13 @@ int main(int argc, char *argv[]) {
 
     xmp3_options_del(options);
     xmpp_server_del(server);
-    event_del_loop(loop);
+    event_loop_del(loop);
 
     return EXIT_SUCCESS;
 
 error:
     if (loop) {
-        event_del_loop(loop);
+        event_loop_del(loop);
     }
     return EXIT_FAILURE;
 }

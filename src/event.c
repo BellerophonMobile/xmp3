@@ -58,13 +58,13 @@ struct event_loop {
     /** @} */
 };
 
-struct event_loop* event_new_loop(void) {
+struct event_loop* event_loop_new(void) {
     struct event_loop *loop = calloc(1, sizeof(*loop));
     check_mem(loop);
     return loop;
 }
 
-void event_del_loop(struct event_loop *loop) {
+void event_loop_del(struct event_loop *loop) {
     struct event_item *item;
     struct event_item *tmp;
     // Free the memory for all the callback entries
