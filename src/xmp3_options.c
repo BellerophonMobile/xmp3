@@ -151,7 +151,7 @@ bool xmp3_options_get_ssl(const struct xmp3_options *options) {
 
 bool xmp3_options_set_keyfile(struct xmp3_options *options,
                               const char *keyfile) {
-    return copy_string(options->keyfile, keyfile);
+    return copy_string(&options->keyfile, keyfile);
 }
 
 const char* xmp3_options_get_keyfile(const struct xmp3_options *options) {
@@ -160,7 +160,7 @@ const char* xmp3_options_get_keyfile(const struct xmp3_options *options) {
 
 bool xmp3_options_set_certificate(struct xmp3_options *options,
                                   const char *certfile) {
-    return copy_string(options->certfile, certfile);
+    return copy_string(&options->certfile, certfile);
 }
 
 const char* xmp3_options_get_certificate(const struct xmp3_options *options) {
@@ -169,7 +169,7 @@ const char* xmp3_options_get_certificate(const struct xmp3_options *options) {
 
 bool xmp3_options_set_server_name(struct xmp3_options *options,
                                   const char *name) {
-    return copy_string(options->server_name, name);
+    return copy_string(&options->server_name, name);
 }
 
 const char* xmp3_options_get_server_name(const struct xmp3_options *options) {
@@ -212,12 +212,13 @@ static bool read_int(const char *arg, long int *output) {
     return (errno != ERANGE) && (*endptr == '\0');
 }
 
-static bool copy_string(char *dest, const char *src) {
-    if (dest != NULL) {
-        free(dest);
+/** Simple string copy, freeing original if neccessary. */
+static bool copy_string(char **dest, const char *src) {
+    if (*dest != NULL) {
+        free(*dest);
     }
-    dest = strdup(src);
-    check_mem(dest);
+    *dest = strdup(src);
+    check_mem(*dest);
     return true;
 }
 
