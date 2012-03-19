@@ -62,14 +62,10 @@ struct xmp3_options* xmp3_options_new(void) {
     options->buffer_size = DEFAULT_BUFFER_SIZE;
 
     options->use_ssl = DEFAULT_USE_SSL;
-    options->keyfile = strdup(DEFAULT_KEYFILE);
-    check_mem(options->keyfile);
 
-    options->certfile = strdup(DEFAULT_CERTFILE);
-    check_mem(options->certfile);
-
-    options->server_name = strdup(DEFAULT_SERVER_NAME);
-    check_mem(options->server_name);
+    STRDUP_CHECK(options->keyfile, DEFAULT_KEYFILE);
+    STRDUP_CHECK(options->certfile, DEFAULT_CERTFILE);
+    STRDUP_CHECK(options->server_name, DEFAULT_SERVER_NAME);
 
     options->search_path = tj_searchpathlist_create();
     check_mem(options->search_path);
