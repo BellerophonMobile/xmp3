@@ -218,8 +218,6 @@ static bool init_socket(struct xmpp_server *server,
                         const struct xmp3_options *options);
 static bool init_ssl(struct xmpp_server *server,
                      const struct xmp3_options *options);
-static bool init_components(struct xmpp_server *server,
-                            const struct xmp3_options *options);
 
 static void connect_client(struct event_loop *loop, int fd, void *data);
 static void read_client(struct event_loop *loop, int fd, void *data);
@@ -266,8 +264,18 @@ struct xmpp_server* xmpp_server_new(struct event_loop *loop,
     }
 
     check(init_socket(server, options), "Unable to initialize socket.");
-    check(init_components(server, options),
-          "Unable to initialize components.");
+
+    // Set up inital stanza and IQ routes.
+    xmpp_server_add_stanza_route(server, server->jid,
+                                 xmpp_core_route_server, NULL);
+    xmpp_server_add_iq_route(server, XMPP_IQ_SESSION_NS,
+                             xmpp_im_iq_session, NULL);
+    xmpp_server_add_iq_route(server, XMPP_IQ_DISCO_ITEMS_NS,
+                             xmpp_im_iq_disco_items, NULL);
+    xmpp_server_add_iq_route(server, XMPP_IQ_DISCO_INFO_NS,
+                             xmpp_im_iq_disco_info, NULL);
+    xmpp_server_add_iq_route(server, XMPP_IQ_ROSTER_NS,
+                             xmpp_im_iq_roster, NULL);
 
     // Register the event handler so we can get notified of new connections.
     event_register_callback(loop, server->fd, connect_client, server);
@@ -613,21 +621,6 @@ error:
         server->ssl_context = NULL;
     }
     return false;
-}
-
-static bool init_components(struct xmpp_server *server,
-                            const struct xmp3_options *options) {
-    xmpp_server_add_stanza_route(server, server->jid,
-                                 xmpp_core_route_server, NULL);
-    xmpp_server_add_iq_route(server, XMPP_IQ_SESSION_NS,
-                             xmpp_im_iq_session, NULL);
-    xmpp_server_add_iq_route(server, XMPP_IQ_DISCO_ITEMS_NS,
-                             xmpp_im_iq_disco_items, NULL);
-    xmpp_server_add_iq_route(server, XMPP_IQ_DISCO_INFO_NS,
-                             xmpp_im_iq_disco_info, NULL);
-    xmpp_server_add_iq_route(server, XMPP_IQ_ROSTER_NS,
-                             xmpp_im_iq_roster, NULL);
-    return true;
 }
 
 static void connect_client(struct event_loop *loop, int fd, void *data) {
