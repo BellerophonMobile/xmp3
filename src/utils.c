@@ -5,9 +5,12 @@
  * @file
  */
 
+#include <errno.h>
 #include <stdlib.h>
+#include <string.h>
 #include <uuid/uuid.h>
 
+#include "log.h"
 #include "utils.h"
 
 char* make_uuid(void) {
@@ -16,6 +19,24 @@ char* make_uuid(void) {
     char *rv = malloc(37 * sizeof(char));
     uuid_unparse(uuid, rv);
     return rv;
+}
+
+bool read_int(const char *arg, long int *output) {
+    // Clear errno so we can check if strtol fails.
+    errno = 0;
+
+    char *endptr;
+    *output = strtol(arg, &endptr, 10);
+
+    // We want to make sure we read the whole string.
+    return (errno != ERANGE) && (*endptr == '\0');
+}
+
+void copy_string(char **dest, const char *src) {
+    if (*dest != NULL) {
+        free(*dest);
+    }
+    STRDUP_CHECK(*dest, src);
 }
 
 /*

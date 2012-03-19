@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <stdbool.h>
+
 /**
  * Allocate and copy a string.
  *
@@ -39,6 +41,19 @@
  * Allocate and return a null-terminated string with a UUID.
  */
 char* make_uuid(void);
+
+/**
+ * Converts a string to an integer with error checking.
+ *
+ * @param[in]  arg    String value to convert.
+ * @param[out] output Where to write the converted integer.
+ * @return true if string is valid and conversion is successful, false
+ *              otherwise.
+ */
+bool read_int(const char *arg, long int *output);
+
+/** Simple string copy, freeing original if neccessary. */
+void copy_string(char **dest, const char *src);
 
 /*
  * These functions are from libb64, found at: http://libb64.sourceforge.net/
