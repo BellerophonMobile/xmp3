@@ -185,10 +185,7 @@ const char* xmpp_stanza_uri(const struct xmpp_stanza *stanza) {
 }
 
 void xmpp_stanza_copy_uri(struct xmpp_stanza *stanza, const char *uri) {
-    if (stanza->uri) {
-        free(stanza->uri);
-    }
-    STRDUP_CHECK(stanza->uri, uri);
+    copy_string(&stanza->uri, uri);
 }
 
 const char* xmpp_stanza_prefix(const struct xmpp_stanza *stanza) {
@@ -196,10 +193,7 @@ const char* xmpp_stanza_prefix(const struct xmpp_stanza *stanza) {
 }
 
 void xmpp_stanza_copy_prefix(struct xmpp_stanza *stanza, const char *prefix) {
-    if (stanza->prefix) {
-        free(stanza->prefix);
-    }
-    STRDUP_CHECK(stanza->prefix, prefix);
+    copy_string(&stanza->prefix, prefix);
 }
 
 const char* xmpp_stanza_name(const struct xmpp_stanza *stanza) {
@@ -207,10 +201,7 @@ const char* xmpp_stanza_name(const struct xmpp_stanza *stanza) {
 }
 
 void xmpp_stanza_copy_name(struct xmpp_stanza *stanza, const char *name) {
-    if (stanza->name) {
-        free(stanza->name);
-    }
-    STRDUP_CHECK(stanza->name, name);
+    copy_string(&stanza->name, name);
 }
 
 const char* xmpp_stanza_attr(const struct xmpp_stanza *stanza,

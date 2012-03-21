@@ -6,7 +6,6 @@
  */
 
 #include <arpa/inet.h>
-#include <errno.h>
 #include <limits.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -67,8 +66,6 @@ struct xmp3_options {
 };
 
 // Forward declarations
-static bool read_int(const char *arg, long int *output);
-static bool copy_string(char **dest, const char *src);
 static int ini_handler(void *data, const char *section, const char *name,
                         const char *value);
 
@@ -173,7 +170,8 @@ bool xmp3_options_get_ssl(const struct xmp3_options *options) {
 
 bool xmp3_options_set_keyfile(struct xmp3_options *options,
                               const char *keyfile) {
-    return copy_string(&options->keyfile, keyfile);
+    copy_string(&options->keyfile, keyfile);
+    return true;
 }
 
 const char* xmp3_options_get_keyfile(const struct xmp3_options *options) {
@@ -182,7 +180,8 @@ const char* xmp3_options_get_keyfile(const struct xmp3_options *options) {
 
 bool xmp3_options_set_certificate(struct xmp3_options *options,
                                   const char *certfile) {
-    return copy_string(&options->certfile, certfile);
+    copy_string(&options->certfile, certfile);
+    return true;
 }
 
 const char* xmp3_options_get_certificate(const struct xmp3_options *options) {
@@ -191,7 +190,8 @@ const char* xmp3_options_get_certificate(const struct xmp3_options *options) {
 
 bool xmp3_options_set_server_name(struct xmp3_options *options,
                                   const char *name) {
-    return copy_string(&options->server_name, name);
+    copy_string(&options->server_name, name);
+    return true;
 }
 
 const char* xmp3_options_get_server_name(const struct xmp3_options *options) {
@@ -214,35 +214,6 @@ error:
 
 struct xmp3_modules* xmp3_options_get_modules(struct xmp3_options *options) {
     return options->modules;
-}
-
-/**
- * Converts a string to an integer with error checking.
- *
- * @param[in]  arg    String value to convert.
- * @param[out] output Where to write the converted integer.
- * @return true if string is valid and conversion is successful, false
- *              otherwise.
- */
-static bool read_int(const char *arg, long int *output) {
-    // Clear errno so we can check if strtol fails.
-    errno = 0;
-
-    char *endptr;
-    *output = strtol(arg, &endptr, 10);
-
-    // We want to make sure we read the whole string.
-    return (errno != ERANGE) && (*endptr == '\0');
-}
-
-/** Simple string copy, freeing original if neccessary. */
-static bool copy_string(char **dest, const char *src) {
-    if (*dest != NULL) {
-        free(*dest);
-    }
-    *dest = strdup(src);
-    check_mem(*dest);
-    return true;
 }
 
 /** Callback used by config file parser. */

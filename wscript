@@ -97,6 +97,14 @@ def build(ctx):
     if ctx.env.target != 'darwin':
         libxmp3.use += ['UUID']
 
+    ctx.program(
+        target = 'xmp3',
+        source = [
+            'src/main.c',
+        ],
+        use = ['libxmp3'],
+    )
+
     # Don't need to link modules with libxmp3, bind symbols at runtime.
     ctx.shlib(
         target = 'xep_muc',
@@ -104,12 +112,10 @@ def build(ctx):
         source = ['src/xep_muc.c'],
     )
 
-    ctx.program(
-        target = 'xmp3',
-        source = [
-            'src/main.c',
-        ],
-        use = ['libxmp3'],
+    ctx.shlib(
+        target = 'xmp3_multicast',
+        includes = libxmp3.includes,
+        source = ['src/xmp3_multicast.c'],
     )
 
 import pprint
