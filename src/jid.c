@@ -15,9 +15,6 @@
 #define MAX_JIDSTR_LEN 3071
 #define MAX_PART_LEN 1023
 
-// Forward declarations
-static void copy_jid_field(char **jidfield, const char *arg);
-
 /** Represents a JID (local@domain/resource). */
 struct jid {
     char *local;
@@ -212,7 +209,7 @@ const char* jid_local(const struct jid *jid) {
 }
 
 void jid_set_local(struct jid *jid, const char *localpart) {
-    copy_jid_field(&jid->local, localpart);
+    copy_string(&jid->local, localpart);
 }
 
 const char* jid_domain(const struct jid *jid) {
@@ -220,7 +217,7 @@ const char* jid_domain(const struct jid *jid) {
 }
 
 void jid_set_domain(struct jid *jid, const char *domainpart) {
-    copy_jid_field(&jid->domain, domainpart);
+    copy_string(&jid->domain, domainpart);
 }
 
 const char* jid_resource(const struct jid *jid) {
@@ -228,15 +225,5 @@ const char* jid_resource(const struct jid *jid) {
 }
 
 void jid_set_resource(struct jid *jid, const char *resourcepart) {
-    copy_jid_field(&jid->resource, resourcepart);
-}
-
-/** Convenience function to copy a string, and freeing the first. */
-static void copy_jid_field(char **jidfield, const char *arg) {
-    free(*jidfield);
-    if (arg == NULL) {
-        *jidfield = NULL;
-    } else {
-        STRNDUP_CHECK(*jidfield, arg, MAX_PART_LEN);
-    }
+    copy_string(&jid->resource, resourcepart);
 }
