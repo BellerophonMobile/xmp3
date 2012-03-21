@@ -1,0 +1,85 @@
+#!/bin/sh -eu
+#
+# Copyright 2008 Mattias Norrby
+#
+# This file is part of Test Dept..
+#
+# Test Dept. is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Test Dept. is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Test Dept..  If not, see <http://www.gnu.org/licenses/>.
+#
+# As a special exception, you may use output from this script file
+# that stems from this file without restriction as part of test cases.
+# Specifically, if other programs use output from this script for
+# constructing test-cases the output source code that stems from
+# templates in this file does not by itself cause the resulting
+# executable to be covered by the GNU General Public License.  This
+# exception does not however invalidate any other reasons why the
+# executable file might be covered by the GNU General Public License.
+
+INVOCATION="`basename ${0}`"
+PROTOTYPE="${1:-}"
+
+usage() {
+    RETVAL="$1"
+    echo "usage: $INVOCATION [prototype file]"
+    echo "      ($INVOCATION reads prototypes and"
+    echo "      outputs proxy C code for each prototype)"
+    exit $RETVAL
+}
+
+err() {
+    MSG="$1"
+    echo "$INVOCATION: $MSG" >&2
+    usage 2
+}
+
+case "$PROTOTYPE" in
+    -h|--help)
+	usage 0
+	;;
+esac
+
+if [ "$PROTOTYPE" != "" ]; then
+ [ -f "$PROTOTYPE" ] || err "no readable file named \"$PROTOTYPE\""
+fi
+
+# sed line #1 makes strings like "return_value:function_name:argument_list"
+# the awk line makes proxy c-code for changing functions
+# sed line #2 removes and adds argument names from argument lists when necessary
+echo "#include <stdlib.h>"
+sed '/^.[*]/d; /^$/d; s/^[ 	\n]*\([A-Za-z_0-9]*[ 	\n*]*\)\([A-Za-z_0-9]*\)[ 	\n]*([ 	\n]*\([^)]*\))[ 	\n]*;.*$/\1:\2:\3:/g' $PROTOTYPE |\
+awk -F: '
+/#include/ {print ; next }
+$2 == "" { next }
+{
+  function_name = $2
+  return_value = $1
+  arguments = $3
+  function_variable = "test_dept_" function_name
+  function_type = function_variable "_fun"
+  print "typedef " return_value " (*" function_type ")(" arguments ");"
+  print "static " function_type " " function_variable " = NULL;"
+  print "void " function_variable "_set(" function_type " f) {"
+  print "    " function_variable " = f;"
+  print "}"
+  print return_value " " function_name "_test_dept_proxy(" arguments ") {"
+  print "    if (" function_variable " != NULL)"
+  print "         return " function_variable "(" arguments ");"
+  print "    else"
+  print "         return " function_name "(" arguments ");"
+  print "}"
+}
+' | sed '
+ /^[	\n ]*typedef/s/\([^ *(,][^ *(,]*\)\([ 	\n*][ 	\n*]*\)[A-Za-z_0-9]*\([),]\)/\1\2\3/g
+ /^[	\n ]*return/s/[A-Za-z_0-9][A-Za-z_0-9 ]*[ *][ *]*\([A-Za-z_0-9][A-Za-z_0-9]*\)\([),]\)/\1\2/g
+'

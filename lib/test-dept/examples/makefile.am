@@ -1,0 +1,21 @@
+EXAMPLE_DIRS=assertion_examples example_project not_recommended_old_c_style prefixed_project
+TEST_DIRS=$(addprefix _check/,$(EXAMPLE_DIRS))
+
+$(TEST_DIRS):
+	mkdir -p $@
+
+TEST_STAMPS=$(addprefix .checked_,$(EXAMPLE_DIRS))
+REL_SRC=../../$(top_srcdir)/src
+MAKE:=env PATH=$(REL_SRC):$$PATH $(MAKE) -I $(REL_SRC)/include -I $(REL_SRC)
+all:	$(TEST_DIRS)
+
+.checked_%: % $(TEST_DIRS)
+	cd _check/$(<F) && $(MAKE) CPPFLAGS="-I$(REL_SRC) -I../../$< -I."\
+	 VPATH=../../$< -f ../../$</Makefile check
+
+check:	$(TEST_STAMPS)
+mostlyclean-local:
+	rm -rf $(TEST_DIRS) _check .checked*
+
+distclean::
+	rm -rf makefile $(TEST_DIRS)

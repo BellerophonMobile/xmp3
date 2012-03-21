@@ -1,0 +1,37 @@
+.TH TEST_DEPT 1 "October 2010" "" "Test Dept."
+.SH NAME
+test_dept \- run all test cases from a Test Dept. test suite
+.SH SYNOPSIS
+.B test_dept
+.RI [ suite ]...
+.br
+.SH DESCRIPTION
+.\" Add any additional description here
+The test_dept command is a default test runner for Test Dept. test suites.
+
+.SH RETURN VALUES
+Returns the cumulative number of failures in a suite, normally 0 or 1.
+
+.SH EXAMPLES
+.nf
+test_dept /path/to/my/test_dept_test_suite
+.fi
+
+.SH AUTHOR
+M Norrby <norrby+test-dept@lysator.liu.se>
+
+.SH "REPORTING BUGS"
+Please enter bugs as issues in <http://code.google.com/p/test-dept/issues/list>
+
+.SH COPYRIGHT
+Copyright \(co 2008--2010 Mattias Norrby
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.
+.br
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+
+.SH SEE ALSO
+.IR build_main_from_symbols (1),
+.IR sym2asm (1),
+.IR sym2repl (1)
+.IR test-dept (3).
