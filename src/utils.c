@@ -33,10 +33,23 @@ bool read_int(const char *arg, long int *output) {
 }
 
 void copy_string(char **dest, const char *src) {
-    if (*dest != NULL) {
-        free(*dest);
+    if (src == NULL) {
+        if (*dest != NULL) {
+            free(*dest);
+            *dest = NULL;
+        }
+        return;
     }
-    STRDUP_CHECK(*dest, src);
+
+    if (*dest != NULL) {
+        int size = strlen(src) + 1;
+        char *new_dest = realloc(dest, size);
+        check_mem(new_dest);
+        *dest = new_dest;
+        memcpy(*dest, src, size);
+    } else {
+        STRDUP_CHECK(*dest, src);
+    }
 }
 
 /*
