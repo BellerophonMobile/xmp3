@@ -106,6 +106,10 @@ char* jid_to_str(const struct jid *jid) {
         utstring_printf(&strjid, "/%s", jid->resource);
     }
 
+    /* Explicitly using utstring_init instead of utstring_new cleans up the
+     * UT_string structure when the function exits.  Since we never call
+     * utstring_done or utstring_free, the actual string being created inside
+     * the structure is never freed, so this does not leak memory. */
     return utstring_body(&strjid);
 }
 
