@@ -272,6 +272,7 @@ error:
 static bool handle_sasl_plain(struct xmpp_stanza *stanza,
                               struct xmpp_parser *parser, void *data) {
     struct xmpp_client *client = (struct xmpp_client*)data;
+    char *plaintext = NULL;
 
     log_info("SASL plain authentication");
 
@@ -284,17 +285,11 @@ static bool handle_sasl_plain(struct xmpp_stanza *stanza,
     check(mechanism != NULL && strcmp(mechanism, AUTH_MECHANISM_PLAIN) == 0,
           "Unexpected authentication mechanism.");
 
-    struct base64_decodestate state;
-    base64_init_decodestate(&state);
-
-    char plaintext[PLAIN_AUTH_BUFFER_SIZE];
-    memset(plaintext, 0, PLAIN_AUTH_BUFFER_SIZE);
-
     check(xmpp_stanza_data_length(stanza) * 0.75 <= PLAIN_AUTH_BUFFER_SIZE,
           "Auth plaintext buffer overflow");
 
-    base64_decode_block(xmpp_stanza_data(stanza),
-                        xmpp_stanza_data_length(stanza), plaintext, &state);
+    plaintext = base64_decode(xmpp_stanza_data(stanza),
+                              xmpp_stanza_data_length(stanza));
 
     char *authzid = plaintext;
     char *authcid = memchr(authzid, '\0', PLAIN_AUTH_BUFFER_SIZE) + 1;
@@ -331,9 +326,14 @@ static bool handle_sasl_plain(struct xmpp_stanza *stanza,
     // Go to step 7, the client needs to send us a new stream header.
     xmpp_parser_new_stream(parser);
     xmpp_parser_set_handler(parser, stream_bind_start);
+
+    free(plaintext);
     return true;
 
 error:
+    if (plaintext != NULL) {
+        free(plaintext);
+    }
     return false;
 }
 

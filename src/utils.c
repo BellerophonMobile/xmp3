@@ -13,6 +13,25 @@
 #include "log.h"
 #include "utils.h"
 
+enum base64_decodestep {
+    base64_step_a,
+    base64_step_b,
+    base64_step_c,
+    base64_step_d,
+};
+
+struct base64_decodestate {
+    enum base64_decodestep step;
+    char plainchar;
+};
+
+/* Forward declarations */
+static void base64_init_decodestate(struct base64_decodestate *state_in);
+static int base64_decode_value(char value_in);
+static int base64_decode_block(const char *code_in, const int length_in,
+                               char *plaintext_out,
+                               struct base64_decodestate *state_in);
+
 char* make_uuid(void) {
     uuid_t uuid;
     uuid_generate(uuid);
@@ -52,6 +71,20 @@ void copy_string(char **dest, const char *src) {
     }
 }
 
+char* base64_decode(const char *input, int length) {
+    int plain_len = length * 0.75 + 1;
+    char *plaintext = malloc(plain_len * sizeof(char));
+    check_mem(plaintext);
+
+    struct base64_decodestate state;
+    base64_init_decodestate(&state);
+    base64_decode_block(input, length, plaintext, &state);
+
+    plaintext[plain_len] = '\0';
+
+    return plaintext;
+}
+
 /*
  * These functions are from libb64, found at: http://libb64.sourceforge.net/
  *
@@ -60,13 +93,12 @@ void copy_string(char **dest, const char *src) {
  * This is part of the libb64 project, and has been placed in the public
  * domain. For details, see http://sourceforge.net/projects/libb64
  */
-
-void base64_init_decodestate(struct base64_decodestate *state_in) {
+static void base64_init_decodestate(struct base64_decodestate *state_in) {
     state_in->step = base64_step_a;
     state_in->plainchar = 0;
 }
 
-int base64_decode_value(char value_in) {
+static int base64_decode_value(char value_in) {
     static const char decoding[] = {62, -1, -1, -1, 63, 52, 53, 54, 55, 56, 57,
         58, 59, 60, 61, -1, -1, -1, -2, -1, -1, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8,
         9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, -1,
@@ -80,9 +112,9 @@ int base64_decode_value(char value_in) {
     return decoding[(int)value_in];
 }
 
-int base64_decode_block(const char *code_in, const int length_in,
-        char *plaintext_out,
-        struct base64_decodestate *state_in) {
+static int base64_decode_block(const char *code_in, const int length_in,
+                               char *plaintext_out,
+                               struct base64_decodestate *state_in) {
     const char *codechar = code_in;
     char *plainchar = plaintext_out;
     char fragment;
