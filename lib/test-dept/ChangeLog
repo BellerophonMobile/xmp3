@@ -1,0 +1,14 @@
+2010-11-20  M Norrby <norrby+test-dept@lysator.liu.se>
+
+	Make sure src/test-dept.mk is part of distribution.
+	Use mostlyclean-local targets.
+
+2010-10-08  M Norrby <norrby+test-dept@lysator.liu.se>
+
+	Do not replace stdout/stderr symbols in binary
+	Assert macros determine types automatically
+	Build explicitly using GNU Make built in rules
+	Support C99
+	Error message when substituting unused function
+	New string equality assertion macro
+	Test case stdout output can be seen when run

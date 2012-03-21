@@ -1,0 +1,19 @@
+include_BUILDDIR=$(builddir)/include
+dist_bin_SCRIPTS=build_main_from_symbols build_c_proxy build_c_proxies	\
+ build_stub_headers sym2repl csym2repl test_dept sym2asm		\
+ sym2asm_i386.awk sym2asm_i686.awk sym2asm_sun4u.awk sym2asm_x86_64.awk
+include_HEADERS=test-dept-proxies.mk	\
+ test-dept-cstubs.mk test-dept-rudimentary.mk test-dept.h		\
+ test-dept-definitions.mk
+nodist_include_HEADERS=$(include_BUILDDIR)/test-dept.mk 
+man_MANS=build_main_from_symbols.1 sym2asm.1 sym2repl.1 test_dept.1	\
+test-dept.3
+
+$(include_BUILDDIR)/%.mk: %.mk
+	mkdir -p $(@D) &&\
+        sed 's/^# \(LDFLAGS_UNRESOLVED?=\)/\1@LDFLAGS_UNRESOLVED@/' $< >$@
+
+mostlyclean-local:
+	rm -f $(nodist_include_HEADERS)
+
+EXTRA_DIST=$(man_MANS) test-dept.mk

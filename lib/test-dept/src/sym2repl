@@ -1,0 +1,47 @@
+#!/bin/sh -eu
+#
+# Copyright 2008--2010 Mattias Norrby
+#
+# This file is part of Test Dept..
+#
+# Test Dept. is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Test Dept. is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Test Dept..  If not, see <http://www.gnu.org/licenses/>.
+
+INVOCATION="`basename ${0}`"
+SUT_SYMBOLS_FILE="${1:-}"
+
+usage() {
+    RETVAL="$1"
+    echo "usage: $INVOCATION [symbols file]"
+    echo "      ($INVOCATION reads nm(1) output and outputs replacement symbols"
+    echo "      for repointing an object file to point to assembly code proxies)"
+    exit $RETVAL
+}
+
+err() {
+    MSG="$1"
+    echo "$INVOCATION: $MSG" >&2
+    usage 2
+}
+
+case "$SUT_SYMBOLS_FILE" in
+    -h|--help)
+	usage 0
+	;;
+esac
+
+if [ "${SUT_SYMBOLS_FILE:--}" != "-" ]; then
+ [ -f "$SUT_SYMBOLS_FILE" ] || err "no readable file named \"$SUT_SYMBOLS_FILE\""
+fi
+
+awk '{print $NF " " $NF "_test_dept_proxy" }' "${SUT_SYMBOLS_FILE:--}"

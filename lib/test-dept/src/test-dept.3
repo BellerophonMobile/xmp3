@@ -1,0 +1,142 @@
+.TH TEST-DEPT 3 "October 2010" "" "Test Dept."
+.SH NAME
+replace_function \- replace calls to function in object file under test
+.br
+restore_function \- restore calls to function in object file under test
+.br
+assert_true, assert_false, assert_equals, assert_not_equals, assert_string_equals, assert_pointer_equals \- assert condition or print error
+.SH SYNOPSIS
+.B #include <test-dept.h>
+.sp
+.BI "replace_function(void *orig_fun, void *replacement_fun);"
+.br
+.BI "restore_function(void *orig_fun);"
+.br
+.BI "assert_true(" truth\ value ");"
+.br
+.BI "assert_false(" truth\ value ");"
+.br
+.BI "assert_equals(" expected\ value ", " actual\ value ");"
+.br
+.BI "assert_not_equals(" value ", " actual\ value ");"
+.br
+.BI "assert_pointer_equals(void *expected, void *actual);"
+.br
+.BI "assert_string_equals(string expected, string actual);"
+
+.SH DESCRIPTION
+.\" Add any additional description here
+The
+.B replace_function()
+function makes certain the
+.I object file under test
+(hereby called
+.BR sut.o )
+refers to
+.B replacement_fun()
+instead of
+.B orig_fun()
+when excercised by a Test Dept. test case.
+
+The
+.B restore_function()
+function restores the original function used by
+.B sut.o
+to its original function.
+
+The
+.B assert_true()
+and
+.B assert_false()
+functions simply check truth values by applying an
+.IR if() -clause
+around the
+.I truth value
+provided as argument.
+
+Both
+.B assert_equals()
+and
+.B assert_not_equals()
+perform simple equality checks using
+.I ==
+and
+.IR != .
+They do not do any type-checking and can thus not print any error
+messages containing expected values. For more elaborate error
+printouts, some of the type-specific functions below are recommended.
+
+The
+.BR assert_equals_int() ,
+.BR assert_equals_hex() ,
+.BR assert_equals_short() ,
+.BR assert_equals_long() ,
+.BR assert_equals_char() ,
+.BR assert_equals_float() ,
+.BR assert_equals_double() ,
+.BR assert_equals_string()
+functions all compare the actual value to the expected value
+using
+.IR == .
+Before printing an error it casts the actual value to the expected
+type to avoid type errors in printf().  None of the functions do any
+type-checking.  In reality they are macros so you can actually provide
+anything.  Be careful!
+
+The whole family of
+.BR assert_ functions
+all increase a test suite global error counter if the assertion
+does not work. They also print error information on standard error.
+
+.SH NOTES
+As an extra feature the preprocessor macro
+.B TEST_DEPT_USE_PREFIX
+can be defined compile-time which results in all of
+the functions being renamed
+.I test_dept_assert_...
+instead of
+.IR assert_... .
+This feature is provided for name space collision avoidance purposes.
+
+.SH AUTHOR
+M Norrby <norrby+test-dept@lysator.liu.se>
+
+.SH EXAMPLES
+.nf
+/* foo_test.c */
+#include <test-dept.h>
+ 
+extern int value;
+ 
+void test_add_one() {
+  int foo = value + 1;
+  assert_equals(4, foo);
+}
+
+void test_init_value() {
+  assert_equals(3, value);
+}
+ 
+static void setup() {
+  value = 3;
+}
+.fi
+
+.SH AUTHOR
+M Norrby <norrby+test-dept@lysator.liu.se>
+
+.SH "REPORTING BUGS"
+Please enter bugs as issues in <http://code.google.com/p/test-dept/issues/list>
+
+.SH COPYRIGHT
+Copyright \(co 2008--2010 Mattias Norrby
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.
+.br
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+
+.SH SEE ALSO
+.IR build_main_from_symbols (1),
+.IR sym2asm (1),
+.IR sym2repl (1),
+.IR test_dept (1).
