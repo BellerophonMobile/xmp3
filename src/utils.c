@@ -62,7 +62,7 @@ void copy_string(char **dest, const char *src) {
 
     if (*dest != NULL) {
         int size = strlen(src) + 1;
-        char *new_dest = realloc(dest, size);
+        char *new_dest = realloc(*dest, size);
         check_mem(new_dest);
         *dest = new_dest;
         memcpy(*dest, src, size);
