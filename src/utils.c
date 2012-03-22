@@ -80,7 +80,7 @@ char* base64_decode(const char *input, int length) {
     base64_init_decodestate(&state);
     base64_decode_block(input, length, plaintext, &state);
 
-    plaintext[plain_len] = '\0';
+    plaintext[plain_len - 1] = '\0';
 
     return plaintext;
 }
