@@ -220,6 +220,7 @@ static bool local_stanza_handler(struct xmpp_stanza *stanza,
 
     struct xmpp_client *client = xmpp_server_find_client(mcast->server,
                                                          from_jid);
+    jid_del(from_jid);
     if (client == NULL) {
         debug("Ignoring stanza from non-local client.");
         return true;
@@ -231,6 +232,7 @@ static bool local_stanza_handler(struct xmpp_stanza *stanza,
     ssize_t num_sent = sendto(mcast->sock, stanza_data, stanza_length, 0,
                               (struct sockaddr*)&mcast->send_addr,
                               sizeof(mcast->send_addr));
+    free(stanza_data);
     check(num_sent > 0, "Failed to send data on multicast socket.");
     check((size_t)num_sent == stanza_length,
           "Sent short message: %zd/%zd bytes", num_sent, stanza_length);
