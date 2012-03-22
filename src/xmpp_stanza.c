@@ -17,25 +17,6 @@
 
 #include "xmpp_stanza.h"
 
-/** Convenience macro to build a key for the attribute hash table.
- *
- * This is to take care of attributes that have namespace qualifiers.
- */
-#define MAKE_KEY(K, N, U) \
-    /* + 1 for null terminator */ \
-    int LEN = strlen(N) + 1; \
-    if (U) { \
-        /* + 1 for space separator */ \
-        LEN += strlen(U) + 1; \
-    } \
-    char K[LEN]; \
-    K[0] = '\0'; \
-    if (U) { \
-        strcat(K, U); \
-        strncat(K, &XMPP_PARSER_SEPARATOR, 1); \
-    } \
-    strcat(K, N)
-
 const char *XMPP_STANZA_NS_CLIENT = "jabber:client";
 const char *XMPP_STANZA_NS_STANZA = "urn:ietf:params:xml:ns:xmpp-stanzas";
 
@@ -77,6 +58,7 @@ struct attribute {
 static void parse_ns(const char *ns_name, char **name, char **prefix, char **uri);
 static void stanza_tostr(struct xmpp_stanza *stanza, UT_string *str);
 static void attribute_del(struct attribute *attr);
+static char* make_key(const char *name, const char *uri);
 
 struct xmpp_stanza {
     /** The name of this tag. */
@@ -123,8 +105,7 @@ struct xmpp_stanza* xmpp_stanza_new(const char *ns_name, const char **attrs) {
             parse_ns(attrs[i], &attr->name, &attr->prefix, &attr->uri);
             STRDUP_CHECK(attr->value, attrs[i + 1]);
 
-            MAKE_KEY(key, attr->name, attr->uri);
-            STRDUP_CHECK(attr->key, key);
+            attr->key = make_key(attr->name, attr->uri);
             HASH_ADD_KEYPTR(hh, stanza->attributes, attr->key,
                             strlen(attr->key), attr);
         }
@@ -217,8 +198,10 @@ const char* xmpp_stanza_attr(const struct xmpp_stanza *stanza,
 
 const char* xmpp_stanza_ns_attr(const struct xmpp_stanza *stanza,
                                 const char *name, const char *uri) {
-    MAKE_KEY(key, name, uri);
-    return xmpp_stanza_attr(stanza, key);
+    char *key = make_key(name, uri);
+    const char *value = xmpp_stanza_attr(stanza, key);
+    free(key);
+    return value;
 }
 
 void xmpp_stanza_set_attr(struct xmpp_stanza *stanza, const char *name,
@@ -250,14 +233,14 @@ void xmpp_stanza_set_attr(struct xmpp_stanza *stanza, const char *name,
 
 void xmpp_stanza_set_ns_attr(struct xmpp_stanza *stanza, const char *name,
                             const char *uri, const char *prefix, char *value) {
-    MAKE_KEY(key, name, uri);
+    char *key = make_key(name, uri);
     xmpp_stanza_set_attr(stanza, key, value);
     if (value != NULL) {
         struct attribute *attr;
         HASH_FIND_STR(stanza->attributes, key, attr);
         if (attr == NULL) {
             log_err("Setting uri/prefix of nonexistant attribute, this shouldn't happen!");
-            return;
+            goto done;
         }
         if (uri) {
             STRDUP_CHECK(attr->uri, uri);
@@ -266,6 +249,8 @@ void xmpp_stanza_set_ns_attr(struct xmpp_stanza *stanza, const char *name,
             STRDUP_CHECK(attr->prefix, prefix);
         }
     }
+done:
+    free(key);
 }
 
 void xmpp_stanza_copy_attr(struct xmpp_stanza *stanza, const char *name,
@@ -426,6 +411,39 @@ static void stanza_tostr(struct xmpp_stanza *stanza, UT_string *str) {
     } else {
         utstring_printf(str, "/>");
     }
+}
+
+/**
+ * Convenience function to build a key for the attribute hash table.
+ *
+ * This is to take care of attributes that have namespace qualifiers.
+ */
+static char* make_key(const char *name, const char *uri) {
+    int name_len = strlen(name);
+
+    /* +1 for null terminator. */
+    int key_len = name_len + 1;
+
+    int uri_len = 0;
+    if (uri != NULL) {
+        uri_len = strlen(uri);
+        /* +1 for space separator. */
+        key_len += uri_len + 1;
+    }
+
+    char *key = malloc(key_len * sizeof(char));
+    check_mem(key);
+
+    //char *tmp = key;
+    if (uri != NULL) {
+        memcpy(key, uri, uri_len);
+        key[uri_len] = XMPP_PARSER_SEPARATOR;
+        memcpy(key + uri_len + 1, name, name_len);
+    } else {
+        memcpy(key, name, name_len);
+    }
+    key[key_len - 1] = '\0';
+    return key;
 }
 
 static void attribute_del(struct attribute *attr) {
