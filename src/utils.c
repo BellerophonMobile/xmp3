@@ -54,9 +54,10 @@ static int base64_decode_block(const char *code_in, const int length_in,
                                struct base64_decodestate *state_in);
 
 char* make_uuid(void) {
+    char *rv = malloc(37 * sizeof(char));
+    check_mem(rv);
     uuid_t uuid;
     uuid_generate(uuid);
-    char *rv = malloc(37 * sizeof(char));
     uuid_unparse(uuid, rv);
     return rv;
 }
