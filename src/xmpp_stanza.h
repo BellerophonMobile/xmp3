@@ -189,7 +189,12 @@ struct xmpp_stanza* xmpp_stanza_next(struct xmpp_stanza *stanza);
 /** Returns a pointer to the previous sibling stanza. */
 struct xmpp_stanza* xmpp_stanza_prev(struct xmpp_stanza *stanza);
 
-/** Appends a child stanza. */
+/**
+ * Appends a child stanza.
+ *
+ * NOTE: A stanza instance can only be the child of one stanza.  Appending
+ * a child to another parent will remove it from the original parent.
+ */
 void xmpp_stanza_append_child(struct xmpp_stanza *stanza,
                               struct xmpp_stanza *child);
 

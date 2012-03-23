@@ -338,6 +338,9 @@ struct xmpp_stanza* xmpp_stanza_prev(struct xmpp_stanza *stanza) {
 
 void xmpp_stanza_append_child(struct xmpp_stanza *stanza,
                               struct xmpp_stanza *child) {
+    if (child->parent != NULL) {
+        xmpp_stanza_remove_child(child->parent, child);
+    }
     DL_APPEND(stanza->children, child);
     child->parent = stanza;
 }
