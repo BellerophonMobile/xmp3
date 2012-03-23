@@ -44,12 +44,14 @@ static void* always_failing_calloc() {
     return NULL;
 }
 
+/** Tests return from jid_new when calloc fails. */
 void test_new_bad_malloc(void) {
     replace_function(&calloc, &always_failing_calloc);
     struct jid* jid = jid_new();
     assert_pointer_equals(NULL, jid);
 }
 
+/** Tests a normal full JID. */
 void test_from_str1(void) {
     struct jid* jid = jid_new_from_str("local@domain/resource");
     assert_string_equals("local", jid_local(jid));
@@ -58,6 +60,7 @@ void test_from_str1(void) {
     jid_del(jid);
 }
 
+/** Tests a normal JID without a resource. */
 void test_from_str2(void) {
     struct jid* jid = jid_new_from_str("local@domain");
     assert_string_equals("local", jid_local(jid));
@@ -66,10 +69,18 @@ void test_from_str2(void) {
     jid_del(jid);
 }
 
+/** Tests a normal JID without a local part or resource. */
 void test_from_str3(void) {
     struct jid* jid = jid_new_from_str("domain");
     assert_pointer_equals(NULL, jid_local(jid));
     assert_string_equals("domain", jid_domain(jid));
     assert_pointer_equals(NULL, jid_resource(jid));
     jid_del(jid);
+}
+
+/** Tests an empty JID, should be an error. */
+void test_from_str4(void) {
+    /* An empty JID is an error, should return NULL. */
+    struct jid* jid = jid_new_from_str("");
+    assert_pointer_equals(NULL, jid);
 }
