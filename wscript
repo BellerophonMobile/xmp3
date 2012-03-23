@@ -134,12 +134,15 @@ def build(ctx):
         includes = libxmp3.includes,
         source = ['src/xmp3_multicast.c'],
     )
+
 def test(ctx):
     if not ctx.env.test:
         ctx.fatal('Run configure with "--test" option first.')
 
     make_test(ctx, 'jid', ['src/utils.c'], ['UUID'])
     make_test(ctx, 'utils', extra_use=['UUID'])
+    make_test(ctx, 'xmpp_stanza', ['src/xmpp_parser.c', 'src/utils.c'],
+              ['UUID', 'EXPAT'])
 
 
 ##################################################
