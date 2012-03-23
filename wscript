@@ -92,7 +92,7 @@ def build(ctx):
             'lib/inih',
             'lib/tj-tools/src',
         ],
-        use = ['DYNAMIC', 'DL', 'EXPAT', 'CRYPTO', 'SSL'],
+        use = ['DYNAMIC', 'DL', 'EXPAT', 'CRYPTO', 'SSL', 'UUID'],
         source = [
             'lib/inih/ini.c',
             'lib/tj-tools/src/tj_searchpathlist.c',
@@ -113,10 +113,6 @@ def build(ctx):
         ],
     )
     libxmp3.export_includes = libxmp3.includes
-
-    # Mac's uuid stuff is built into its libc
-    if ctx.env.target != 'darwin':
-        libxmp3.use += ['UUID']
 
     ctx.program(
         target = 'xmp3',
@@ -139,8 +135,6 @@ def build(ctx):
         source = ['src/xmp3_multicast.c'],
     )
 
-import pprint
-
 class TestContext(waflib.Build.BuildContext):
     cmd = 'test'
     fun = 'test'
@@ -149,38 +143,39 @@ def test(ctx):
     if not ctx.env.test:
         ctx.fatal('Run configure with "--test" option first.')
 
-    if ctx.env.test:
-        for t in ['jid']:
-            prog = ctx.program(
-                target = t + '_test',
-                features = ['test-dept'],
-                defines = ['__STRICT_ANSI__'],
-                includes = [
-                    'src',
-                    'lib/uthash/src',
-                    'lib/inih',
-                    'lib/tj-tools/src',
-                    'lib/test-dept/src',
-                ],
-                source = [
-                    'src/{0}.c'.format(t),
-                    'test/{0}_test.c'.format(t),
-                ],
-            )
+    make_test(ctx, 'jid', ['src/utils.c'], ['UUID'])
+
+def make_test(ctx, target, extra_source=None, extra_use=None):
+    if extra_source is None:
+        extra_source = []
+
+    if extra_use is None:
+        extra_use = []
+
+    ctx.program(
+        target = target + '_test',
+        features = ['test-dept'],
+        use = extra_use,
+        includes = [
+            'src',
+            'lib/uthash/src',
+            'lib/inih',
+            'lib/tj-tools/src',
+            'lib/test-dept/src',
+            ],
+        source = [
+            'src/{0}.c'.format(target),
+            'test/{0}_test.c'.format(target),
+        ] + extra_source,
+    )
 
 @waflib.TaskGen.feature('test-dept')
 @waflib.TaskGen.before('apply_link')
 @waflib.TaskGen.after('process_source')
 def test_dept(self):
-    # Should only have two items in the source array
-    if len(self.source) != 2:
-        raise TypeError('Should only have two items in source array.')
-
-    for s in self.source:
-        if '_test' in str(s):
-            test_src = s
-        else:
-            mod_src = s
+    # Assumes sources in particular order, should be done better.
+    mod_src = self.source[0]
+    test_src = self.source[1]
 
     # Find the compilation task associated with compiling each file
     for t in self.compiled_tasks:
@@ -204,12 +199,14 @@ def test_dept(self):
         dir_node.make_node(self.target + '_without_proxies.o'))
     self.compiled_tasks.append(main_o)
 
-    main_wo_proxies_prog = self.create_task('cprogram',
-            main_o.outputs + mod_task.outputs + test_task.outputs,
-            dir_node.make_node(self.target + '_without_proxies'))
-
     undef_syms = self.create_task('test_dept_undef_syms', mod_task.outputs,
         dir_node.make_node(self.target + '_undef_syms.txt'))
+
+    tmp = mod_task.outputs[:]
+    for t in self.compiled_tasks:
+        tmp += t.outputs
+    main_wo_proxies_prog = self.create_task('cprogram', tmp,
+            dir_node.make_node(self.target + '_without_proxies'))
 
     accessible_funcs = self.create_task('test_dept_accessible_functions',
             main_wo_proxies_prog.outputs,
