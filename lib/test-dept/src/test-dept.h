@@ -200,10 +200,10 @@ do {\
 } while (0)
 
 #ifndef __STRICT_ANSI__
+// assert (replacement_function == NULL ||
 #define _test_dept_replace_function(original_function, replacement_function)\
 {\
-  assert (replacement_function == NULL ||\
-          __builtin_types_compatible_p(typeof(original_function),\
+  assert (__builtin_types_compatible_p(typeof(original_function),\
                                        typeof(replacement_function)));\
   _test_dept_set_proxy(original_function, replacement_function);\
 }
