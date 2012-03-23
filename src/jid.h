@@ -87,7 +87,7 @@ struct jid* jid_new_from_jid_bare(const struct jid *jid);
 char* jid_to_str(const struct jid *jid);
 
 /** Gets the length of a JID string without converting it. */
-int jid_to_str_len(const struct jid *jid);
+size_t jid_to_str_len(const struct jid *jid);
 
 /**
  * Compare two JIDs exactly.

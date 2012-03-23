@@ -142,8 +142,8 @@ char* jid_to_str(const struct jid *jid) {
     return utstring_body(&strjid);
 }
 
-int jid_to_str_len(const struct jid *jid) {
-    int len = strlen(jid->domain);
+size_t jid_to_str_len(const struct jid *jid) {
+    size_t len = strlen(jid->domain);
     if (jid->local) {
         /* +1 for '@' */
         len += strlen(jid->local) + 1;
