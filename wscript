@@ -143,6 +143,8 @@ def test(ctx):
     make_test(ctx, 'utils', extra_use=['UUID'])
     make_test(ctx, 'xmpp_stanza', ['src/xmpp_parser.c', 'src/utils.c'],
               ['UUID', 'EXPAT'])
+    make_test(ctx, 'xmpp_parser', ['src/xmpp_stanza.c', 'src/utils.c'],
+              ['UUID', 'EXPAT']);
 
 
 ##################################################
