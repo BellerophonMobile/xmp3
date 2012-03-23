@@ -100,6 +100,8 @@ int jid_cmp(const struct jid *a, const struct jid *b);
 /**
  * Compare two JIDs with wildcard matches.
  *
+ * Bare JIDs match with full JIDs.
+ *
  * @returns 0 if exact match, -1 if a is before b in lexographically sorted
  *          order, -1 otherwise.
  */

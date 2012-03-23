@@ -75,6 +75,8 @@ struct jid* jid_new_from_str(const char *jidstr) {
         }
         check(len > 0, "JID local part cannot be empty.");
         STRNDUP_CHECK(jid->local, jidstr, len);
+        /* This will catch if '@' and '/' are out of order, since the len check
+         * below will be negative. */
         jidstr = at_delim + 1;
     }
 
