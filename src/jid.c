@@ -28,7 +28,9 @@
  * Functions and data structure to manipulate a JID
  */
 
-#include "utstring.h"
+#include <ctype.h>
+
+#include <utstring.h>
 
 #include "log.h"
 #include "utils.h"
@@ -63,37 +65,38 @@ void jid_del(struct jid *jid) {
 struct jid* jid_new_from_str(const char *jidstr) {
     struct jid *jid = jid_new();
 
-    /* We use this temp string to replace delimiters with NULLs, then copy
-     * those substrings out into the final structure. */
-    char *tmpstr;
-    STRNDUP_CHECK(tmpstr, jidstr, JID_MAX_LEN);
+    const char *at_delim = strchr(jidstr, '@');
+    const char *slash_delim = strchr(jidstr, '/');
 
-    /* Need to check for '/' first, since I'm modifying the string. */
-    char *slash_delim = strchr(tmpstr, '/');
-    if (slash_delim != NULL) {
-        *slash_delim = '\0';
-        slash_delim++;
-    }
-
-    char *at_delim = strchr(tmpstr, '@');
     if (at_delim != NULL) {
-        *at_delim = '\0';
-        at_delim++;
-    }
-
-    if (at_delim == NULL) {
-        jid_set_domain(jid, tmpstr);
-    } else {
-        jid_set_local(jid, tmpstr);
-        jid_set_domain(jid, at_delim);
+        int len = at_delim - jidstr;
+        if (len > JID_PART_MAX_LEN) {
+            len = JID_PART_MAX_LEN;
+        }
+        check(len > 0, "JID local part cannot be empty.");
+        STRNDUP_CHECK(jid->local, jidstr, len);
+        jidstr = at_delim + 1;
     }
 
     if (slash_delim != NULL) {
-        jid_set_resource(jid, slash_delim);
-    }
+        int len = slash_delim - jidstr;
+        if (len > JID_PART_MAX_LEN) {
+            len = JID_PART_MAX_LEN;
+        }
+        check(len > 0, "JID domain part cannot be empty.");
+        STRNDUP_CHECK(jid->domain, jidstr, len);
 
-    free(tmpstr);
+        check(slash_delim[1] != '\0', "JID resource part cannot be empty.");
+        STRNDUP_CHECK(jid->resource, slash_delim + 1, JID_PART_MAX_LEN);
+    } else {
+        check(jidstr[0] != '\0', "JID domain part cannot be empty.");
+        STRNDUP_CHECK(jid->domain, jidstr, JID_PART_MAX_LEN);
+    }
     return jid;
+
+error:
+    jid_del(jid);
+    return NULL;
 }
 
 struct jid* jid_new_from_jid(const struct jid *jid) {
