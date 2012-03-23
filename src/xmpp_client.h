@@ -29,7 +29,7 @@
 
 #pragma once
 
-// Forward declarations
+/* Forward declarations. */
 struct client_socket;
 struct xmpp_client;
 struct xmpp_parser;

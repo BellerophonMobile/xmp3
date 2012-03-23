@@ -357,20 +357,20 @@ static void parse_ns(const char *ns_name, char **name, char **prefix,
                      char **uri) {
     char *separator = strchr(ns_name, XMPP_PARSER_SEPARATOR);
     if (separator == NULL) {
-        // No namespace or prefix
+        /* No namespace or prefix. */
         STRDUP_CHECK(*name, ns_name);
 
     } else {
-        // There is a namespace URI
+        /* There is a namespace URI. */
         STRNDUP_CHECK(*uri, ns_name, separator - ns_name);
 
         char *tmp = separator + 1;
         separator = strchr(tmp, XMPP_PARSER_SEPARATOR);
         if (separator == NULL) {
-            // There is no namespace prefix
+            /* There is no namespace prefix. */
             STRDUP_CHECK(*name, tmp);
         } else {
-            // There is a namespace prefix
+            /* There is a namespace prefix. */
             STRNDUP_CHECK(*name, tmp, separator - tmp);
             STRDUP_CHECK(*prefix, separator + 1);
         }

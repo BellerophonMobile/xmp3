@@ -36,7 +36,7 @@ extern const char *XMPP_IQ_DISCO_ITEMS_NS;
 extern const char *XMPP_IQ_DISCO_INFO_NS;
 extern const char *XMPP_IQ_ROSTER_NS;
 
-// Forward declarations
+/* Forward declarations. */
 struct xmpp_stanza;
 struct xmp3_xml;
 

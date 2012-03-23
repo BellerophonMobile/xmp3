@@ -65,7 +65,7 @@ struct jid* jid_new_from_str(const char *jidstr) {
     char *tmpstr;
     STRNDUP_CHECK(tmpstr, jidstr, MAX_JIDSTR_LEN);
 
-    // Need to check for '/' first, since I'm modifying the string.
+    /* Need to check for '/' first, since I'm modifying the string. */
     char *slash_delim = strchr(tmpstr, '/');
     if (slash_delim != NULL) {
         *slash_delim = '\0';
@@ -111,7 +111,7 @@ struct jid* jid_new_from_jid_bare(const struct jid *jid) {
 }
 
 char* jid_to_str(const struct jid *jid) {
-    // Domain part is required
+    /* Domain part is required */
     if (jid->domain == NULL) {
         return NULL;
     }
@@ -139,18 +139,18 @@ char* jid_to_str(const struct jid *jid) {
 int jid_to_str_len(const struct jid *jid) {
     int len = strlen(jid->domain);
     if (jid->local) {
-        // +1 for '@'
+        /* +1 for '@' */
         len += strlen(jid->local) + 1;
     }
     if (jid->resource) {
-        // +1 for '/'
+        /* +1 for '/' */
         len += strlen(jid->resource) + 1;
     }
     return len;
 }
 
 int jid_cmp(const struct jid *a, const struct jid *b) {
-    // If one has a local part, and the other doesn't then no match.
+    /* If one has a local part, and the other doesn't then no match. */
     if ((a->local == NULL) != (b->local == NULL)) {
         return a->local == NULL ? -1 : 1;
     }
@@ -162,7 +162,7 @@ int jid_cmp(const struct jid *a, const struct jid *b) {
         }
     }
 
-    // Domains should never be NULL, but just to be sure.
+    /* Domains should never be NULL, but just to be sure. */
     if ((a->domain == NULL) != (b->domain == NULL)) {
         return a->domain == NULL ? -1 : 1;
     }

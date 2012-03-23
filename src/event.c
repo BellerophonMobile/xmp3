@@ -89,7 +89,7 @@ struct event_loop* event_loop_new(void) {
 void event_loop_del(struct event_loop *loop) {
     struct event_item *item;
     struct event_item *tmp;
-    // Free the memory for all the callback entries
+    /* Free the memory for all the callback entries. */
     DL_FOREACH_SAFE(loop->events, item, tmp) {
         free(item);
     }
@@ -101,21 +101,21 @@ void event_register_callback(struct event_loop *loop, int fd,
     struct event_item *item = calloc(1, sizeof(*item));
     check_mem(item);
 
-    // Add the item to the list
+    /* Add the item to the list. */
     item->fd = fd;
     item->func = func;
     item->data = data;
 
     DL_APPEND(loop->events, item);
 
-    // Select needs nfds, one plus the highest numbered fd in readfds
+    /* Select needs nfds, one plus the highest numbered fd in readfds. */
     if (fd + 1 > loop->nfds) {
         loop->nfds = fd + 1;
     }
 }
 
 void event_deregister_callback(struct event_loop *loop, int fd) {
-    // Find the entry in the list, and free it
+    /* Find the entry in the list, and free it. */
     struct event_item *item;
     DL_FOREACH(loop->events, item) {
         if (item->fd == fd) {
@@ -126,7 +126,7 @@ void event_deregister_callback(struct event_loop *loop, int fd) {
     }
 
     if (fd + 1 == loop->nfds) {
-        // We need to find a new maximum fd for select
+        /* We need to find a new maximum fd for select. */
         DL_FOREACH(loop->events, item) {
             if (item->fd + 1 > loop->nfds) {
                 loop->nfds = item->fd + 1;
@@ -138,7 +138,7 @@ void event_deregister_callback(struct event_loop *loop, int fd) {
 void event_init_readfds(struct event_loop *loop) {
     FD_ZERO(&loop->readfds);
 
-    // Add each file descriptor to the select set
+    /* Add each file descriptor to the select set. */
     struct event_item *item;
     DL_FOREACH(loop->events, item) {
         FD_SET(item->fd, &loop->readfds);
@@ -146,7 +146,7 @@ void event_init_readfds(struct event_loop *loop) {
 }
 
 void event_loop_start(struct event_loop *loop) {
-    // Set up a sigset to block SIGINT later
+    /* Set up a sigset to block SIGINT later. */
     sigset_t emptyset, blockset;
     sigemptyset(&emptyset);
     sigemptyset(&blockset);
@@ -177,7 +177,7 @@ void event_loop_start(struct event_loop *loop) {
         }
 
         if (num_ready == 0) {
-            // If/when we do timeout-based callbacks, it would happen here.
+            /* If/when we do timeout-based callbacks, it would happen here. */
             continue;
         }
 
@@ -201,12 +201,12 @@ void event_loop_start(struct event_loop *loop) {
         }
     }
 
-    // Unblock signals if we still have them blocked.
+    /* Unblock signals if we still have them blocked. */
     check(sigprocmask(SIG_UNBLOCK, &blockset, NULL) != -1,
           "Can't unblock signals");
 
 error:
-    // TODO: Make this return a bool or something.
+    /* TODO: Make this return a bool or something. */
     return;
 }
 

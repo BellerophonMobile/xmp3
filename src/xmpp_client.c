@@ -62,11 +62,11 @@ struct xmpp_client* xmpp_client_new(struct xmpp_server *server,
     client->server = server;
     client->socket = socket;
 
-    // Create the XML parser we'll use to parse stanzas from the client.
+    /* Create the XML parser we'll use to parse stanzas from the client. */
     client->parser = xmpp_parser_new(true);
     check(client->parser != NULL, "Error creating XML parser");
 
-    // Set initial handlers to begin authentication.
+    /* Set initial handlers to begin authentication. */
     xmpp_parser_set_handler(client->parser, xmpp_auth_stream_start);
     xmpp_parser_set_data(client->parser, client);
 

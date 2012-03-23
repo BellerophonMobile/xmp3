@@ -54,7 +54,7 @@
 /* authzid, authcid, passed can be 255 octets, plus 2 NULLs inbetween. */
 static const int PLAIN_AUTH_BUFFER_SIZE = (3 * 255 + 2);
 
-// XML string constants
+/* XML string constants. */
 static const char *STREAM_NS = "http://etherx.jabber.org/streams";
 static const char *STREAM_NAME = "stream";
 
@@ -120,8 +120,8 @@ static const char *MSG_NOT_AUTHORIZED =
     "</failure>"
     "</stream:stream>";
 
-// Forward declarations
-/* Inital authentication handlers
+/* Forward declarations
+ * Inital authentication handlers
  * See: http://tools.ietf.org/html/rfc6120#section-9.1 */
 
 static bool stream_sasl_start(struct xmpp_stanza *stanza,
@@ -149,13 +149,14 @@ bool xmpp_auth_stream_start(struct xmpp_stanza *stanza,
 
     log_info("New stream start");
 
-    // name and attrs are guaranteed to be null terminated, so strcmp is OK.
+    /* name and attrs are guaranteed to be null terminated, so strcmp is OK. */
     check(strcmp(xmpp_stanza_uri(stanza), STREAM_NS) == 0,
           "Unexpected stanza");
     check(strcmp(xmpp_stanza_name(stanza), STREAM_NAME) == 0,
           "Unexpected stanza");
 
-    // Step 2: Server responds by sending a response stream header to client
+    /* Step 2: Server responds by sending a response stream header to
+     * client. */
     check(client_socket_sendall(xmpp_client_socket(client),
                 MSG_STREAM_HEADER, strlen(MSG_STREAM_HEADER)) > 0,
           "Error sending stream header to client");
@@ -168,17 +169,17 @@ bool xmpp_auth_stream_start(struct xmpp_stanza *stanza,
                                     strlen(MSG_STREAM_FEATURES_TLS)) > 0,
               "Error sending TLS stream features to client");
 
-        // We expect to see a <starttls> tag from the client.
+        /* We expect to see a <starttls> tag from the client. */
         xmpp_parser_set_handler(parser, handle_starttls);
 
     } else {
-        // SSL is disabled, skip right to SASL.
+        /* SSL is disabled, skip right to SASL. */
         check(client_socket_sendall(xmpp_client_socket(client),
                     MSG_STREAM_FEATURES_SASL,
                     strlen(MSG_STREAM_FEATURES_SASL)) > 0,
               "Error sending SASL stream features to client");
 
-        // We expect to see a SASL PLAIN <auth> tag next.
+        /* We expect to see a SASL PLAIN <auth> tag next. */
         xmpp_parser_set_handler(parser, handle_sasl_plain);
     }
     return true;
@@ -210,7 +211,7 @@ static bool stream_sasl_start(struct xmpp_stanza *stanza,
                 strlen(MSG_STREAM_FEATURES_SASL)) > 0,
           "Error sending SASL stream features to client");
 
-    // We expect to see a SASL PLAIN <auth> tag next.
+    /* We expect to see a SASL PLAIN <auth> tag next. */
     xmpp_parser_set_handler(parser, handle_sasl_plain);
     return true;
 
@@ -239,7 +240,7 @@ static bool stream_bind_start(struct xmpp_stanza *stanza,
                     strlen(MSG_STREAM_FEATURES_BIND)) > 0,
           "Error sending bind stream features to client");
 
-    // We expect to see the resouce binding IQ stanza next.
+    /* We expect to see the resouce binding IQ stanza next. */
     xmpp_parser_set_handler(parser, handle_bind_iq);
     return true;
 
@@ -270,7 +271,7 @@ static bool handle_starttls(struct xmpp_stanza *stanza,
           xmpp_server_ssl_context(xmpp_client_server(client))) != NULL,
           "Error initializing SSL socket.");
 
-    // We expect a new stream from the client
+    /* We expect a new stream from the client. */
     xmpp_parser_new_stream(parser);
     xmpp_parser_set_handler(parser, stream_sasl_start);
 
@@ -334,12 +335,12 @@ static bool handle_sasl_plain(struct xmpp_stanza *stanza,
             jid_domain(xmpp_server_jid(xmpp_client_server(client))));
     xmpp_client_set_jid(client, jid);
 
-    // Success!
+    /* Success! */
     check(client_socket_sendall(xmpp_client_socket(client),
                 MSG_SASL_SUCCESS, strlen(MSG_SASL_SUCCESS)) > 0,
           "Error sending SASL success to client");
 
-    // Go to step 7, the client needs to send us a new stream header.
+    /* Go to step 7, the client needs to send us a new stream header. */
     xmpp_parser_new_stream(parser);
     xmpp_parser_set_handler(parser, stream_bind_start);
 
@@ -370,7 +371,7 @@ static bool handle_bind_iq(struct xmpp_stanza *stanza,
     check(strcmp(xmpp_stanza_name(stanza), XMPP_STANZA_IQ) == 0,
           "Unexpected stanza");
 
-    // Validate the correct attributes set on the start tag
+    /* Validate the correct attributes set on the start tag. */
     const char *type = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_TYPE);
     check(type != NULL && strcmp(type, XMPP_STANZA_TYPE_SET) == 0,
           "Unexpected bind iq type.");
@@ -378,7 +379,7 @@ static bool handle_bind_iq(struct xmpp_stanza *stanza,
     const char *id = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_ID);
     check(id != NULL, "Bind iq has no id.");
 
-    // Jump to the inner <bind> tag
+    /* Jump to the inner <bind> tag. */
     stanza = xmpp_stanza_children(stanza);
     check(stanza != NULL, "Bind iq has no child.");
     check(strcmp(xmpp_stanza_uri(stanza), BIND_NS) == 0,
@@ -386,7 +387,7 @@ static bool handle_bind_iq(struct xmpp_stanza *stanza,
     check(strcmp(xmpp_stanza_name(stanza), BIND) == 0,
           "Unexpected stanza");
 
-    // Jump to the inner <resource> tag
+    /* Jump to the inner <resource> tag. */
     stanza = xmpp_stanza_children(stanza);
     check(stanza != NULL, "Bind has no child.");
     check(strcmp(xmpp_stanza_uri(stanza), BIND_NS) == 0,
@@ -394,9 +395,9 @@ static bool handle_bind_iq(struct xmpp_stanza *stanza,
     check(strcmp(xmpp_stanza_name(stanza), RESOURCE) == 0,
           "Unexpected stanza");
 
-    // TODO: Check for duplicate resources
+    /* TODO: Check for duplicate resources. */
 
-    // Copy the resource into the client information structure
+    /* Copy the resource into the client information structure. */
     jid_set_resource(xmpp_client_jid(client), xmpp_stanza_data(stanza));
 
     char *jidstr = jid_to_str(xmpp_client_jid(client));

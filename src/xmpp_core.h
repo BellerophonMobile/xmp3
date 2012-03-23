@@ -31,7 +31,7 @@
 
 #include <stdbool.h>
 
-// Forward declarations
+/* Forward declarations. */
 struct xmpp_parser;
 struct xmpp_server;
 struct xmpp_stanza;

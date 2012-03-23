@@ -40,7 +40,7 @@
 #include "xmp3_module.h"
 #include "xmp3_options.h"
 
-// Default address is loopback
+/* Default address is loopback. */
 const struct in_addr DEFAULT_ADDR = { 0x0100007f };
 const uint16_t DEFAULT_PORT = 5222;
 const int DEFAULT_BACKLOG = 3;

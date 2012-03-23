@@ -61,7 +61,7 @@
 
 /** Check that A is not null, else log and abort. */
 #define check_mem(A) if(!(A)) { log_err("Out of memory."); abort(); }
-//#define check_mem(A) check((A), "Out of memory.")
+/* #define check_mem(A) check((A), "Out of memory.") */
 
 /** Same as check, but doesn't print if NDEBUG is set. */
 #define check_debug(A, M, ...) if(!(A)) { debug(M, ##__VA_ARGS__); errno=0; goto error; }

@@ -80,7 +80,7 @@ static void print_usage(void) {
     printf("  -h, --help     This help output\n");
 }
 
-// File-global event loop handle, so we can stop it from the signal handler.
+/* File-global event loop handle, so we can stop it from the signal handler. */
 static struct event_loop *loop = NULL;
 
 static void signal_handler(int signal) {
@@ -177,7 +177,7 @@ int main(int argc, char *argv[]) {
     check_mem(loop);
 
     if (xmp3_options_get_ssl(options)) {
-        // Initialize OpenSSL
+        /* Initialize OpenSSL. */
         SSL_load_error_strings();
         SSL_library_init();
     }

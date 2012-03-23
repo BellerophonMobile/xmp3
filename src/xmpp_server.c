@@ -244,7 +244,7 @@ struct xmpp_server {
     struct auth_callback auth_callback;
 };
 
-// Forward declarations
+/* Forward declarations. */
 static bool init_socket(struct xmpp_server *server,
                         const struct xmp3_options *options);
 static bool init_ssl(struct xmpp_server *server,
@@ -296,7 +296,7 @@ struct xmpp_server* xmpp_server_new(struct event_loop *loop,
 
     check(init_socket(server, options), "Unable to initialize socket.");
 
-    // Set up inital stanza and IQ routes.
+    /* Set up inital stanza and IQ routes. */
     xmpp_server_add_stanza_route(server, server->jid,
                                  xmpp_core_route_server, NULL);
     xmpp_server_add_iq_route(server, XMPP_IQ_SESSION_NS,
@@ -308,7 +308,7 @@ struct xmpp_server* xmpp_server_new(struct event_loop *loop,
     xmpp_server_add_iq_route(server, XMPP_IQ_ROSTER_NS,
                              xmpp_im_iq_roster, NULL);
 
-    // Register the event handler so we can get notified of new connections.
+    /* Register the event handler so we can get notified of new connections. */
     event_register_callback(loop, server->fd, connect_client, server);
 
     log_info("Listening for XMPP connections on %s:%d",
@@ -412,7 +412,7 @@ void xmpp_server_del_client_disconnect_cb(struct xmpp_client *client,
 void xmpp_server_disconnect_client(struct xmpp_client *client) {
     struct xmpp_server *server = xmpp_client_server(client);
 
-    // Sanity check that the client is registered with the server
+    /* Sanity check that the client is registered with the server. */
     struct c_client *search = NULL;
     DL_FOREACH(server->clients, search) {
         if (client == search->client) {
@@ -610,7 +610,7 @@ static bool init_socket(struct xmpp_server *server,
     server->fd = socket(AF_INET, SOCK_STREAM, 0);
     check(server->fd != -1, "Error creating XMPP server socket");
 
-    // Allow address reuse when in the TIME_WAIT state.
+    /* Allow address reuse when in the TIME_WAIT state. */
     static const int on = 1;
     check(setsockopt(server->fd, SOL_SOCKET, SO_REUSEADDR, &on,
                      sizeof(on)) != -1,

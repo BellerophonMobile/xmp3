@@ -56,7 +56,7 @@ struct ssl_socket {
     SSL *ssl;
 };
 
-// Forward declarations
+/* Forward declarations */
 static void fd_del(struct client_socket *socket);
 static void fd_close(struct client_socket *socket);
 static int fd_fd(struct client_socket *socket);
@@ -104,7 +104,7 @@ struct client_socket* client_socket_ssl_new(struct client_socket *socket,
     check(self->ssl != NULL, "Cannot create new SSL structure.");
     check(SSL_set_fd(self->ssl, self->fd_socket->fd) != 0,
           "Unable to attach original socket to SSL structure.");
-    // TODO: This should be done elsewhere, since it could block for awhile.
+    /* TODO: This should be done elsewhere, since it could block for awhile. */
     check(SSL_accept(self->ssl) == 1, "SSL_accept failed.");
 
     socket->self = self;
@@ -151,7 +151,7 @@ ssize_t client_socket_recv(struct client_socket *socket, void *buf,
 
 ssize_t client_socket_sendall(struct client_socket *socket, const void *buf,
                               size_t len) {
-    // Keep track of how much we've sent so far
+    /* Keep track of how much we've sent so far. */
     size_t numsent = 0;
     do {
         ssize_t newsent = client_socket_send(socket, buf + numsent,

@@ -79,7 +79,7 @@ struct xep_muc {
     struct jid *jid;
 };
 
-// Forward declarations
+/* Forward declarations. */
 static void* xep_muc_new(void);
 static void xep_muc_del(void *data);
 static bool xep_muc_conf(void *data, const char *key, const char *value);
@@ -269,7 +269,7 @@ static bool handle_message(struct xmpp_stanza *stanza, struct xep_muc *muc) {
         xmpp_server_route_stanza(muc->server, stanza);
     }
 
-    // Set the "to" and "from" back to their orignal values
+    /* Set the "to" and "from" back to their orignal values. */
     xmpp_stanza_set_attr(stanza, XMPP_STANZA_ATTR_TO, to);
     xmpp_stanza_set_attr(stanza, XMPP_STANZA_ATTR_FROM, from);
     return true;
@@ -338,7 +338,7 @@ static bool enter_room_presence(const char *search_room,
                                                      from_jid);
     check_mem(new_client);
 
-    // If this is a local client, we need to know when they disconnect
+    /* If this is a local client, we need to know when they disconnect. */
     struct xmpp_client *client = xmpp_server_find_client(muc->server,
                                                          from_jid);
     if (client != NULL) {
@@ -351,7 +351,7 @@ static bool enter_room_presence(const char *search_room,
     struct room *room = NULL;
     HASH_FIND_STR(muc->rooms, search_room, room);
     if (room == NULL) {
-        // Room doesn't exist, create it
+        /* Room doesn't exist, create it. */
         debug("New room, creating");
         room = room_new(muc, search_room);
         HASH_ADD_KEYPTR(hh, muc->rooms, room->name, strlen(room->name), room);
@@ -382,7 +382,7 @@ static bool enter_room_presence(const char *search_room,
         xmpp_server_route_stanza(muc->server, presence);
     }
 
-    // Send presence of the new occupant to all occupants.
+    /* Send presence of the new occupant to all occupants. */
     jid_set_resource(room->jid, new_client->nickname);
     xmpp_stanza_set_attr(presence, XMPP_STANZA_ATTR_FROM,
                          jid_to_str(room->jid));
@@ -394,7 +394,7 @@ static bool enter_room_presence(const char *search_room,
         xmpp_server_route_stanza(muc->server, presence);
     }
 
-    // Send the self-presence to the client
+    /* Send the self-presence to the client. */
     DL_APPEND(room->clients, new_client);
     xmpp_stanza_set_attr(presence, XMPP_STANZA_ATTR_ID, make_uuid());
     xmpp_stanza_copy_attr(presence, XMPP_STANZA_ATTR_TO, from);
@@ -405,7 +405,7 @@ static bool enter_room_presence(const char *search_room,
 
     xmpp_server_route_stanza(muc->server, presence);
 
-    // Clean up
+    /* Clean up. */
     xmpp_stanza_del(presence, true);
     jid_set_resource(room->jid, NULL);
 
@@ -475,7 +475,7 @@ static bool leave_room(struct xep_muc *muc, struct room *room,
             NULL});
     xmpp_stanza_append_child(presence_x, presence_item);
 
-    // Send self-presence back to the occupant
+    /* Send self-presence back to the occupant. */
     struct xmpp_stanza *status = xmpp_stanza_new("status",
         (const char*[]){"code", "110", NULL});
     xmpp_stanza_append_child(presence_x, status);
@@ -487,7 +487,7 @@ static bool leave_room(struct xep_muc *muc, struct room *room,
     xmpp_stanza_remove_child(presence_x, status);
     xmpp_stanza_del(status, true);
 
-    // Send the leave presence to other occupants in the room
+    /* Send the leave presence to other occupants in the room. */
     struct room_client *other_client;
     DL_FOREACH(room->clients, other_client) {
         xmpp_stanza_set_attr(presence, XMPP_STANZA_ATTR_TO,
@@ -496,7 +496,7 @@ static bool leave_room(struct xep_muc *muc, struct room *room,
     }
     xmpp_stanza_del(presence, true);
 
-    // If the room is empty now, delete it
+    /* If the room is empty now, delete it. */
     if (room->clients == NULL) {
         HASH_DEL(muc->rooms, room);
         room_del(room);

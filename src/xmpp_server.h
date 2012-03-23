@@ -33,7 +33,7 @@
 
 #include <openssl/ssl.h>
 
-// Forward declarations
+/* Forward declarations. */
 struct event_loop;
 struct xmp3_options;
 struct xmpp_client;

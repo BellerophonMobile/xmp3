@@ -63,13 +63,13 @@ char* make_uuid(void) {
 }
 
 bool read_int(const char *arg, long int *output) {
-    // Clear errno so we can check if strtol fails.
+    /* Clear errno so we can check if strtol fails. */
     errno = 0;
 
     char *endptr;
     *output = strtol(arg, &endptr, 10);
 
-    // We want to make sure we read the whole string.
+    /* We want to make sure we read the whole string. */
     return (errno != ERANGE) && (*endptr == '\0');
 }
 

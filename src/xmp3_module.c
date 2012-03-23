@@ -160,7 +160,7 @@ bool xmp3_modules_stop(struct xmp3_modules *modules) {
         }
         if (!module->functions->mod_stop(module->data)) {
             log_err("Error stopping module '%s'", module->name);
-            // Don't want to stop stopping modules just because one failed.
+            /* Don't want to stop stopping modules just because one failed. */
             rv = false;
         }
         module->started = false;
