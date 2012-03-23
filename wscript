@@ -134,16 +134,21 @@ def build(ctx):
         includes = libxmp3.includes,
         source = ['src/xmp3_multicast.c'],
     )
-
-class TestContext(waflib.Build.BuildContext):
-    cmd = 'test'
-    fun = 'test'
-
 def test(ctx):
     if not ctx.env.test:
         ctx.fatal('Run configure with "--test" option first.')
 
     make_test(ctx, 'jid', ['src/utils.c'], ['UUID'])
+    make_test(ctx, 'utils', extra_use=['UUID'])
+
+
+##################################################
+# Should not need to change anything below here. #
+##################################################
+
+class TestContext(waflib.Build.BuildContext):
+    cmd = 'test'
+    fun = 'test'
 
 def make_test(ctx, target, extra_source=None, extra_use=None):
     if extra_source is None:
