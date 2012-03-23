@@ -51,14 +51,8 @@
 
 #include "xmpp_auth.h"
 
-// authzid, authcid, passed can be 255 octets, plus 2 NULLs inbetween
-#define PLAIN_AUTH_BUFFER_SIZE (3 * 255 + 2)
-
-// Maximum size of "id" attributes
-#define ID_BUFFER_SIZE 256
-
-// Maximum size of the "resourcepart" in resource binding
-#define RESOURCEPART_BUFFER_SIZE 1024
+/* authzid, authcid, passed can be 255 octets, plus 2 NULLs inbetween. */
+static const int PLAIN_AUTH_BUFFER_SIZE = (3 * 255 + 2);
 
 // XML string constants
 static const char *STREAM_NS = "http://etherx.jabber.org/streams";

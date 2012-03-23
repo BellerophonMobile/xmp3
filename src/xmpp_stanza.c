@@ -456,7 +456,6 @@ static char* make_key(const char *name, const char *uri) {
     char *key = malloc(key_len * sizeof(char));
     check_mem(key);
 
-    //char *tmp = key;
     if (uri != NULL) {
         memcpy(key, uri, uri_len);
         key[uri_len] = XMPP_PARSER_SEPARATOR;
