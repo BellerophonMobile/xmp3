@@ -30,6 +30,7 @@
 #pragma once
 
 #include <stdbool.h>
+#include <string.h>
 
 /**
  * Allocate and copy a string.
@@ -40,7 +41,7 @@
  * @param[in] src Source string to copy.
  */
 #define STRDUP_CHECK(dst, src) do { \
-    dst = strdup(src); \
+    (dst) = strdup(src); \
     check_mem(dst); \
 } while (0)
 

@@ -29,7 +29,6 @@
 
 #include <errno.h>
 #include <stdlib.h>
-#include <string.h>
 #include <uuid/uuid.h>
 
 #include "log.h"
