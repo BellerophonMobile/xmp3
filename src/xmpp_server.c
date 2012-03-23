@@ -551,6 +551,7 @@ bool xmpp_server_route_iq(struct xmpp_server *server,
     struct iq_route *route = NULL;
     DL_FOREACH(server->iq_routes, route) {
         debug("Is it '%s'?", route->ns);
+        /* These strings come from Expat, so they should be null-terminated. */
         if (strcmp(search_uri, route->ns) == 0) {
             debug("Yes!");
             if (route->cb(stanza, server, route->data)) {
@@ -582,6 +583,7 @@ void xmpp_server_del_disco_item(struct xmpp_server *server,
                                 const char *name, const struct jid *jid) {
     struct disco_item *item;
     DL_FOREACH(server->disco_items, item) {
+        /* These strings come from Expat, so they should be null-terminated. */
         if (strcmp(name, item->name) == 0 && jid_cmp(jid, item->jid) == 0) {
             DL_DELETE(server->disco_items, item);
             disco_item_del(item);
@@ -867,6 +869,7 @@ static void iq_route_del(struct iq_route *route) {
 }
 
 static int iq_route_cmp(const struct iq_route *a, const struct iq_route *b) {
+    /* These URIs come from Expat, so they should be null-terminated. */
     int rv = strcmp(a->ns, b->ns);
     if (rv != 0) {
         return rv;

@@ -35,8 +35,11 @@
 
 #include "jid.h"
 
-#define MAX_JIDSTR_LEN 3071
-#define MAX_PART_LEN 1023
+/* From RFC 6122 Section 2.1. */
+const int JID_PART_MAX_LEN = 1023;
+
+/* (local + domain + resource) + '@' + '/'. */
+const int JID_MAX_LEN = 3071;
 
 /** Represents a JID (local@domain/resource). */
 struct jid {
@@ -63,7 +66,7 @@ struct jid* jid_new_from_str(const char *jidstr) {
     /* We use this temp string to replace delimiters with NULLs, then copy
      * those substrings out into the final structure. */
     char *tmpstr;
-    STRNDUP_CHECK(tmpstr, jidstr, MAX_JIDSTR_LEN);
+    STRNDUP_CHECK(tmpstr, jidstr, JID_MAX_LEN);
 
     /* Need to check for '/' first, since I'm modifying the string. */
     char *slash_delim = strchr(tmpstr, '/');
@@ -156,7 +159,7 @@ int jid_cmp(const struct jid *a, const struct jid *b) {
     }
 
     if (a->local != NULL && b->local != NULL) {
-        int rv = strcmp(a->local, b->local);
+        int rv = strncmp(a->local, b->local, JID_PART_MAX_LEN);
         if (rv != 0) {
             return rv;
         }
@@ -168,7 +171,7 @@ int jid_cmp(const struct jid *a, const struct jid *b) {
     }
 
     if (a->domain != NULL && b->domain != NULL) {
-        int rv = strcmp(a->domain, b->domain);
+        int rv = strncmp(a->domain, b->domain, JID_PART_MAX_LEN);
         if (rv != 0) {
             return rv;
         }
@@ -179,7 +182,7 @@ int jid_cmp(const struct jid *a, const struct jid *b) {
     }
 
     if (a->resource != NULL && b->resource != NULL) {
-        return strcmp(a->resource, b->resource);
+        return strncmp(a->resource, b->resource, JID_PART_MAX_LEN);
     }
 
     return 0;
@@ -187,36 +190,42 @@ int jid_cmp(const struct jid *a, const struct jid *b) {
 
 int jid_cmp_wildcards(const struct jid *a, const struct jid *b) {
     if (a->local == NULL) {
-        if (b->local != NULL && strcmp(b->local, "*") != 0) {
+        if (b->local != NULL && strncmp(b->local, "*", JID_PART_MAX_LEN)
+                != 0) {
             return 1;
         }
     }
     if (b->local == NULL) {
-        if (a->local != NULL && strcmp(a->local, "*") != 0) {
+        if (a->local != NULL && strncmp(a->local, "*", JID_PART_MAX_LEN)
+                != 0) {
             return 1;
         }
     }
     if (a->local != NULL && b->local != NULL
-            && strcmp(a->local, "*") != 0 && strcmp(b->local, "*") != 0) {
-        int rv = strcmp(a->local, b->local);
+            && strncmp(a->local, "*", JID_PART_MAX_LEN) != 0
+            && strncmp(b->local, "*", JID_PART_MAX_LEN) != 0) {
+        int rv = strncmp(a->local, b->local, JID_PART_MAX_LEN);
         if (rv != 0) {
             return rv;
         }
     }
 
     if (a->domain == NULL) {
-        if (b->domain != NULL && strcmp(b->domain, "*") != 0) {
+        if (b->domain != NULL && strncmp(b->domain, "*", JID_PART_MAX_LEN)
+                != 0) {
             return 1;
         }
     }
     if (b->domain == NULL) {
-        if (a->domain != NULL && strcmp(a->domain, "*") != 0) {
+        if (a->domain != NULL && strncmp(a->domain, "*", JID_PART_MAX_LEN)
+                != 0) {
             return 1;
         }
     }
     if (a->domain != NULL && b->domain != NULL
-            && strcmp(a->domain, "*") != 0 && strcmp(b->domain, "*") != 0) {
-        int rv = strcmp(a->domain, b->domain);
+            && strncmp(a->domain, "*", JID_PART_MAX_LEN) != 0
+            && strncmp(b->domain, "*", JID_PART_MAX_LEN) != 0) {
+        int rv = strncmp(a->domain, b->domain, JID_PART_MAX_LEN);
         if (rv != 0) {
             return rv;
         }
@@ -225,8 +234,9 @@ int jid_cmp_wildcards(const struct jid *a, const struct jid *b) {
     /* If one resource is NULL, and the other isn't we don't care.  Only if
      * they both do, and they are different. */
     if (a->resource != NULL && b->resource != NULL
-            && strcmp(a->resource, "*") != 0 && strcmp(b->resource, "*") != 0) {
-        return strcmp(a->resource, b->resource);
+            && strncmp(a->resource, "*", JID_PART_MAX_LEN) != 0
+            && strncmp(b->resource, "*", JID_PART_MAX_LEN) != 0) {
+        return strncmp(a->resource, b->resource, JID_PART_MAX_LEN);
     }
     return 0;
 }

@@ -29,6 +29,12 @@
 
 #pragma once
 
+/** The maximum length (in bytes) of any part of a JID. */
+extern const int JID_PART_MAX_LEN;
+
+/** The maximum length (in bytes) of the total JID string. */
+extern const int JID_MAX_LEN;
+
 /** Opaque pointer to a JID structure. */
 struct jid;
 
