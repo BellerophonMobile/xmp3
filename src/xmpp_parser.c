@@ -161,9 +161,9 @@ static void stream_start(void *data, const char *ns_name, const char **attrs) {
     struct xmpp_stanza *stanza = xmpp_stanza_ns_new(ns_name, attrs,
                                                     parser->namespaces);
 
-    char *str = xmpp_stanza_string(stanza, NULL);
-    log_info("Received stanza: %s", str);
-    free(str);
+    //char *str = xmpp_stanza_string(stanza, NULL);
+    //log_info("Received stanza: %s", str);
+    //free(str);
 
     parser->namespaces = NULL;
     if (!parser->handler(stanza, parser, parser->data)) {
@@ -205,9 +205,9 @@ static void end(void *data, const char *name) {
     if (parser->depth < 0) {
         XML_StopParser(parser->parser, false);
     } else if (parser->depth == 0) {
-        char *stanza_str = xmpp_stanza_string(parser->cur_stanza, NULL);
-        debug("Received stanza: %s", stanza_str);
-        free(stanza_str);
+        //char *stanza_str = xmpp_stanza_string(parser->cur_stanza, NULL);
+        //debug("Received stanza: %s", stanza_str);
+        //free(stanza_str);
 
         if (!parser->handler(parser->cur_stanza, parser, parser->data)) {
             XML_StopParser(parser->parser, false);

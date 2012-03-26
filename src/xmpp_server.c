@@ -738,6 +738,7 @@ static void read_client(struct event_loop *loop, int fd, void *data) {
     char *addrstr = client_socket_addr_str(xmpp_client_socket(client));
     check_mem(addrstr);
     log_info("%s - Read %zd bytes", addrstr, numrecv);
+    debug("%s: %.*s", addrstr, (int)numrecv, server->buffer);
     free(addrstr);
 
     struct xmpp_parser *parser = xmpp_client_parser(client);
