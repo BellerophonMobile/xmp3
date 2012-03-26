@@ -35,36 +35,34 @@
 
 #include "xmpp_parser.h"
 
+static int called = 0;
+
+void setup(void) {
+    called = 0;
+}
+
+static bool cb1(struct xmpp_stanza *stanza, struct xmpp_parser *parser,
+                void *data) {
+    called++;
+    return true;
+}
+
 /** Tests that the stanza callback gets called. */
 void test_handler1(void) {
     static const char *DATA = "<a/>";
-    bool called = false;
-
-    bool cb(struct xmpp_stanza *stanza, struct xmpp_parser *parser,
-            void *data) {
-        called = true;
-        return true;
-    }
 
     struct xmpp_parser* parser = xmpp_parser_new(false);
-    xmpp_parser_set_handler(parser, &cb);
+    xmpp_parser_set_handler(parser, &cb1);
     assert_true(xmpp_parser_parse(parser, DATA, strlen(DATA)));
-    assert_true(called);
+    assert_equals(1, called);
 }
 
 /** Tests that the stanza callback gets called twice for the stream start. */
 void test_handler2(void) {
     static const char *DATA = "<stream><a/></stream>";
-    int called = 0;
-
-    bool cb(struct xmpp_stanza *stanza, struct xmpp_parser *parser,
-            void *data) {
-        called++;
-        return true;
-    }
 
     struct xmpp_parser* parser = xmpp_parser_new(true);
-    xmpp_parser_set_handler(parser, &cb);
+    xmpp_parser_set_handler(parser, &cb1);
     assert_true(xmpp_parser_parse(parser, DATA, strlen(DATA)));
     assert_equals(2, called);
 }
@@ -73,16 +71,9 @@ void test_handler2(void) {
  * stanzas. */
 void test_handler3(void) {
     static const char *DATA = "<stream><a/><b/><c/></stream>";
-    int called = 0;
-
-    bool cb(struct xmpp_stanza *stanza, struct xmpp_parser *parser,
-            void *data) {
-        called++;
-        return true;
-    }
 
     struct xmpp_parser* parser = xmpp_parser_new(true);
-    xmpp_parser_set_handler(parser, &cb);
+    xmpp_parser_set_handler(parser, &cb1);
     assert_true(xmpp_parser_parse(parser, DATA, strlen(DATA)));
     assert_equals(4, called);
 }
@@ -91,16 +82,9 @@ void test_handler3(void) {
  * stanzas. */
 void test_handler4(void) {
     static const char *DATA = "<stream><a><a><a></a></a></a><b/><c/></stream>";
-    int called = 0;
-
-    bool cb(struct xmpp_stanza *stanza, struct xmpp_parser *parser,
-            void *data) {
-        called++;
-        return true;
-    }
 
     struct xmpp_parser* parser = xmpp_parser_new(true);
-    xmpp_parser_set_handler(parser, &cb);
+    xmpp_parser_set_handler(parser, &cb1);
     assert_true(xmpp_parser_parse(parser, DATA, strlen(DATA)));
     assert_equals(4, called);
 }
