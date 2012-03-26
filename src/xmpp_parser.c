@@ -55,7 +55,10 @@ struct xmpp_parser {
     struct xmpp_parser_namespace *namespaces;
     struct xmpp_stanza *cur_stanza;
     int depth;
+    bool is_stream_start;
 };
+
+static void init_parser(struct xmpp_parser *parser);
 
 static void stream_start(void *data, const char *name, const char **attrs);
 static void start(void *data, const char *name, const char **attrs);
@@ -70,16 +73,9 @@ struct xmpp_parser* xmpp_parser_new(bool is_stream_start) {
     parser->parser = XML_ParserCreateNS(NULL, XMPP_PARSER_SEPARATOR);
     check(parser->parser != NULL, "Error creating XML parser");
 
-    XML_SetReturnNSTriplet(parser->parser, true);
+    parser->is_stream_start = is_stream_start;
 
-    XML_SetElementHandler(parser->parser, start, end);
-    XML_SetCharacterDataHandler(parser->parser, chardata);
-    XML_SetUserData(parser->parser, parser);
-    XML_SetStartNamespaceDeclHandler(parser->parser, ns_start);
-
-    if (is_stream_start) {
-        XML_SetStartElementHandler(parser->parser, stream_start);
-    }
+    init_parser(parser);
 
     return parser;
 
@@ -107,25 +103,23 @@ void xmpp_parser_set_data(struct xmpp_parser *parser, void *data) {
 }
 
 bool xmpp_parser_parse(struct xmpp_parser *parser, const char *buf, int len) {
+    if (parser->is_stream_start) {
+        xmpp_parser_reset(parser);
+    }
     return XML_Parse(parser->parser, buf, len, 0) == XML_STATUS_OK;
 }
 
-bool xmpp_parser_reset(struct xmpp_parser *parser, bool is_stream_start) {
+bool xmpp_parser_reset(struct xmpp_parser *parser) {
     if (XML_ParserReset(parser->parser, NULL) != XML_TRUE) {
         return false;
     }
 
-    XML_SetElementHandler(parser->parser, start, end);
-    XML_SetCharacterDataHandler(parser->parser, chardata);
-    XML_SetUserData(parser->parser, parser);
-
-    if (is_stream_start) {
-        XML_SetStartElementHandler(parser->parser, stream_start);
-    }
+    init_parser(parser);
     return true;
 }
 
 void xmpp_parser_new_stream(struct xmpp_parser *parser) {
+    parser->is_stream_start = true;
     XML_SetStartElementHandler(parser->parser, stream_start);
 }
 
@@ -155,6 +149,18 @@ void xmpp_parser_namespace_del(struct xmpp_parser_namespace *ns) {
     }
 }
 
+static void init_parser(struct xmpp_parser *parser) {
+    XML_SetReturnNSTriplet(parser->parser, true);
+    XML_SetElementHandler(parser->parser, start, end);
+    XML_SetCharacterDataHandler(parser->parser, chardata);
+    XML_SetUserData(parser->parser, parser);
+    XML_SetStartNamespaceDeclHandler(parser->parser, ns_start);
+
+    if (parser->is_stream_start) {
+        xmpp_parser_new_stream(parser);
+    }
+}
+
 /** Expat callback for the start of an XMPP stream. */
 static void stream_start(void *data, const char *ns_name, const char **attrs) {
     struct xmpp_parser *parser = (struct xmpp_parser*)data;
@@ -173,6 +179,8 @@ static void stream_start(void *data, const char *ns_name, const char **attrs) {
         XML_SetStartElementHandler(parser->parser, start);
     }
     xmpp_stanza_del(stanza, false);
+
+    parser->is_stream_start = false;
 }
 
 /** Expat callback for the start of any other element. */

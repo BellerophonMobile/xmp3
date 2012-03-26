@@ -281,7 +281,7 @@ static void socket_handler(struct event_loop *loop, int fd, void *data) {
     log_info("Received %zd bytes from %s:%d", num_recv,
              inet_ntoa(recv_addr.sin_addr), ntohs(recv_addr.sin_port));
 
-    xmpp_parser_reset(mcast->parser, false);
+    xmpp_parser_reset(mcast->parser);
     xmpp_parser_parse(mcast->parser, mcast->buffer, num_recv);
 
 error:
