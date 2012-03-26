@@ -389,16 +389,23 @@ static bool handle_bind_iq(struct xmpp_stanza *stanza,
 
     /* Jump to the inner <resource> tag. */
     stanza = xmpp_stanza_children(stanza);
-    check(stanza != NULL, "Bind has no child.");
-    check(strcmp(xmpp_stanza_uri(stanza), BIND_NS) == 0,
-          "Unexpected stanza");
-    check(strcmp(xmpp_stanza_name(stanza), RESOURCE) == 0,
-          "Unexpected stanza");
 
-    /* TODO: Check for duplicate resources. */
+    if (stanza == NULL) {
+        /* No resource specified, generate one. */
+        char *uuid = make_uuid();
+        jid_set_resource(xmpp_client_jid(client), uuid);
+        free(uuid);
+    } else {
+        check(strcmp(xmpp_stanza_uri(stanza), BIND_NS) == 0,
+              "Unexpected stanza");
+        check(strcmp(xmpp_stanza_name(stanza), RESOURCE) == 0,
+              "Unexpected stanza");
 
-    /* Copy the resource into the client information structure. */
-    jid_set_resource(xmpp_client_jid(client), xmpp_stanza_data(stanza));
+        /* TODO: Check for duplicate resources. */
+
+        /* Copy the resource into the client information structure. */
+        jid_set_resource(xmpp_client_jid(client), xmpp_stanza_data(stanza));
+    }
 
     char *jidstr = jid_to_str(xmpp_client_jid(client));
     utstring_printf(&success_msg, MSG_BIND_SUCCESS, id, jidstr);
