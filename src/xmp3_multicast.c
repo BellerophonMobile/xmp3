@@ -236,6 +236,9 @@ static bool local_stanza_handler(struct xmpp_stanza *stanza,
         return true;
     }
 
+    /* We only want to send out stanzas originating from locally connected
+     * clients.  Look up the JID of the stanza's "from" attribute to see if
+     * that JID is connected to this local server instance. */
     struct jid *from_jid = jid_new_from_str(xmpp_stanza_attr(stanza,
                 XMPP_STANZA_ATTR_FROM));
 
