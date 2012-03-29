@@ -61,7 +61,7 @@ void xmpp_parser_set_data(struct xmpp_parser *parser, void *data);
 bool xmpp_parser_parse(struct xmpp_parser *parser, const char *buf, int len);
 
 /** Reset the state of the parser as if it was just created. */
-bool xmpp_parser_reset(struct xmpp_parser *parser);
+bool xmpp_parser_reset(struct xmpp_parser *parser, bool is_stream_start);
 
 void xmpp_parser_new_stream(struct xmpp_parser *parser);
 
