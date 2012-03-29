@@ -48,7 +48,7 @@ static bool get_roster(struct xmpp_stanza *stanza, struct xmpp_server *server);
 
 bool xmpp_im_iq_session(struct xmpp_stanza *stanza, struct xmpp_server *server,
                         void *data) {
-    log_info("Session IQ");
+    debug("Session IQ");
 
     check(strcmp(xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_TYPE),
                  XMPP_STANZA_TYPE_SET) == 0, "Session IQ type must be 'set'");
@@ -76,7 +76,7 @@ error:
 
 bool xmpp_im_iq_disco_items(struct xmpp_stanza *stanza,
                             struct xmpp_server *server, void *data) {
-    log_info("Disco Items IQ");
+    debug("Disco Items IQ");
 
     check(strcmp(xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_TYPE),
                  XMPP_STANZA_TYPE_GET) == 0, "Disco IQ type must be 'get'");
@@ -110,7 +110,7 @@ error:
 
 bool xmpp_im_iq_disco_info(struct xmpp_stanza *stanza,
                            struct xmpp_server *server, void *data) {
-    log_info("Disco Info IQ");
+    debug("Disco Info IQ");
 
     check(strcmp(xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_TYPE),
                  XMPP_STANZA_TYPE_GET) == 0, "Disco IQ type must be 'get'");
@@ -160,7 +160,7 @@ error:
 
 bool xmpp_im_iq_roster(struct xmpp_stanza *stanza, struct xmpp_server *server,
                        void *data) {
-    log_info("Roster IQ");
+    debug("Roster IQ");
 
     const char *type = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_TYPE);
 

@@ -81,6 +81,7 @@ def configure(ctx):
             ctx.env.CFLAGS += ['-O0', '-g']
         else:
             ctx.env.CFLAGS += ['-O3']
+            ctx.env.DEFINES += ['NDEBUG']
 
 def build(ctx):
     libxmp3 = ctx.stlib(

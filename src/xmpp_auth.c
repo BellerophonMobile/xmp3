@@ -147,7 +147,7 @@ bool xmpp_auth_stream_start(struct xmpp_stanza *stanza,
                             struct xmpp_parser *parser, void *data) {
     struct xmpp_client *client = (struct xmpp_client*)data;
 
-    log_info("New stream start");
+    debug("New stream start");
 
     /* name and attrs are guaranteed to be null terminated, so strcmp is OK. */
     check(strcmp(xmpp_stanza_uri(stanza), STREAM_NS) == 0,
@@ -192,7 +192,7 @@ static bool stream_sasl_start(struct xmpp_stanza *stanza,
                               struct xmpp_parser *parser, void *data) {
     struct xmpp_client *client = (struct xmpp_client*)data;
 
-    log_info("SASL stream start");
+    debug("SASL stream start");
 
     /* Step 7: If TLS negotiation is successful, client initiates a new stream
      * to server over the TLS-protected TCP connection. */
@@ -223,7 +223,7 @@ static bool stream_bind_start(struct xmpp_stanza *stanza,
                               struct xmpp_parser *parser, void *data) {
     struct xmpp_client *client = (struct xmpp_client*)data;
 
-    log_info("Resource bind stream start");
+    debug("Resource bind stream start");
 
     check(strcmp(xmpp_stanza_uri(stanza), STREAM_NS) == 0,
           "Unexpected stanza");
@@ -255,7 +255,7 @@ static bool handle_starttls(struct xmpp_stanza *stanza,
                             struct xmpp_parser *parser, void *data) {
     struct xmpp_client *client = (struct xmpp_client*)data;
 
-    log_info("Start TLS");
+    debug("Start TLS");
 
     check(strcmp(xmpp_stanza_uri(stanza), STARTTLS_NS) == 0,
           "Unexpected stanza");
@@ -275,11 +275,10 @@ static bool handle_starttls(struct xmpp_stanza *stanza,
     xmpp_parser_new_stream(parser);
     xmpp_parser_set_handler(parser, stream_sasl_start);
 
-    log_info("Done?");
+    debug("Done?");
     return true;
 
 error:
-    log_info("FAILED!");
     return false;
 }
 
@@ -291,7 +290,7 @@ static bool handle_sasl_plain(struct xmpp_stanza *stanza,
     struct xmpp_client *client = (struct xmpp_client*)data;
     char *plaintext = NULL;
 
-    log_info("SASL plain authentication");
+    debug("SASL plain authentication");
 
     check(strcmp(xmpp_stanza_uri(stanza), SASL_NS) == 0,
           "Unexpected stanza");
@@ -323,8 +322,6 @@ static bool handle_sasl_plain(struct xmpp_stanza *stanza,
                                     strlen(MSG_NOT_AUTHORIZED)) > 0,
               "Error sending not authorized message to client");
         goto error;
-    } else {
-        log_info("User authenticated");
     }
 
     struct jid *jid = jid_new();
@@ -344,6 +341,10 @@ static bool handle_sasl_plain(struct xmpp_stanza *stanza,
     xmpp_parser_new_stream(parser);
     xmpp_parser_set_handler(parser, stream_bind_start);
 
+    char *strjid = jid_to_str(jid);
+    log_info("User %s connected.", strjid);
+    free(strjid);
+
     free(plaintext);
     return true;
 
@@ -361,7 +362,7 @@ static bool handle_bind_iq(struct xmpp_stanza *stanza,
                            struct xmpp_parser *parser, void *data) {
     struct xmpp_client *client = (struct xmpp_client*)data;
 
-    log_info("Resource binding IQ");
+    debug("Resource binding IQ");
 
     UT_string success_msg;
     utstring_init(&success_msg);

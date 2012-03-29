@@ -166,9 +166,11 @@ static void stream_start(void *data, const char *ns_name, const char **attrs) {
     struct xmpp_stanza *stanza = xmpp_stanza_ns_new(ns_name, attrs,
                                                     parser->namespaces);
 
-    //char *str = xmpp_stanza_string(stanza, NULL);
-    //log_info("Received stanza: %s", str);
-    //free(str);
+#ifndef NDEBUG
+    char *str = xmpp_stanza_string(stanza, NULL);
+    debug("Handling Stanza: %s", str);
+    free(str);
+#endif
 
     parser->namespaces = NULL;
     if (!parser->handler(stanza, parser, parser->data)) {
@@ -178,8 +180,6 @@ static void stream_start(void *data, const char *ns_name, const char **attrs) {
         XML_SetStartElementHandler(parser->parser, start);
     }
     xmpp_stanza_del(stanza, false);
-
-    parser->is_stream_start = false;
 }
 
 /** Expat callback for the start of any other element. */
@@ -212,9 +212,11 @@ static void end(void *data, const char *name) {
     if (parser->depth < 0) {
         XML_StopParser(parser->parser, false);
     } else if (parser->depth == 0) {
-        //char *stanza_str = xmpp_stanza_string(parser->cur_stanza, NULL);
-        //debug("Received stanza: %s", stanza_str);
-        //free(stanza_str);
+#ifndef NDEBUG
+        char *stanza_str = xmpp_stanza_string(parser->cur_stanza, NULL);
+        debug("Handling Stanza: %s", stanza_str);
+        free(stanza_str);
+#endif
 
         if (!parser->handler(parser->cur_stanza, parser, parser->data)) {
             XML_StopParser(parser->parser, false);

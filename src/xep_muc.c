@@ -209,13 +209,13 @@ static bool stanza_handler(struct xmpp_stanza *stanza,
     check(from != NULL, "MUC message without from attribute.");
 
     if (strcmp(xmpp_stanza_name(stanza), XMPP_STANZA_MESSAGE) == 0) {
-        log_info("MUC Message");
+        debug("MUC Message");
         return handle_message(stanza, muc);
     } else if (strcmp(xmpp_stanza_name(stanza), XMPP_STANZA_PRESENCE) == 0) {
-        log_info("MUC Presence");
+        debug("MUC Presence");
         return handle_presence(stanza, muc);
     } else if (strcmp(xmpp_stanza_name(stanza), XMPP_STANZA_IQ) == 0) {
-        log_info("MUC IQ");
+        debug("MUC IQ");
         return handle_iq(stanza, muc);
     } else {
         log_warn("Unknown MUC stanza");

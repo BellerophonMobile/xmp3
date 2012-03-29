@@ -562,7 +562,7 @@ bool xmpp_server_route_iq(struct xmpp_server *server,
 
 error:
     if (!was_handled) {
-        log_info("No route for destination");
+        debug("No route for destination");
         send_service_unavailable(server, stanza);
     }
     return was_handled;
