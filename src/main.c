@@ -135,7 +135,6 @@ int main(int argc, char *argv[]) {
     }
 
     struct xmp3_options *options = xmp3_options_new();
-    check_mem(options);
 
     /* Load the config file first, then have the rest of the command line
      * options override settings in it. */
@@ -174,7 +173,6 @@ int main(int argc, char *argv[]) {
     check(sigaction(SIGINT, &sa, NULL) != -1, "Cannot set signal handler.");
 
     loop = event_loop_new();
-    check_mem(loop);
 
     if (xmp3_options_get_ssl(options)) {
         /* Initialize OpenSSL. */

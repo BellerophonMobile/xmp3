@@ -238,8 +238,8 @@ static bool handle_message(struct xmpp_stanza *stanza, struct xep_muc *muc) {
     check(type != NULL && strcmp(type, XMPP_STANZA_TYPE_GROUPCHAT) == 0,
           "MUC message stanza type other than groupchat.");
 
-    char *to = strdup(xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_TO));
-    check(to != NULL, "MUC message without to attribute.");
+    char *to;
+    STRDUP_CHECK(to, xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_TO));
 
     struct jid *to_jid = jid_new_from_str(to);
     struct room *room = NULL;
@@ -247,8 +247,8 @@ static bool handle_message(struct xmpp_stanza *stanza, struct xep_muc *muc) {
     jid_del(to_jid);
     check(room != NULL, "MUC message to non-existent room.");
 
-    char *from = strdup(xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_FROM));
-    check(from != NULL, "MUC message without from attribute.");
+    char *from;
+    STRDUP_CHECK(from, xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_FROM));
 
     struct jid *from_jid = jid_new_from_str(from);
     struct room_client *room_client = NULL;
@@ -370,7 +370,6 @@ static bool enter_room_presence(const char *search_room,
     }
 
     struct room_client *new_client = room_client_new(nickname, from_jid);
-    check_mem(new_client);
 
     /* If this is a local client, we need to know when they disconnect. */
     struct xmpp_client *client = xmpp_server_find_client(muc->server,
@@ -488,11 +487,9 @@ static struct room* room_new(const struct xep_muc *muc, const char *name) {
     struct room *room = calloc(1, sizeof(*room));
     check_mem(room);
 
-    room->name = strdup(name);
-    check_mem(room->name);
+    STRDUP_CHECK(room->name, name);
 
     room->jid = jid_new_from_jid(muc->jid);
-    check_mem(room->jid);
     jid_set_local(room->jid, room->name);
 
     return room;
@@ -515,8 +512,7 @@ static struct room_client* room_client_new(const char *nickname,
     struct room_client *room_client = calloc(1, sizeof(*room_client));
     check_mem(room_client);
 
-    room_client->nickname = strdup(nickname);
-    check_mem(room_client->nickname);
+    STRDUP_CHECK(room_client->nickname, nickname);
 
     room_client->client_jid = jid_new_from_jid(client_jid);
     return room_client;

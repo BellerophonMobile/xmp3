@@ -62,7 +62,6 @@
  */
 #define ADD_CALLBACK(type, list, ...) do { \
     struct type *add = type ## _new(__VA_ARGS__); \
-    check_mem(add); \
     struct type *match = NULL; \
     DL_SEARCH(list, match, add, type ## _cmp); \
     if (match != NULL) { \
@@ -288,7 +287,6 @@ struct xmpp_server* xmpp_server_new(struct event_loop *loop,
 
     server->loop = loop;
     server->jid = jid_new_from_str(xmp3_options_get_server_name(options));
-    check_mem(server->jid);
 
     if (xmp3_options_get_ssl(options)) {
         check(init_ssl(server, options), "Unable to initialize OpenSSL.");
@@ -676,14 +674,12 @@ static void connect_client(struct event_loop *loop, int fd, void *data) {
     check(client_fd != -1, "Error accepting new client connection");
 
     socket = client_socket_new(client_fd, caddr);
-    check_mem(socket);
-
     client = xmpp_client_new(server, socket);
-    check_mem(client);
 
     event_register_callback(loop, client_fd, read_client, client);
 
     connected_client = calloc(1, sizeof(*connected_client));
+    check_mem(connected_client);
     connected_client->client = client;
 
     log_info("New connection from %s:%d", inet_ntoa(caddr.sin_addr),
@@ -720,9 +716,7 @@ static void read_client(struct event_loop *loop, int fd, void *data) {
                                          server->buffer, server->buffer_size);
 
     if (numrecv == 0 || numrecv == -1) {
-        char *addrstr = client_socket_addr_str(
-                xmpp_client_socket(client));
-        check_mem(addrstr);
+        char *addrstr = client_socket_addr_str(xmpp_client_socket(client));
         switch (numrecv) {
             case 0:
                 log_info("%s disconnected", addrstr);
@@ -736,7 +730,6 @@ static void read_client(struct event_loop *loop, int fd, void *data) {
     }
 
     char *addrstr = client_socket_addr_str(xmpp_client_socket(client));
-    check_mem(addrstr);
     log_info("%s - Read %zd bytes", addrstr, numrecv);
     debug("%s: %.*s", addrstr, (int)numrecv, server->buffer);
     free(addrstr);
@@ -824,7 +817,6 @@ static struct stanza_route* stanza_route_new(const struct jid *jid,
     check_mem(route);
 
     route->jid = jid_new_from_jid(jid);
-    check_mem(route->jid);
     route->cb = cb;
     route->data = data;
 
@@ -856,8 +848,7 @@ static struct iq_route* iq_route_new(const char *ns,
     struct iq_route *route = calloc(1, sizeof(*route));
     check_mem(route);
 
-    route->ns = strdup(ns);
-    check_mem(route->ns);
+    STRDUP_CHECK(route->ns, ns);
     route->cb = cb;
     route->data = data;
 

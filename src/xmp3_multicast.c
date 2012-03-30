@@ -170,7 +170,6 @@ static bool multicast_start(void *data, struct xmpp_server *server) {
     /* Add a callback to XMP3 so we can grab all messages created by a locally
      * connected client. */
     struct jid *jid = jid_new_from_str("*@*/*");
-    check_mem(jid);
     xmpp_server_add_stanza_route(server, jid, local_stanza_handler, mcast);
     jid_del(jid);
 
@@ -192,7 +191,6 @@ static bool multicast_stop(void *data) {
     struct xmp3_multicast *mcast = data;
 
     struct jid *jid = jid_new_from_str("*@*/*");
-    check_mem(jid);
     xmpp_server_del_stanza_route(mcast->server, jid, local_stanza_handler,
                                  mcast);
     jid_del(jid);

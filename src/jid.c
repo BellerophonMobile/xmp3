@@ -52,6 +52,7 @@ struct jid {
 
 struct jid* jid_new(void) {
     struct jid *jid = calloc(1, sizeof(*jid));
+    check_mem(jid);
     return jid;
 }
 

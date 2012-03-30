@@ -325,8 +325,6 @@ static bool handle_sasl_plain(struct xmpp_stanza *stanza,
     }
 
     struct jid *jid = jid_new();
-    check_mem(jid);
-
     jid_set_local(jid, authcid);
     jid_set_domain(jid,
             jid_domain(xmpp_server_jid(xmpp_client_server(client))));

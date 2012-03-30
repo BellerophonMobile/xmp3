@@ -111,7 +111,6 @@ struct xmp3_options* xmp3_options_new(void) {
     check_mem(options->search_path);
 
     options->modules = xmp3_modules_new();
-    check_mem(options->modules);
 
     return options;
 }
