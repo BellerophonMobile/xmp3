@@ -62,6 +62,13 @@
 } while(0)
 
 /**
+ * The size of the string returned by the make_uuid function.
+ *
+ * Includes the trailing null terminator.
+ */
+extern const size_t UUID_SIZE;
+
+/**
  * Allocate and return a null-terminated string with a UUID.
  */
 char* make_uuid(void);

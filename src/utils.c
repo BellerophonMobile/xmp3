@@ -34,6 +34,9 @@
 #include "log.h"
 #include "utils.h"
 
+/* 36 bytes + trailing '\0' */
+const size_t UUID_SIZE = 37 * sizeof(char);
+
 enum base64_decodestep {
     base64_step_a,
     base64_step_b,
@@ -54,7 +57,7 @@ static int base64_decode_block(const char *code_in, const int length_in,
                                struct base64_decodestate *state_in);
 
 char* make_uuid(void) {
-    char *rv = malloc(37 * sizeof(char));
+    char *rv = malloc(UUID_SIZE);
     check_mem(rv);
     uuid_t uuid;
     uuid_generate(uuid);
