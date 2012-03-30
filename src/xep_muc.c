@@ -119,6 +119,13 @@ static bool handle_items_query(struct xmpp_stanza *stanza,
 
 static bool handle_info_query(struct xmpp_stanza *stanza, struct xep_muc *muc);
 
+static void send_nickname_conflict(struct xep_muc *muc,
+                                   const struct jid *room_jid, const char *to,
+                                   const char *from);
+static void send_presence_broadcast(struct xep_muc *muc, struct room *room,
+                                    const char *to, const char *from,
+                                    const char *nickname);
+
 /* Global module definition */
 struct xmp3_module XMP3_MODULE = {
     .mod_new = xep_muc_new,
@@ -329,13 +336,40 @@ static bool enter_room_presence(const char *search_room,
                                 struct xmpp_stanza *stanza,
                                 struct xep_muc *muc) {
     const char *to = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_TO);
-    struct jid *to_jid = jid_new_from_str(to);
-
     const char *from = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_FROM);
+
+    struct jid *to_jid = jid_new_from_str(to);
     struct jid *from_jid = jid_new_from_str(from);
 
-    struct room_client *new_client = room_client_new(jid_resource(to_jid),
-                                                     from_jid);
+    const char *nickname = jid_resource(to_jid);
+
+    struct room *room = NULL;
+    HASH_FIND_STR(muc->rooms, search_room, room);
+    if (room == NULL) {
+        /* Room doesn't exist, create it. */
+        debug("New room, creating");
+        room = room_new(muc, search_room);
+        HASH_ADD_KEYPTR(hh, muc->rooms, room->name, strlen(room->name), room);
+    } else {
+        /* Room exists, check to make sure this nickname isn't used already. */
+        struct room_client *room_client;
+        DL_FOREACH(room->clients, room_client) {
+            if (strncmp(nickname, room_client->nickname,
+                        JID_PART_MAX_LEN) == 0) {
+
+                /* XEP-0045 Section 7.2.9 specifies that a client requesting to
+                 * join a room with a duplicate nickname should be denied. */
+                debug("Duplicate nickname: %s", room_client->nickname);
+                /* "to" attribute is who we got the presence from, so reverse
+                 * from/to. */
+                send_nickname_conflict(muc, room->jid, from, to);
+
+                goto done;
+            }
+        }
+    }
+
+    struct room_client *new_client = room_client_new(nickname, from_jid);
     check_mem(new_client);
 
     /* If this is a local client, we need to know when they disconnect. */
@@ -345,71 +379,14 @@ static bool enter_room_presence(const char *search_room,
         xmpp_server_add_client_listener(client, client_disconnect, muc);
     }
 
+    send_presence_broadcast(muc, room, to, from, nickname);
+
+    /* Add the client to the room client list. */
+    DL_APPEND(room->clients, new_client);
+
+done:
     jid_del(to_jid);
     jid_del(from_jid);
-
-    struct room *room = NULL;
-    HASH_FIND_STR(muc->rooms, search_room, room);
-    if (room == NULL) {
-        /* Room doesn't exist, create it. */
-        debug("New room, creating");
-        room = room_new(muc, search_room);
-        HASH_ADD_KEYPTR(hh, muc->rooms, room->name, strlen(room->name), room);
-    }
-
-    struct xmpp_stanza *presence = xmpp_stanza_new("presence",
-        (const char*[]){XMPP_STANZA_ATTR_TO, from, NULL});
-    struct xmpp_stanza *presence_x = xmpp_stanza_new("x", (const char*[]){
-            "xmlns", "http://jabber.org/protocol/muc#user",
-            NULL});
-    xmpp_stanza_append_child(presence, presence_x);
-    struct xmpp_stanza *presence_item = xmpp_stanza_new("item",
-            (const char*[]){
-            "affiliation", "member",
-            "role", "participant",
-            NULL});
-    xmpp_stanza_append_child(presence_x, presence_item);
-
-    /* XEP-0045 Section 7.2.3: Broadcast presence of existing occupants to the
-     * new occupant. */
-    struct room_client *room_client;
-    DL_FOREACH(room->clients, room_client) {
-        xmpp_stanza_set_attr(presence, XMPP_STANZA_ATTR_ID, make_uuid());
-
-        jid_set_resource(room->jid, room_client->nickname);
-        xmpp_stanza_set_attr(presence, XMPP_STANZA_ATTR_FROM,
-                             jid_to_str(room->jid));
-        xmpp_server_route_stanza(muc->server, presence);
-    }
-
-    /* Send presence of the new occupant to all occupants. */
-    jid_set_resource(room->jid, new_client->nickname);
-    xmpp_stanza_set_attr(presence, XMPP_STANZA_ATTR_FROM,
-                         jid_to_str(room->jid));
-
-    DL_FOREACH(room->clients, room_client) {
-        xmpp_stanza_set_attr(presence, XMPP_STANZA_ATTR_ID, make_uuid());
-        xmpp_stanza_set_attr(presence, XMPP_STANZA_ATTR_TO,
-                             jid_to_str(room_client->client_jid));
-        xmpp_server_route_stanza(muc->server, presence);
-    }
-
-    /* Send the self-presence to the client. */
-    DL_APPEND(room->clients, new_client);
-    xmpp_stanza_set_attr(presence, XMPP_STANZA_ATTR_ID, make_uuid());
-    xmpp_stanza_copy_attr(presence, XMPP_STANZA_ATTR_TO, from);
-
-    struct xmpp_stanza *status = xmpp_stanza_new("status",
-        (const char*[]){"code", "110", NULL});
-    xmpp_stanza_append_child(presence_x, status);
-
-    xmpp_server_route_stanza(muc->server, presence);
-
-    /* Clean up. */
-    xmpp_stanza_del(presence, true);
-    jid_set_resource(room->jid, NULL);
-
-    debug("Done!");
     return true;
 }
 
@@ -430,9 +407,12 @@ static bool leave_room_presence(const char *search_room,
         }
     }
     check(room_client != NULL, "Non member trying to leave room.");
+
+    jid_del(from_jid);
     return leave_room(muc, room, room_client);
 
 error:
+    jid_del(from_jid);
     return false;
 }
 
@@ -617,4 +597,90 @@ static bool handle_info_query(struct xmpp_stanza *stanza,
     xmpp_server_route_stanza(muc->server, result);
     xmpp_stanza_del(result, true);
     return true;
+}
+
+static void send_nickname_conflict(struct xep_muc *muc,
+                                   const struct jid *room_jid, const char *to,
+                                   const char *from) {
+    struct xmpp_stanza *presence = xmpp_stanza_new("presence", (const char*[]){
+            XMPP_STANZA_ATTR_TO, to,
+            XMPP_STANZA_ATTR_FROM, from,
+            XMPP_STANZA_ATTR_TYPE, "error",
+            NULL});
+    xmpp_stanza_set_attr(presence, XMPP_STANZA_ATTR_ID, make_uuid());
+
+    struct xmpp_stanza *x = xmpp_stanza_new("x", (const char*[]){
+            "xmlns", "http://jabber.org/protocol/muc",
+            NULL});
+    xmpp_stanza_append_child(presence, x);
+
+    struct xmpp_stanza *error = xmpp_stanza_new("error", (const char*[]){
+            "type", "cancel", NULL});
+    xmpp_stanza_set_attr(error, "by", jid_to_str(room_jid));
+    xmpp_stanza_append_child(presence, error);
+
+    struct xmpp_stanza *conflict = xmpp_stanza_new("conflict", (const char*[]){
+            "xmlns", "urn:ietf:params:xml:ns:xmpp-stanzas",
+            NULL});
+    xmpp_stanza_append_child(error, conflict);
+    xmpp_server_route_stanza(muc->server, presence);
+    xmpp_stanza_del(presence, true);
+}
+
+static void send_presence_broadcast(struct xep_muc *muc, struct room *room,
+                                    const char *to, const char *from,
+                                    const char *nickname) {
+    struct xmpp_stanza *presence = xmpp_stanza_new("presence", (const char*[]){
+            XMPP_STANZA_ATTR_TO, from,
+            NULL});
+
+    struct xmpp_stanza *presence_x = xmpp_stanza_new("x", (const char*[]){
+            "xmlns", "http://jabber.org/protocol/muc#user",
+            NULL});
+    xmpp_stanza_append_child(presence, presence_x);
+
+    struct xmpp_stanza *item = xmpp_stanza_new("item", (const char*[]){
+            "affiliation", "member",
+            "role", "participant",
+            NULL});
+    xmpp_stanza_append_child(presence_x, item);
+
+    struct jid *tmp_jid = jid_new_from_jid(room->jid);
+
+    /* XEP-0045 Section 7.2.3: Broadcast presence of existing occupants to the
+     * new occupant. */
+    struct room_client *room_client;
+    DL_FOREACH(room->clients, room_client) {
+        xmpp_stanza_set_attr(presence, XMPP_STANZA_ATTR_ID, make_uuid());
+
+        jid_set_resource(tmp_jid, room_client->nickname);
+        xmpp_stanza_set_attr(presence, XMPP_STANZA_ATTR_FROM,
+                             jid_to_str(tmp_jid));
+        xmpp_server_route_stanza(muc->server, presence);
+    }
+
+    /* Send presence of the new occupant to all occupants. */
+    jid_set_resource(tmp_jid, nickname);
+    xmpp_stanza_set_attr(presence, XMPP_STANZA_ATTR_FROM, jid_to_str(tmp_jid));
+
+    DL_FOREACH(room->clients, room_client) {
+        xmpp_stanza_set_attr(presence, XMPP_STANZA_ATTR_ID, make_uuid());
+        xmpp_stanza_set_attr(presence, XMPP_STANZA_ATTR_TO,
+                             jid_to_str(room_client->client_jid));
+        xmpp_server_route_stanza(muc->server, presence);
+    }
+
+    /* Send the self-presence to the client. */
+    xmpp_stanza_set_attr(presence, XMPP_STANZA_ATTR_ID, make_uuid());
+    xmpp_stanza_copy_attr(presence, XMPP_STANZA_ATTR_TO, from);
+
+    struct xmpp_stanza *status = xmpp_stanza_new("status",
+        (const char*[]){"code", "110", NULL});
+    xmpp_stanza_append_child(presence_x, status);
+
+    xmpp_server_route_stanza(muc->server, presence);
+
+    /* Clean up. */
+    xmpp_stanza_del(presence, true);
+    jid_del(tmp_jid);
 }
