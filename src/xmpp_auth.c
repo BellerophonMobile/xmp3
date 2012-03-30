@@ -361,6 +361,7 @@ error:
 static bool handle_bind_iq(struct xmpp_stanza *stanza,
                            struct xmpp_parser *parser, void *data) {
     struct xmpp_client *client = (struct xmpp_client*)data;
+    struct xmpp_server *server = xmpp_client_server(client);
 
     debug("Resource binding IQ");
 
@@ -388,13 +389,14 @@ static bool handle_bind_iq(struct xmpp_stanza *stanza,
     check(strcmp(xmpp_stanza_name(stanza), BIND) == 0,
           "Unexpected stanza");
 
+    struct jid *new_jid = jid_new_from_jid(xmpp_client_jid(client));
+
     /* Jump to the inner <resource> tag. */
     stanza = xmpp_stanza_children(stanza);
-
-    if (stanza == NULL) {
+    if (stanza == NULL || xmpp_stanza_data_length(stanza) == 0) {
         /* No resource specified, generate one. */
         char *uuid = make_uuid();
-        jid_set_resource(xmpp_client_jid(client), uuid);
+        jid_set_resource(new_jid, uuid);
         free(uuid);
     } else {
         check(strcmp(xmpp_stanza_uri(stanza), BIND_NS) == 0,
@@ -402,11 +404,31 @@ static bool handle_bind_iq(struct xmpp_stanza *stanza,
         check(strcmp(xmpp_stanza_name(stanza), RESOURCE) == 0,
               "Unexpected stanza");
 
-        /* TODO: Check for duplicate resources. */
-
         /* Copy the resource into the client information structure. */
-        jid_set_resource(xmpp_client_jid(client), xmpp_stanza_data(stanza));
+        jid_set_resource(new_jid, xmpp_stanza_data(stanza));
     }
+
+    /* Search for locally connected clients with this JID.  If a duplicate is
+     * found, append a UUID until we get a unique resource. */
+    while (xmpp_server_find_client(server, new_jid) != NULL) {
+
+#ifndef NDEBUG
+        char *strjid = jid_to_str(new_jid);
+        debug("JID %s is duplicate, generating new resource.", strjid);
+        free(strjid);
+#endif
+
+        /* UUID_SIZE includes the trailing null terminator. */
+        char new_resource[strlen(jid_resource(new_jid)) + UUID_SIZE];
+        char *uuid = make_uuid();
+        snprintf(new_resource, JID_PART_MAX_LEN, "%s%s", jid_resource(new_jid),
+                 uuid);
+        free(uuid);
+        jid_set_resource(new_jid, new_resource);
+    }
+
+    jid_set_resource(xmpp_client_jid(client), jid_resource(new_jid));
+    jid_del(new_jid);
 
     char *jidstr = jid_to_str(xmpp_client_jid(client));
     utstring_printf(&success_msg, MSG_BIND_SUCCESS, id, jidstr);
@@ -423,8 +445,7 @@ static bool handle_bind_iq(struct xmpp_stanza *stanza,
     /* Resource binding, and thus authentication, is complete!  Continue to
      * process general messages. */
     xmpp_parser_set_handler(parser, xmpp_core_handle_stanza);
-    xmpp_server_add_stanza_route(xmpp_client_server(client),
-                                 xmpp_client_jid(client),
+    xmpp_server_add_stanza_route(server, xmpp_client_jid(client),
                                  xmpp_core_route_client, client);
     return true;
 
