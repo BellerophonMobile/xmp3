@@ -34,12 +34,13 @@ import unittest
 import socket
 import xml.etree.ElementTree
 import io
+import time
 
 XMP3_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                          '../build/xmp3')
 
 XMP3_ADDRESS = ('127.0.0.1', 5222)
-TIMEOUT = 0.2
+TIMEOUT = 1
 
 # From: https://github.com/codeinthehole/unittest-xml/
 # Modifications by Tom Wambold
@@ -95,34 +96,14 @@ class NoSSLTests(unittest.TestCase, XMLAssertions):
         print('Logging to:', log_path)
         self.xmp3 = subprocess.Popen([XMP3_PATH, '-n'], stdout=log_fd,
                                      stderr=subprocess.STDOUT)
-
-        self.sock = socket.create_connection(XMP3_ADDRESS, TIMEOUT)
+        time.sleep(2)
 
     def tearDown(self):
         self.xmp3.terminate()
         self.xmp3.wait()
 
-    def send_msg(self, msg):
-        self.sock.sendall(bytes(msg, 'utf-8'))
-
-    def recv_msg(self):
-        rv = []
-        while True:
-            try:
-                rv.append(str(self.sock.recv(102400), 'utf-8'))
-            except socket.timeout:
-                break
-        msg = ''.join(rv)
-        #print(msg)
-        #print()
-        return msg
-
     def testPidginConnect(self):
-        self.send_msg("<?xml version='1.0' ?>")
-        self.send_msg("<stream:stream to='localhost'"
-                                    " xmlns='jabber:client'"
-                                    " xmlns:stream='http://etherx.jabber.org/streams'"
-                                    " version='1.0'>")
+        user1 = Pidgin('user1', 'resource1', 'password1')
 
         # <stream:stream from='localhost' id='foobarx' version='1.0'
         #                xml:lang='en' xmlns='jabber:client'
@@ -132,7 +113,7 @@ class NoSSLTests(unittest.TestCase, XMLAssertions):
         #             <mechanism>PLAIN</mechanism>
         #         </mechanisms>
         #     </stream:features>
-        msg = self.recv_msg()
+        msg = user1.initial_stream_header()
         self.assertXPathNodeCount(msg, 1, 'stream:stream')
         self.assertXPathNodeAttributes(msg,
                 {'from': None, 'id': None, 'version': None}, 'stream:stream')
@@ -143,21 +124,9 @@ class NoSSLTests(unittest.TestCase, XMLAssertions):
                                   self.assertLessEqual)
         self.assertXPathNodeText(msg, 'PLAIN', 'stream:stream/stream:features/xmpp-sasl:mechanisms/xmpp-sasl:mechanism')
 
-        self.send_msg("<auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl'"
-                           " mechanism='PLAIN'"
-                           " xmlns:ga='http://www.google.com/talk/protocol/auth'"
-                           " ga:client-uses-full-bind-result='true'>"
-                           "{}</auth>".format(str(base64.b64encode(bytes(
-                               '\0user1\0password1', 'utf-8')), 'utf-8')))
-
         # <success xmlns='urn:ietf:params:xml:ns:xmpp-sasl'/>
-        msg = self.recv_msg()
+        msg = user1.sasl_plain_auth()
         self.assertXPathNodeCount(msg, 1, 'xmpp-sasl:success')
-
-        self.send_msg("<stream:stream to='localhost'"
-                                    " xmlns='jabber:client'"
-                                    " xmlns:stream='http://etherx.jabber.org/streams'"
-                                    " version='1.0'>")
 
         # <stream:stream from='localhost' id='foobarx' version='1.0'
         #                xml:lang='en' xmlns='jabber:client'
@@ -166,7 +135,7 @@ class NoSSLTests(unittest.TestCase, XMLAssertions):
         #         <bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'/>
         #         <session xmlns='urn:ietf:params:xml:ns:xmpp-session'/>
         #     </stream:features>
-        msg = self.recv_msg()
+        msg = user1.after_sasl_stream_header()
         self.assertXPathNodeCount(msg, 1, 'stream:stream')
         self.assertXPathNodeAttributes(msg,
                 {'from': None, 'id': None, 'version': None}, 'stream:stream')
@@ -175,17 +144,12 @@ class NoSSLTests(unittest.TestCase, XMLAssertions):
         self.assertXPathNodeCount(msg, 1, 'stream:stream/stream:features/xmpp-bind:bind')
         self.assertXPathNodeCount(msg, 1, 'stream:stream/stream:features/xmpp-session:session')
 
-        self.send_msg("<iq type='set' id='purple6aec7129'>"
-                          "<bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'>"
-                               "<resource>resource1</resource>"
-                          "</bind></iq>")
-
         # <iq id='purple6aec7129' type='result'>
         #     <bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'>
         #         <jid>user1@localhost/resource1</jid>
         #     </bind>
         # </iq>
-        msg = self.recv_msg()
+        msg = user1.resource_bind_iq()
         self.assertXPathNodeCount(msg, 1, 'iq')
         self.assertXPathNodeAttributes(msg, {'id': 'purple6aec7129',
                                        'type': 'result'}, 'iq')
@@ -194,29 +158,19 @@ class NoSSLTests(unittest.TestCase, XMLAssertions):
         self.assertXPathNodeCount(msg, 1, 'iq/xmpp-bind:bind/xmpp-bind:jid')
         self.assertXPathNodeText(msg, 'user1@localhost/resource1', 'iq/xmpp-bind:bind/xmpp-bind:jid')
 
-        self.send_msg("<iq type='set' id='purple6aec712a'>"
-                          "<session xmlns='urn:ietf:params:xml:ns:xmpp-session'/>"
-                      "</iq>")
-
         # <iq id='purple6aec712a' from='localhost' to='user1@localhost/resource1' type='result'/>
-        msg = self.recv_msg()
+        msg = user1.session_start()
         self.assertXPathNodeCount(msg, 1, 'iq')
         self.assertXPathNodeAttributes(msg, {'id': 'purple6aec712a',
             'type': 'result'}, 'iq')
 
-        self.send_msg("<iq type='get' id='purple6aec712b' to='localhost'>"
-                          "<query xmlns='http://jabber.org/protocol/disco#items'/>"
-                      "</iq>")
         # <iq id='purple6aec712b' from='localhost' to='user1@localhost/resource1' type='result'>
         #     <query xmlns='http://jabber.org/protocol/disco#items'/>
         # </iq>
-        msg = self.recv_msg()
+        msg = user1.disco_items_query()
         self.assertXPathNodeCount(msg, 1, 'iq')
         self.assertXPathNodeCount(msg, 1, 'iq/disco-items:query')
 
-        self.send_msg("<iq type='get' id='purple6aec712c' to='localhost'>"
-                          "<query xmlns='http://jabber.org/protocol/disco#info'/>"
-                      "</iq>")
         # <iq id='purple6aec712c' from='localhost' to='user1@localhost/resource1' type='result'>
         #     <query xmlns='http://jabber.org/protocol/disco#info'>
         #         <identity category='server' type='im' name='xmp3'/>
@@ -224,37 +178,156 @@ class NoSSLTests(unittest.TestCase, XMLAssertions):
         #         <feature var='http://jabber.org/protocol/disco#items'/>
         #     </query>
         # </iq>
-        msg = self.recv_msg()
+        msg = user1.disco_info_query()
         self.assertXPathNodeCount(msg, 1, 'iq')
         self.assertXPathNodeCount(msg, 1, 'iq/disco-info:query')
         self.assertXPathNodeCount(msg, 3, 'iq/disco-info:query/*', self.assertLessEqual)
 
-        self.send_msg("<iq type='get' id='purple6aec712d'>"
-                          "<vCard xmlns='vcard-temp'/>"
-                      "</iq>")
         # TODO: XMP3 currently returns an error for this
-        msg = self.recv_msg()
+        msg = user1.iq_vcard_get()
 
-        self.send_msg("<iq type='get' id='purple6aec712e'>"
-                          "<query xmlns='jabber:iq:roster'/>"
-                      "</iq>")
         # <iq id='purple6aec712e' from='localhost' to='user1@localhost/resource1' type='result'>
         #     <query xmlns='jabber:iq:roster'/>
         # </iq>
-        msg = self.recv_msg()
+        msg = user1.iq_roster_get()
         self.assertXPathNodeCount(msg, 1, 'iq')
         self.assertXPathNodeCount(msg, 1, 'iq/roster:query')
 
+        # TODO: XMP3 does not respond to this at all
+        user1.iq_bytestream_query()
+        user1.initial_presence()
+
+    def testPidginOneToOne(self):
+        user2 = Pidgin('user2', 'resource2', 'password2')
+        user1 = Pidgin('user3', 'resource3', 'password3')
+
+        user1.connect_no_ssl()
+        user2.connect_no_ssl()
+
+
+class Client(object):
+    def __init__(self):
+        self.sock = socket.create_connection(XMP3_ADDRESS)
+        self.sock.settimeout(TIMEOUT)
+
+    def __del__(self):
+        self.sock.close()
+
+    def send_msg(self, msg):
+        self.sock.sendall(bytes(msg, 'utf-8'))
+
+    def recv_msg(self):
+        rv = []
+        while True:
+            try:
+                data = str(self.sock.recv(102400), 'utf-8')
+                if len(data) == 0:
+                    break
+                rv.append(data)
+            except socket.timeout:
+                break
+        msg = ''.join(rv)
+        #print(msg)
+        #print()
+        return msg
+
+class Pidgin(Client):
+    def __init__(self, user, resource, password):
+        super().__init__()
+        self.user = user
+        self.resource = resource
+        self.password = password
+
+    def connect_no_ssl(self):
+        self.initial_stream_header()
+        self.sasl_plain_auth()
+        self.after_sasl_stream_header()
+        self.resource_bind_iq()
+        self.session_start()
+        self.disco_items_query()
+        self.disco_info_query()
+        self.iq_vcard_get()
+        self.iq_roster_get()
+        self.iq_bytestream_query()
+        self.initial_presence()
+
+    def initial_stream_header(self):
+        self.send_msg("<?xml version='1.0' ?>")
+        self.send_msg("<stream:stream to='localhost'"
+                                    " xmlns='jabber:client'"
+                                    " xmlns:stream='http://etherx.jabber.org/streams'"
+                                    " version='1.0'>")
+        return self.recv_msg()
+
+    def sasl_plain_auth(self):
+        self.send_msg("<auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl'"
+                           " mechanism='PLAIN'"
+                           " xmlns:ga='http://www.google.com/talk/protocol/auth'"
+                           " ga:client-uses-full-bind-result='true'>"
+                           "{}</auth>".format(str(base64.b64encode(bytes(
+                               '\0'.join(['', self.user, self.password]),
+                               'utf-8')), 'utf-8')))
+        return self.recv_msg()
+
+    def after_sasl_stream_header(self):
+        self.send_msg("<stream:stream to='localhost'"
+                                    " xmlns='jabber:client'"
+                                    " xmlns:stream='http://etherx.jabber.org/streams'"
+                                    " version='1.0'>")
+        return self.recv_msg()
+
+    def resource_bind_iq(self):
+        self.send_msg("<iq type='set' id='purple6aec7129'>"
+                          "<bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'>"
+                               "<resource>{0}</resource>"
+                          "</bind></iq>".format(self.resource))
+        return self.recv_msg()
+
+    def session_start(self):
+        self.send_msg("<iq type='set' id='purple6aec712a'>"
+                          "<session xmlns='urn:ietf:params:xml:ns:xmpp-session'/>"
+                      "</iq>")
+        return self.recv_msg()
+
+    def disco_items_query(self):
+        self.send_msg("<iq type='get' id='purple6aec712b' to='localhost'>"
+                          "<query xmlns='http://jabber.org/protocol/disco#items'/>"
+                      "</iq>")
+        return self.recv_msg()
+
+    def disco_info_query(self):
+        self.send_msg("<iq type='get' id='purple6aec712c' to='localhost'>"
+                          "<query xmlns='http://jabber.org/protocol/disco#info'/>"
+                      "</iq>")
+        return self.recv_msg()
+
+    def iq_vcard_get(self):
+        self.send_msg("<iq type='get' id='purple6aec712d'>"
+                          "<vCard xmlns='vcard-temp'/>"
+                      "</iq>")
+        return self.recv_msg()
+
+    def iq_roster_get(self):
+        self.send_msg("<iq type='get' id='purple6aec712e'>"
+                          "<query xmlns='jabber:iq:roster'/>"
+                      "</iq>")
+        return self.recv_msg()
+
+    def iq_bytestream_query(self):
         self.send_msg("<iq type='get' id='purple6aec712f' to='proxy.eu.jabber.org'>"
                           "<query xmlns='http://jabber.org/protocol/bytestreams'/>"
                       "</iq>")
         # TODO: XMP3 does not respond to this at all
+        return
 
+    def initial_presence(self):
         self.send_msg("<presence>"
                           "<priority>1</priority>"
                           "<c xmlns='http://jabber.org/protocol/caps' node='http://pidgin.im/' hash='sha-1' ver='lV6i//bt2U8Rm0REcX8h4F3Nk3M=' ext='voice-v1 camera-v1 video-v1'/>"
                           "<x xmlns='vcard-temp:x:update'/>"
                       "</presence>")
+        # XMP3 does not respond to this yet
+        return
 
 
 
