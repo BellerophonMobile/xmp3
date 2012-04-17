@@ -23,6 +23,19 @@
  */
 
 /**
+ * @mainpage
+ *
+ * XMP3 provides a lightweight (mostly) RFC compliant XMPP server.  The key
+ * feature is the ability to hook into the server to receive/send XMPP stanzas.
+ * This makes it easy to use XMP3 as a proxy to another system.  For example,
+ * xmp3_multicast.c provides a method to deliver stanzas server-to-server via a
+ * UDP multicast group.
+ *
+ * See the README file in the source distribution for more information about
+ * building/running XMP3.
+ */
+
+/**
  * @file main.c
  * Main function and argument parsing.
  */
