@@ -25,6 +25,9 @@
 /**
  * @mainpage
  *
+ * Overview
+ * --------
+ *
  * XMP3 provides a lightweight (mostly) RFC compliant XMPP server.  The key
  * feature is the ability to hook into the server to receive/send XMPP stanzas.
  * This makes it easy to use XMP3 as a proxy to another system.  For example,
@@ -33,6 +36,42 @@
  *
  * See the README file in the source distribution for more information about
  * building/running XMP3.
+ *
+ * Basic Architecture
+ * ------------------
+ *
+ *  XMP3 tries to maintain a very simple architecture.  The main server
+ *  functions handle creating the server socket, and routing incoming stanzas
+ *  to appropriate callback functions.  This is all done in a single-threaded
+ *  manner, managed by a small event loop.
+ *
+ *  The two key components of XMP3 are the event loop and the main server
+ *  functions, which are explained below.
+ *
+ *  ### Event Loop ###
+ *
+ *  XMP3 currently uses a simple event loop (implemented in event.c), based on
+ *  registering callbacks for when sockets are available to read.  All sockets
+ *  used in XMP3 are managed through this event loop (main server socket, all
+ *  client connections).  Plugins can hook into the event loop in order to
+ *  receive notifications of incoming data on any sockets they are using.
+ *
+ *  ### Main Server ###
+ *
+ *  The main server (implemented in xmpp_server.c), mainly provides the core
+ *  stanza router.  Each incoming and outgoing stanza is matched on its "to"
+ *  attribute to determine which callback function is called.  Stanzas to a
+ *  locally connected client are passed to the xmpp_core_route_client()
+ *  callback function.  Stanzas addressed to the server itself (such as IQs)
+ *  are deliverd to the xmpp_core_route_server() callback function.  IQ stanzas
+ *  in particular are delivered to the xmpp_server_route_iq() function which
+ *  then calls the appropriate callback based on the namespace of the IQ (most
+ *  of which are implemented in xmpp_im.c).
+ *
+ *  Plugins can extend the functionality of the core server by adding stanza
+ *  routes with xmpp_server_add_stanza_route() (i.e. the MUC component
+ *  registers a route for conference.localhost).  They can also implement IQs
+ *  with xmpp_server_add_iq_route().
  */
 
 /**

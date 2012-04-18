@@ -27,6 +27,100 @@
  * Simple extension module that multicasts messages to other XMP3 instances.
  */
 
+/**
+ * @page modules Building XMPP Modules
+ *
+ * Defining the Module
+ * -------------------
+ *
+ *  Each external module requires a global module definition.  Do this by
+ *  defining a symbol named "XMP3_MODULE" of type struct xmp3_module.
+ *  This struct defines function pointers to be called to instantiate,
+ *  destroy, start, stop, and configure an instance of your module.
+ *
+ *  @see struct xmp3_module for documentation on each function a module should
+ *  define.
+ *
+ * Instantiating the Module
+ * ------------------------
+ *
+ *  Modules that will inject XMPP stanzas into the server need to construct
+ *  xmpp_stanza structures to hand to the server.  The xmpp_parser object is
+ *  created for this purpose.  Most modules will want to create in instance of
+ *  this in their xmp3_module.mod_new functions, setting the stanza handler to
+ *  be something simple like the remote_stanza_handler() in xmp3_multicast.c.
+ *  The stanza handler then just forwards the stanza to the server stanza
+ *  router.
+ *
+ *  @see remote_stanza_handler() in xmp3_multicast.c for an example.
+ *
+ * Configuring the Module
+ * ----------------------
+ *
+ *  The xmp3_module.mod_conf function will be called for each (key = value)
+ *  pair defined in the configuration file.
+ *
+ *  @see multicast_conf() fin xmp3_multicast.c for an example.
+ *
+ * Starting the Module
+ * -------------------
+ *
+ *  The xmp3_module.mod_start function will be called for each module instance
+ *  just before the server starts, after all the configuration options have
+ *  been parsed.  Here, a module that wants to receive stanzas sent to the
+ *  server can register a stanza route (using xmpp_server_add_stanza_route()).
+ *  Stanza routes look like normal JIDs, which are of the form
+ *  "local@domain/resource".  Any part of the route can be replaced by an
+ *  asterisk ("*") as a wildcard.
+ *
+ *  If a module creates and listens on its own sockets, it can utilize XMP3's
+ *  event loop, instead of implementing its own in a thread.  Using the
+ *  xmpp_server_loop() function to retrieve the instance of the main event
+ *  loop, a module can then register its own callbacks with sockets with the
+ *  event_register_callback() function.
+ *
+ *  @see multicast_start() in xmp3_multicast.c for an example.
+ *
+ * Stopping the Module
+ * -------------------
+ *
+ *  The xmp3_module.mod_stop function will be called just after the server
+ *  stops.  Here, the module should deregister any stanza routes it used (with
+ *  xmp3_server_del_stanza_route()), and remove any event loop callbacks (with
+ *  event_deregister_callback()).
+ *
+ *  @see multicast_stop() in xmp3_multicast.c for an example.
+ *
+ * Getting Stanzas from the Server
+ * -------------------------------
+ *
+ *  By setting up a stanza route, a module will receive an xmpp_stanza instance
+ *  for each stanza with a "to" attribute that matches the route (after
+ *  evaluating wildcards).  In most cases, the stanza should not be modified,
+ *  since other functions may still need to use that stanza instance.  From
+ *  here, a module can serialize the stanza into any desired format and
+ *  transmitted to another system.
+ *
+ *  @note If the module also injects stanzas into the server, the module will
+ *  receive those stanzas if they match the stanza route added.  A work around
+ *  for this is to check if a stanza is from a locally connected client (using
+ *  xmpp_server_find_client()) before doing anything with it.
+ *
+ *  @see local_stanza_handler() in xmp3_multicast.c for an example.
+ *
+ * Injecting Stanzas to the Server
+ * -------------------------------
+ *
+ *  If a module uses the xmpp_parser functions, it can pass received XMPP
+ *  stanzas into the xmpp_parer_parse() function to construct an xmpp_stanza
+ *  instance.  This stanza can then be passed to the xmpp_server_route_stanza()
+ *  function to have the server process it.
+ *
+ *  @see socket_handler() and remote_stanza_handler() in xmp3_multicast.c for
+ *  and example.
+ *
+ */
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -119,6 +213,8 @@ static void* multicast_new(void) {
     mcast->ttl = DEFAULT_TTL;
     mcast->buffer_size = DEFAULT_BUFFER_SIZE;
 
+    /* Create an XMPP parser for ourselves, so we can inject stanza object into
+     * the server. */
     mcast->parser = xmpp_parser_new(false);
     xmpp_parser_set_handler(mcast->parser, remote_stanza_handler);
     xmpp_parser_set_data(mcast->parser, mcast);
@@ -136,6 +232,8 @@ static void multicast_del(void *data) {
 static bool multicast_conf(void *data, const char *key, const char *value) {
     struct xmp3_multicast *mcast = data;
 
+    /* Compare the key against all the configuration options this module
+     * accepts.  If it doesn't match any of them, return an error. */
     if (strcmp(key, "address") == 0) {
         copy_string(&mcast->address, value);
 
@@ -154,6 +252,10 @@ static bool multicast_conf(void *data, const char *key, const char *value) {
         long int size;
         return read_int(value, &size);
         mcast->buffer_size = size;
+
+    } else {
+        log_err("No such configuration option: '%s'", key);
+        return false;
     }
 
     return true;
@@ -279,6 +381,8 @@ static void socket_handler(struct event_loop *loop, int fd, void *data) {
     log_info("Received %zd bytes from %s:%d", num_recv,
              inet_ntoa(recv_addr.sin_addr), ntohs(recv_addr.sin_port));
 
+    /* Parse the XMPP stanza string we just received.  Reset the parser before
+     * to clear any state from previous stanzas. */
     xmpp_parser_reset(mcast->parser, false);
     xmpp_parser_parse(mcast->parser, mcast->buffer, num_recv);
 

@@ -13,6 +13,25 @@ This makes it easy to use XMP3 as a proxy to another system.  Otherwise XMP3
 works well as a light weight XMPP server for general use, especially on
 resource-constrained devices.
 
+Features
+--------
+
+ * Mostly RFC 6120, 6121 compliant XMPP implementation
+ * Supports one-to-one messaging.
+ * Supports XEP-0045 multi-user chat.
+ * Pluggable authentication mechanisms:
+    * See xmpp_server_set_auth_callback in xmpp_server.h
+
+Planned Features
+----------------
+
+XMP3 does not currently, but should in a future version, support these
+features:
+
+ * Configurable roster implementations (file/database backed, etc).
+ * Server dialback support.
+ * RFC 6120 Server to Server communication.
+
 Supported Platforms
 -------------------
 
@@ -30,6 +49,12 @@ XMP3 is officially supported and tested on the following platforms:
         * HTC Nexus One
         * Samsung Galaxy Nexus
     * Android 4.0.3 - ASUS EEE Transformer
+
+XMP3 has been tested with the following clients:
+
+ * Pidgin 2.10.3 (libpurple 2.10.3)
+ * iChat in OSX 10.6 and 10.7.
+ * Xabber on Android
 
 Requirements
 ------------
@@ -183,3 +208,26 @@ Development
 
 The Doxygen documentation provides an overview of the source code.  To begin
 implementing your own proxy, see "src/xmp3_multicast.c" for a basic example.
+The Doxygen documentation also has a writeup of building an external module
+under the "Related Pages" section.
+
+Third-Party Libraries
+---------------------
+
+XMP3 relies on the following third-party libraries (most of them included in
+the "lib" directory):
+
+ * Expat - for XML parsing
+    * http://expat.sourceforge.net/
+ * OpenSSL - for SSL/TLS support
+    * http://www.openssl.org/
+ * inih - to parse the configuration file
+    * http://inih.googlecode.com/
+ * test-dept - for unit tests
+    * http://test-dept.googlecode.com/
+ * tj-tools - misc. utility functions (dynamic library loading, etc.)
+    * http://tj-tools.googlecode.com/
+ * uthash - hash tables, dynamic arrays, and dynamic string macros/functions
+    * http://uthash.sourceforge.net/
+ * libb64 - base64 decoding
+    * http://libb64.sourceforge.net/

@@ -35,22 +35,6 @@
 struct xmpp_server;
 struct xmp3_modules;
 
-/** Called to instantiate a new intance of the module. */
-typedef void* (*xmp3_module_new)(void);
-
-/** Called when the module should be deleted. */
-typedef void (*xmp3_module_del)(void *module);
-
-/** Called for each key=value pair in the config file for this module. */
-typedef bool (*xmp3_module_conf)(void *module, const char *key,
-                                 const char *value);
-
-/** Called when the server is starting. */
-typedef bool (*xmp3_module_start)(void *module, struct xmpp_server *server);
-
-/** Called when the server is stopping. */
-typedef bool (*xmp3_module_stop)(void *module);
-
 /**
  * Structure representing an XMP3 extension module.
  *
@@ -62,11 +46,71 @@ typedef bool (*xmp3_module_stop)(void *module);
  * shared object containing the extension.  See the example config file.
  */
 struct xmp3_module {
-    xmp3_module_new mod_new;
-    xmp3_module_del mod_del;
-    xmp3_module_conf mod_conf;
-    xmp3_module_start mod_start;
-    xmp3_module_stop mod_stop;
+    /**
+     * Function for creating and initializing a new instance of a module.
+     *
+     * This will be called once for each new instantiation of a module.  It
+     * should allocate memory and initialize any default variables for your
+     * module, and return a pointer to that memory.  The returned pointer will
+     * be passed to the subsequent functions to manipulate.
+     *
+     * @returns A new instance of this module.
+     */
+    void* (*mod_new)(void);
+
+    /**
+     * Function for cleaning up and deallocating an instance of a module.
+     *
+     * Thsi will be called once for each instantiated module when the server
+     * shuts down.  It should free any resources allocated during the operation
+     * of the module.
+     *
+     * @param module A pointer to the module instance.
+     */
+    void (*mod_del)(void *module);
+
+    /**
+     * Function for setting module options.
+     *
+     * This will be called once for each (key = value) pair in the
+     * configuration file for a module instance.
+     *
+     * @param module A pointer to the module instance.
+     * @param key    The name of the configuration option to set.
+     * @param value  The value of the configuration option to set.
+     * @returns True if successful, False on error (invalid key, etc.).
+     */
+    bool (*mod_conf)(void *module, const char *key, const char *value);
+
+    /**
+     * Function to start an instantiated module.
+     *
+     * This will be called immediately after the server is started, after all
+     * the configuration options have been parsed.  This is where a module can
+     * register stanza routes, callback functions, or run its own event loop in
+     * a thread if necessary.  If a module fails to start, the server will stop
+     * and report the error.
+     *
+     * @param module A pointer to the module instance.
+     * @param server A pointer to the running XMPP server instance.
+     * @returns True if sucessful, False on error.
+     */
+    bool (*mod_start)(void *module, struct xmpp_server *server);
+
+    /**
+     * Function to stop an instantiated and running module.
+     *
+     * This will be called just after the server is stopped.  This should
+     * remove any registered stanza routes and event callbacks, and stop any
+     * threads that are running.  Essesntially, this module should stop
+     * everything short of freeing memory.  On error, the server will report
+     * the error, but continue in its normal shutdown sequence.  In the future,
+     * the server may have the capability to start/stop modules at runtime.
+     *
+     * @param module A pointer to the module instance.
+     * @returns True if sucessful, False on error.
+     */
+    bool (*mod_stop)(void *module);
 };
 
 struct xmp3_modules* xmp3_modules_new(void);
