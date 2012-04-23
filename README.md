@@ -13,6 +13,9 @@ This makes it easy to use XMP3 as a proxy to another system.  Otherwise XMP3
 works well as a light weight XMPP server for general use, especially on
 resource-constrained devices.
 
+Most of this work is funded by the Naval Research Laboratory:
+http://cs.itd.nrl.navy.mil/
+
 Features
 --------
 
