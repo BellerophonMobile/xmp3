@@ -34,6 +34,7 @@ import waflib
 def options(ctx):
     ctx.load('compiler_c')
     ctx.load('asm')
+
     opts = ctx.add_option_group('XMP3 Options')
     opts.add_option('--debug', action='store_true',
                     help='Build with debugging flags (default optimized).')
@@ -41,11 +42,59 @@ def options(ctx):
     opts.add_option('--test', action='store_true',
                     help='Build test programs')
 
+    cross = ctx.add_option_group('Cross Compiling')
+    cross.add_option('--cross-android', action='store_const', dest='cross',
+                     const='android', default=None,
+                     help='Cross compile for Android')
+    cross.add_option('--cross-android-ndk', action='store',
+                     default=os.getenv('ANDROID_NDK'),
+                     help='Android NDK directory.')
+    cross.add_option('--cross-android-level', action='store', type=int,
+                     default=9, help='Android platform level to use.')
+    cross.add_option('--cross-android-arch', action='store', default='armv6',
+                     help='Android architecture to use (armv6, armv7).')
+
 def configure(ctx):
+    # System waf is running on: linux, darwin (Mac OSX), freebsd, windows, etc.
+    if ctx.options.cross:
+        ctx.env.target = ctx.options.cross
+    else:
+        ctx.env.target = platform.system().lower()
+
+    # Check if cross-compiling
+    if ctx.env.target == 'android':
+        ctx.env.android_ndk = ctx.options.cross_android_ndk
+        ctx.env.android_level = ctx.options.cross_android_level
+        ctx.env.android_arch = ctx.options.cross_android_arch
+        if ctx.options.cross_android_arch == 'armv7':
+            arch = 'arm'
+            ctx.env.CFLAGS += ['-march=armv7-a', '-mfloat-abi=softfp']
+            ctx.env.LINKFLAGS += ['-Wl,--fix-cortex-a8']
+        elif ctx.options.cross_android_arch == 'armv6':
+            arch = 'arm'
+        else:
+            arch = ctx.options.cross_android_arch
+
+        path = os.path.join(ctx.options.cross_android_ndk, 'toolchains',
+                            'arm-linux-androideabi-4.4.3', 'prebuilt',
+                            'linux-x86', 'bin')
+        ctx.find_program('arm-linux-androideabi-gcc', var='CC',
+                         path_list=[path])
+        ctx.find_program('arm-linux-androideabi-g++', var='CXX',
+                         path_list=[path])
+        ctx.find_program('arm-linux-androideabi-as', var='AS',
+                         path_list=[path])
+
+        ctx.env.android_sysroot = os.path.join(
+                ctx.options.cross_android_ndk, 'platforms',
+                'android-{0}'.format( ctx.options.cross_android_level),
+                'arch-{0}'.format(arch))
+
+        ctx.env.CFLAGS += ['--sysroot=' + ctx.env.android_sysroot]
+        ctx.env.LINKFLAGS += ['--sysroot=' + ctx.env.android_sysroot]
+
     ctx.load('compiler_c')
 
-    # System waf is running on: linux, darwin (Mac OSX), freebsd, windows, etc.
-    ctx.env.target = platform.system().lower()
     ctx.env.arch = platform.machine()
     ctx.env.test = ctx.options.test
 
@@ -56,7 +105,7 @@ def configure(ctx):
     ctx.check_cc(lib='dl')
     ctx.check_cc(lib='expat')
     ctx.check_cc(lib='crypto')
-    ctx.check_cc(lib='ssl')
+    ctx.check_cc(lib='ssl', use='CRYPTO')
 
     if ctx.env.test:
         ctx.load('gas')
