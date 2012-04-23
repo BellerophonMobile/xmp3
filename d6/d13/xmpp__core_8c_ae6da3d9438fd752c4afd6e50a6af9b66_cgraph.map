@@ -1,0 +1,21 @@
+<map id="G" name="G">
+<area shape="rect" id="node3" href="$dd/d4d/xmpp__client_8c.html#a5ff8a826aface187b00ffcdfb7ce125a" title="Return the server this client is connected to." alt="" coords="286,69,453,96"/>
+<area shape="rect" id="node5" href="$d1/d59/xmpp__stanza_8c.html#a20c90c791fa856784f2d43c9f44f1d3c" title="Returns the value of an attribute of this stanza." alt="" coords="530,259,681,285"/>
+<area shape="rect" id="node7" href="$d1/d59/xmpp__stanza_8c.html#a10c606a11c37c01bf59881827dc2229a" title="Returns the name of the tag of this stanza (message/presence/IQ)" alt="" coords="294,171,445,197"/>
+<area shape="rect" id="node9" href="$d3/d5a/jid_8c.html#ae6100aaa50b6af23516ebc89e2f8c338" title="Allocate and initialize a new JID from an existing JID without the resource." alt="" coords="274,120,465,147"/>
+<area shape="rect" id="node24" href="$dd/d4d/xmpp__client_8c.html#af963b026952bdbc45a4df0fa3d69b641" title="Return the JID for this client." alt="" coords="298,272,441,299"/>
+<area shape="rect" id="node26" href="$d3/d5a/jid_8c.html#a3d51f2b27d20189e523b0d0b2a77e4a9" title="Converts a JID to a newly allocated string." alt="" coords="554,309,657,336"/>
+<area shape="rect" id="node28" href="$d3/d5a/jid_8c.html#ab83fd5aae95de2c9d38fb9d9cd161580" title="Cleans up and frees an existing JID." alt="" coords="750,411,829,437"/>
+<area shape="rect" id="node30" href="$d0/df0/xmpp__server_8c.html#a7e2bb7e228fb17cb6c41aea78e6f5679" title="Gets the JID of this server." alt="" coords="298,424,441,451"/>
+<area shape="rect" id="node32" href="$d1/d59/xmpp__stanza_8c.html#a7ca8bf259143d7ff53b24de8b666026d" title="Sets the value of an attribute in a stanza." alt="" coords="278,487,461,513"/>
+<area shape="rect" id="node36" href="$d0/df0/xmpp__server_8c.html#a6d3f7e5e289f785b1c8c52f95068c627" title="Deliver a stanza to a registered callback function." alt="" coords="262,373,477,400"/>
+<area shape="rect" id="node11" href="$d3/d5a/jid_8c.html#abd2028a1e581e6374acaa6beaf6e5413" title="Allocate and initialize a new blank JID." alt="" coords="750,284,829,311"/>
+<area shape="rect" id="node13" href="$d3/d5a/jid_8c.html#a1a93fd4eaa48c375952cb6f9c9127907" title="Sets the localpart of a JID." alt="" coords="542,107,669,133"/>
+<area shape="rect" id="node17" href="$d3/d5a/jid_8c.html#ac1dcf40e9090a5a9717b685b6b055feb" title="Returns the localpart of a JID." alt="" coords="558,157,653,184"/>
+<area shape="rect" id="node19" href="$d3/d5a/jid_8c.html#aeefeabfe802b3db2ce1b8894ae6a0d05" title="Sets the domainpart of a JID." alt="" coords="538,56,673,83"/>
+<area shape="rect" id="node22" href="$d3/d5a/jid_8c.html#a32b3d0744d90d33622986e4989042ee6" title="Returns the domainpart of a JID." alt="" coords="554,5,657,32"/>
+<area shape="rect" id="node15" href="$d3/d91/utils_8c.html#a07891e77aee8f9b825d52bd33e474f30" title="Simple string copy, freeing original if neccessary." alt="" coords="734,81,845,108"/>
+<area shape="rect" id="node34" href="$d1/d59/xmpp__stanza_8c.html#a2fb472c6bf9b7f540a97ddc6c11adb74" title="attribute_del" alt="" coords="542,512,669,539"/>
+<area shape="rect" id="node38" href="$d3/d5a/jid_8c.html#a0151ea37a9f52813a8d48d2b7eec2044" title="Allocate and initialize a new JID from an existing JID string." alt="" coords="530,360,681,387"/>
+<area shape="rect" id="node44" href="$d3/d5a/jid_8c.html#a5b2f969326a86fa7e585f633d7b0f565" title="Compare two JIDs with wildcard matches." alt="" coords="526,461,685,488"/>
+</map>

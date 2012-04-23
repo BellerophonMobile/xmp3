@@ -1,0 +1,11 @@
+<map id="G" name="G">
+<area shape="rect" id="node3" href="$d1/d59/xmpp__stanza_8c.html#a513b6e2da3dce364271ba9315d7b3d95" title="Returns the stanza (and its children) packed into a null&#45;terminated string." alt="" coords="102,56,269,83"/>
+<area shape="rect" id="node13" href="$d1/d59/xmpp__stanza_8c.html#af40757ae1d137034570b1bb33303d024" title="Cleans up and frees an XMPP stanza." alt="" coords="114,131,257,157"/>
+<area shape="rect" id="node20" href="$d1/d59/xmpp__stanza_8c.html#aacbe1cdb2a1d254b0b712653787b3c45" title="Returns a pointer to the parent stanza." alt="" coords="102,181,269,208"/>
+<area shape="rect" id="node5" href="$d1/d59/xmpp__stanza_8c.html#aae8c30c30fcbc2325d34897f8035ca46" title="Function that gets called recursively to convert a stanza to a string." alt="" coords="370,56,489,83"/>
+<area shape="rect" id="node7" href="$d1/dc2/xmpp__parser_8c.html#acce8bfe5926da4e64c3b5038dc683618" title="xmpp_parser_namespace_prefix" alt="" coords="590,5,837,32"/>
+<area shape="rect" id="node9" href="$d1/dc2/xmpp__parser_8c.html#afde3cf0e74a12bfe4ac90fa8dbae51a0" title="xmpp_parser_namespace_uri" alt="" coords="602,56,825,83"/>
+<area shape="rect" id="node11" href="$d1/dc2/xmpp__parser_8c.html#af924e15caac53b347a48878fcb046bc4" title="Return the next namespace in the namespace list." alt="" coords="598,107,829,133"/>
+<area shape="rect" id="node15" href="$d1/d59/xmpp__stanza_8c.html#a2fb472c6bf9b7f540a97ddc6c11adb74" title="attribute_del" alt="" coords="366,119,493,145"/>
+<area shape="rect" id="node17" href="$d1/dc2/xmpp__parser_8c.html#a87065f39f10a449e7af17fa45ca475f2" title="xmpp_parser_namespace_del" alt="" coords="318,169,541,196"/>
+</map>

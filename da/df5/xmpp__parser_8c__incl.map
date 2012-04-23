@@ -1,0 +1,6 @@
+<map id="G" name="G">
+<area shape="rect" id="node7" href="$d7/d7f/log_8h.html" title="Debugging and logging functions/macros." alt="" coords="218,80,280,107"/>
+<area shape="rect" id="node15" href="$d5/d60/utils_8h.html" title="Miscellaneous utility functions." alt="" coords="305,80,383,107"/>
+<area shape="rect" id="node20" href="$dd/d21/xmpp__stanza_8h.html" title="Represents top&#45;level XMPP stanzas received from clients." alt="" coords="407,80,533,107"/>
+<area shape="rect" id="node23" href="$d8/d55/xmpp__parser_8h.html" title="DOM&#45;style XML parser for XMPP stanzas." alt="" coords="558,80,684,107"/>
+</map>

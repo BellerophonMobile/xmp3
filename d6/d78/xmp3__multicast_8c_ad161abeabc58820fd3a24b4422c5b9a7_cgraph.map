@@ -1,0 +1,19 @@
+<map id="G" name="G">
+<area shape="rect" id="node3" href="$d3/d5a/jid_8c.html#a0151ea37a9f52813a8d48d2b7eec2044" title="Allocate and initialize a new JID from an existing JID string." alt="" coords="514,37,665,64"/>
+<area shape="rect" id="node7" href="$d3/d5a/jid_8c.html#ab83fd5aae95de2c9d38fb9d9cd161580" title="Cleans up and frees an existing JID." alt="" coords="774,12,853,39"/>
+<area shape="rect" id="node9" href="$d0/df0/xmpp__server_8c.html#af2e493f9f89b437fae7212b941c536cf" title="Remove a callback from the list of routes for stanza delivery." alt="" coords="190,176,437,203"/>
+<area shape="rect" id="node11" href="$d6/d78/xmp3__multicast_8c.html#a3ef84feef94d4ad6045cd45fd91b531c" title="local_stanza_handler" alt="" coords="222,125,405,152"/>
+<area shape="rect" id="node36" href="$d0/deb/event_8c.html#a9c3c87f32e90d8fa0245d154fac61da9" title="Deregisters a callback for a particular file descriptor." alt="" coords="202,227,425,253"/>
+<area shape="rect" id="node38" href="$d0/df0/xmpp__server_8c.html#ac84f99d96a630f056f36dc0aa9cac9dd" title="Gets the event loop instance this server is using." alt="" coords="238,277,389,304"/>
+<area shape="rect" id="node5" href="$d3/d5a/jid_8c.html#abd2028a1e581e6374acaa6beaf6e5413" title="Allocate and initialize a new blank JID." alt="" coords="774,63,853,89"/>
+<area shape="rect" id="node13" href="$d1/d59/xmpp__stanza_8c.html#a10c606a11c37c01bf59881827dc2229a" title="Returns the name of the tag of this stanza (message/presence/IQ)" alt="" coords="514,88,665,115"/>
+<area shape="rect" id="node16" href="$d1/d59/xmpp__stanza_8c.html#a20c90c791fa856784f2d43c9f44f1d3c" title="Returns the value of an attribute of this stanza." alt="" coords="514,139,665,165"/>
+<area shape="rect" id="node18" href="$d0/df0/xmpp__server_8c.html#a312f47af548e12ec5d866bea1d142d5e" title="Find a locally connected client by JID." alt="" coords="486,240,693,267"/>
+<area shape="rect" id="node25" href="$d1/d59/xmpp__stanza_8c.html#a513b6e2da3dce364271ba9315d7b3d95" title="Returns the stanza (and its children) packed into a null&#45;terminated string." alt="" coords="506,291,673,317"/>
+<area shape="rect" id="node20" href="$d3/d5a/jid_8c.html#a03139cec95c699c543f239f338c0c568" title="Compare two JIDs exactly." alt="" coords="774,189,853,216"/>
+<area shape="rect" id="node22" href="$dd/d4d/xmpp__client_8c.html#af963b026952bdbc45a4df0fa3d69b641" title="Return the JID for this client." alt="" coords="742,240,885,267"/>
+<area shape="rect" id="node27" href="$d1/d59/xmpp__stanza_8c.html#aae8c30c30fcbc2325d34897f8035ca46" title="Function that gets called recursively to convert a stanza to a string." alt="" coords="754,291,873,317"/>
+<area shape="rect" id="node29" href="$d1/dc2/xmpp__parser_8c.html#acce8bfe5926da4e64c3b5038dc683618" title="xmpp_parser_namespace_prefix" alt="" coords="934,240,1181,267"/>
+<area shape="rect" id="node31" href="$d1/dc2/xmpp__parser_8c.html#afde3cf0e74a12bfe4ac90fa8dbae51a0" title="xmpp_parser_namespace_uri" alt="" coords="946,291,1169,317"/>
+<area shape="rect" id="node33" href="$d1/dc2/xmpp__parser_8c.html#af924e15caac53b347a48878fcb046bc4" title="Return the next namespace in the namespace list." alt="" coords="942,341,1173,368"/>
+</map>

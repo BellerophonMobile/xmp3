@@ -1,0 +1,51 @@
+<map id="G" name="G">
+<area shape="rect" id="node3" href="$d0/d29/main_8c.html#a0edd37fe65f6a8b1e530370f6e6402f3" title="print_usage" alt="" coords="174,31,285,57"/>
+<area shape="rect" id="node5" href="$dd/d68/xmp3__options_8c.html#abcdc25830b1fd70ad8e50949f34deede" title="Allocate and initialize a new XMP3 options instance." alt="" coords="154,81,305,108"/>
+<area shape="rect" id="node9" href="$dd/d68/xmp3__options_8c.html#a5df01d376481ee0326ff253fa9af2e11" title="Load a configuration from an ini&#45;style config." alt="" coords="110,233,349,260"/>
+<area shape="rect" id="node13" href="$dd/d68/xmp3__options_8c.html#aa1ba3db850b890eb6401b0d27bf5808e" title="Set the address that the server should bind to." alt="" coords="706,5,929,32"/>
+<area shape="rect" id="node15" href="$dd/d68/xmp3__options_8c.html#acbb98846d1b189c321da9c3344924ff2" title="Set the port that the server should bind to using a string." alt="" coords="706,56,929,83"/>
+<area shape="rect" id="node19" href="$dd/d68/xmp3__options_8c.html#a68168550518ba4dc66d7fd7cd8c9ea35" title="Enable/disable SSL support for the XMPP server." alt="" coords="726,309,909,336"/>
+<area shape="rect" id="node21" href="$dd/d68/xmp3__options_8c.html#aff95f741533b65ab175d8db8364ac47a" title="Set the path to the OpenSSL private key file to use." alt="" coords="710,360,925,387"/>
+<area shape="rect" id="node25" href="$dd/d68/xmp3__options_8c.html#a9c72728768403b4b28237b0a9595e2c4" title="Set the path to the OpenSSL certificate file." alt="" coords="694,411,941,437"/>
+<area shape="rect" id="node42" href="$d0/d29/main_8c.html#a5a2cb997ac731840ca1dbea80f7ba042" title="signal_handler" alt="" coords="162,436,297,463"/>
+<area shape="rect" id="node46" href="$d0/deb/event_8c.html#a61f908e9fff2f3bbd849c49257396a5b" title="Allocate a new event loop." alt="" coords="162,487,297,513"/>
+<area shape="rect" id="node48" href="$dd/d68/xmp3__options_8c.html#a4dca7de42dcd62e8afc25ca402ff3350" title="Get whether SSL is enabled or disabled on the server." alt="" coords="430,487,613,513"/>
+<area shape="rect" id="node50" href="$d0/df0/xmpp__server_8c.html#a27bfc8e4d424a8bc17ab21a4a09cdf92" title="Allocates and initializes the XMPP server." alt="" coords="158,867,301,893"/>
+<area shape="rect" id="node95" href="$d0/df0/xmpp__server_8c.html#af7d75415fd5671841797bf77bbc1a981" title="Cleans up an XMPP server instance." alt="" coords="450,1399,593,1425"/>
+<area shape="rect" id="node99" href="$d3/dd8/xmp3__module_8c.html#a60cbe032870724d4cc9e599b4302f93d" title="xmp3_modules_start" alt="" coords="146,968,313,995"/>
+<area shape="rect" id="node101" href="$dd/d68/xmp3__options_8c.html#ad01639615e48af17764378bf5cb96211" title="Returns a list of currently loaded modules." alt="" coords="122,1019,337,1045"/>
+<area shape="rect" id="node103" href="$d0/deb/event_8c.html#a65586ce8f2c4b81c478098ec9c62cd22" title="Start the event loop." alt="" coords="154,1272,305,1299"/>
+<area shape="rect" id="node107" href="$d3/dd8/xmp3__module_8c.html#aa06f25797f697c01efeb7939cbba7619" title="xmp3_modules_stop" alt="" coords="738,1525,897,1552"/>
+<area shape="rect" id="node109" href="$dd/d68/xmp3__options_8c.html#afb9ad881010fa12689fd32fa057e053d" title="Cleans up and frees an XMP3 options instance." alt="" coords="154,1551,305,1577"/>
+<area shape="rect" id="node115" href="$d0/deb/event_8c.html#aba2df7c12a8d96fc028c09ac4f5e3222" title="Free an existing event loop." alt="" coords="162,1601,297,1628"/>
+<area shape="rect" id="node7" href="$d3/dd8/xmp3__module_8c.html#a1a1b8983a1a9eae57afff1f2f8680838" title="xmp3_modules_new" alt="" coords="446,81,597,108"/>
+<area shape="rect" id="node11" href="$dd/d68/xmp3__options_8c.html#a8414633ed403260567569dbc9ee00434" title="Callback used by config file parser." alt="" coords="466,233,577,260"/>
+<area shape="rect" id="node28" href="$dd/d68/xmp3__options_8c.html#a2a3941189614387781d9ce32974cdf69" title="Set the name of the XMPP server (used for the domainpart)." alt="" coords="694,107,941,133"/>
+<area shape="rect" id="node31" href="$dd/d68/xmp3__options_8c.html#ac86ab03d220a93f6927fc22a79192b22" title="Adds a path to the extension module search path." alt="" coords="694,157,941,184"/>
+<area shape="rect" id="node33" href="$d3/dd8/xmp3__module_8c.html#afcade838b5776e223ce72dcf9eccaceb" title="xmp3_modules_load" alt="" coords="738,208,897,235"/>
+<area shape="rect" id="node35" href="$d3/dd8/xmp3__module_8c.html#a9ab0467f25b9c9a2e33ac3cdecdb315f" title="xmp3_modules_config" alt="" coords="730,259,905,285"/>
+<area shape="rect" id="node17" href="$d3/d91/utils_8c.html#a9b37013d0f910039c8e0fb81b04af602" title="Converts a string to an integer with error checking." alt="" coords="1002,56,1089,83"/>
+<area shape="rect" id="node23" href="$d3/d91/utils_8c.html#a07891e77aee8f9b825d52bd33e474f30" title="Simple string copy, freeing original if neccessary." alt="" coords="990,360,1101,387"/>
+<area shape="rect" id="node44" href="$d0/deb/event_8c.html#ad0438512b96c4a0456095c26f7c61179" title="Stop the event loop." alt="" coords="450,436,593,463"/>
+<area shape="rect" id="node52" href="$dd/d68/xmp3__options_8c.html#a2142a3e7f4576d6ea061411c966edb2c" title="Get the size of the buffer used to receive incoming data." alt="" coords="398,537,645,564"/>
+<area shape="rect" id="node54" href="$dd/d68/xmp3__options_8c.html#a75608a761ea36313264ec95ca8fed07a" title="Get the amount of pending connections the server will support." alt="" coords="414,588,629,615"/>
+<area shape="rect" id="node56" href="$d3/d5a/jid_8c.html#a0151ea37a9f52813a8d48d2b7eec2044" title="Allocate and initialize a new JID from an existing JID string." alt="" coords="742,701,893,728"/>
+<area shape="rect" id="node60" href="$dd/d68/xmp3__options_8c.html#ac432807970ca8f22233d4212f45a3389" title="Gets the name of the XMPP server." alt="" coords="398,689,645,716"/>
+<area shape="rect" id="node63" href="$d0/df0/xmpp__server_8c.html#a5130c2d3b5b0db5c7ae0cd72b3f5f779" title="Initializes the OpenSSL context, setting up the key and certificate." alt="" coords="478,740,565,767"/>
+<area shape="rect" id="node65" href="$d0/df0/xmpp__server_8c.html#a25597394c3cf98a82a1510e7bf59cb44" title="Simple function to create and bind the server socket." alt="" coords="466,841,577,868"/>
+<area shape="rect" id="node67" href="$dd/d68/xmp3__options_8c.html#a8f2e47d0d2d44cb1ab251a7fbdac2aed" title="Get the port that the server will bind to." alt="" coords="722,804,913,831"/>
+<area shape="rect" id="node69" href="$dd/d68/xmp3__options_8c.html#a7aeb503b1902d9541ab828903c8ee6fe" title="Get the address that the server will bind to." alt="" coords="722,880,913,907"/>
+<area shape="rect" id="node71" href="$d0/df0/xmpp__server_8c.html#add7e09cc71b8417eab325d96bc2be357" title="Add a callback to the list of routes for stanza delivery." alt="" coords="398,943,645,969"/>
+<area shape="rect" id="node73" href="$d6/d13/xmpp__core_8c.html#a777c384ae6685d30bfa255c4b33022aa" title="An xmpp_server stanza route for stanzas directed to the server itself." alt="" coords="422,993,621,1020"/>
+<area shape="rect" id="node75" href="$d0/df0/xmpp__server_8c.html#afc0b58cc507d836285e78e2f200b0985" title="Add a callback to handle IQ stanza to a particular namespace+tag name." alt="" coords="414,1044,629,1071"/>
+<area shape="rect" id="node77" href="$dc/da6/xmpp__im_8c.html#aee8f65a08bdaf68accfdcee40ed1488d" title="IQ stanza callback for handling a session IQ." alt="" coords="438,1095,605,1121"/>
+<area shape="rect" id="node79" href="$dc/da6/xmpp__im_8c.html#a7542fa668dcf982bb5d3725c5cacb0ca" title="IQ stanza callback for handling a disco items query." alt="" coords="422,1145,621,1172"/>
+<area shape="rect" id="node81" href="$dc/da6/xmpp__im_8c.html#a93be77ae71bc544a1c23fae07f39fd23" title="IQ stanza callback for handling a disco info query." alt="" coords="426,1196,617,1223"/>
+<area shape="rect" id="node83" href="$dc/da6/xmpp__im_8c.html#a40f3cf6fffd6aafe9c7cde476fdbc9c2" title="IQ stanza callback for handing a roster query." alt="" coords="442,1247,601,1273"/>
+<area shape="rect" id="node85" href="$d0/deb/event_8c.html#aca48eb884e29dd7b5155327401f78a87" title="Register a callback function for read events on a file&#45;descriptor." alt="" coords="714,1297,921,1324"/>
+<area shape="rect" id="node87" href="$d0/df0/xmpp__server_8c.html#a66363912ef1221a2574f9f99805fe8fd" title="Callback for new client connections." alt="" coords="454,1348,589,1375"/>
+<area shape="rect" id="node58" href="$d3/d5a/jid_8c.html#ab83fd5aae95de2c9d38fb9d9cd161580" title="Cleans up and frees an existing JID." alt="" coords="1006,1348,1085,1375"/>
+<area shape="rect" id="node90" href="$dd/d4d/xmpp__client_8c.html#add2df61245a543667b6d98e3fcd57077" title="xmpp_client_del" alt="" coords="746,1348,889,1375"/>
+<area shape="rect" id="node105" href="$d0/deb/event_8c.html#aa36dae53ea0c0f434114ef78c854fcbd" title="event_init_readfds" alt="" coords="438,1449,605,1476"/>
+<area shape="rect" id="node111" href="$d3/dd8/xmp3__module_8c.html#ae4546768c03304b209acd628c0583c61" title="xmp3_modules_del" alt="" coords="446,1551,597,1577"/>
+</map>

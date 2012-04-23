@@ -1,0 +1,25 @@
+var searchData=
+[
+  ['sasl_5fns',['SASL_NS',['../df/da9/xmpp__auth_8c.html#a0e630ba01839c300ff9a8858dbc99915',1,'xmpp_auth.c']]],
+  ['search_5fpath',['search_path',['../dd/d68/xmp3__options_8c.html#a535a1715f69ec46790fb73d54f4d57f7',1,'xmp3_options']]],
+  ['self',['self',['../d9/d71/client__socket_8h.html#a704e4da9be8553470f861bdc8020f53a',1,'client_socket']]],
+  ['send_5faddr',['send_addr',['../d6/d78/xmp3__multicast_8c.html#a66ad6cd8c25ce3ee80827a79fc5bb22b',1,'xmp3_multicast']]],
+  ['send_5ffunc',['send_func',['../d9/d71/client__socket_8h.html#a2ffa2a373dec646163311fae05b80a68',1,'client_socket']]],
+  ['server',['server',['../d7/d71/xep__muc_8c.html#a3665241c488c6c9ed6e72796e0c7707e',1,'xep_muc::server()'],['../d6/d78/xmp3__multicast_8c.html#a5f4270111d5a9112c808231b04197618',1,'xmp3_multicast::server()'],['../dd/d4d/xmpp__client_8c.html#ace7207c4ea578aa2dbc8df5e9dddf26e',1,'xmpp_client::server()']]],
+  ['server_5fname',['server_name',['../dd/d68/xmp3__options_8c.html#a2a8f49e5fa930da5aed72b34886e0154',1,'xmp3_options']]],
+  ['sock',['sock',['../d6/d78/xmp3__multicast_8c.html#a1d8eef55da4460d742a48ccab9b8e717',1,'xmp3_multicast']]],
+  ['socket',['socket',['../dd/d4d/xmpp__client_8c.html#ae0d9d55bb844adc751be77f2968fc408',1,'xmpp_client']]],
+  ['solibrary',['solibrary',['../d3/dd8/xmp3__module_8c.html#af676bf890265b540bff54e093e896b2a',1,'xmp3_modules']]],
+  ['ssl',['ssl',['../d4/d8e/client__socket_8c.html#aba0dcf40ee70a6d5798ce6b5f57d1411',1,'ssl_socket']]],
+  ['ssl_5fcontext',['ssl_context',['../d0/df0/xmpp__server_8c.html#aaec44cc49c71acbc24383b860bc5719d',1,'xmpp_server']]],
+  ['stanza_5froutes',['stanza_routes',['../d0/df0/xmpp__server_8c.html#a81113abb0b8795977d75303cae68c5c4',1,'xmpp_server']]],
+  ['started',['started',['../d3/dd8/xmp3__module_8c.html#a8b1c7b4fbfb9f4addefa6cd4a2583ec4',1,'module']]],
+  ['starttls',['STARTTLS',['../df/da9/xmpp__auth_8c.html#abbd8b64e5511fff51839b1d31d5b4099',1,'xmpp_auth.c']]],
+  ['starttls_5fns',['STARTTLS_NS',['../df/da9/xmpp__auth_8c.html#a9b480ef56878f6487388333d36501003',1,'xmpp_auth.c']]],
+  ['step',['step',['../d3/d91/utils_8c.html#a923e11b5575076dbc753bd8723456ae2',1,'base64_decodestate']]],
+  ['stop_5floop',['stop_loop',['../d0/deb/event_8c.html#a116c0b57044abc416f587c3148d25cbf',1,'event_loop']]],
+  ['str_5ffunc',['str_func',['../d9/d71/client__socket_8h.html#a31c11732ad9051748b1f926bf77d5215',1,'client_socket']]],
+  ['stream_5fname',['STREAM_NAME',['../df/da9/xmpp__auth_8c.html#a34d82f27338976bc1836103a47efe4bd',1,'xmpp_auth.c']]],
+  ['stream_5fns',['STREAM_NS',['../df/da9/xmpp__auth_8c.html#a05ffa9930bcd995a2779e1bd7610cfb2',1,'xmpp_auth.c']]],
+  ['symbol_5fname',['SYMBOL_NAME',['../d3/dd8/xmp3__module_8c.html#a2d12dff948c8b2c8a19e3a86aa2fa239',1,'xmp3_module.c']]]
+];

@@ -1,0 +1,9 @@
+<map id="G" name="G">
+<area shape="rect" id="node3" href="$d6/d78/xmp3__multicast_8c.html" title="Simple extension module that multicasts messages to other XMP3 instances." alt="" coords="5,80,187,107"/>
+<area shape="rect" id="node5" href="$df/da9/xmpp__auth_8c.html" title="Implement initial XMPP authendication." alt="" coords="211,80,353,107"/>
+<area shape="rect" id="node7" href="$dd/d4d/xmpp__client_8c.html" title="A connected XMPP server client." alt="" coords="378,80,536,107"/>
+<area shape="rect" id="node9" href="$d6/d13/xmpp__core_8c.html" title="Handles base stanza routing." alt="" coords="561,80,703,107"/>
+<area shape="rect" id="node11" href="$d1/dc2/xmpp__parser_8c.html" title="DOM&#45;style XML parser for XMPP stanzas." alt="" coords="727,80,885,107"/>
+<area shape="rect" id="node13" href="$d0/df0/xmpp__server_8c.html" title="Main XMPP server data/functions." alt="" coords="910,80,1068,107"/>
+<area shape="rect" id="node15" href="$d1/d59/xmpp__stanza_8c.html" title="Represents top&#45;level XMPP stanzas received from clients." alt="" coords="1093,80,1251,107"/>
+</map>

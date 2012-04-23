@@ -1,0 +1,5 @@
+<map id="G" name="G">
+<area shape="rect" id="node3" href="$d8/d28/xmpp__core_8h.html#a777c384ae6685d30bfa255c4b33022aa" title="An xmpp_server stanza route for stanzas directed to the server itself." alt="" coords="238,5,437,32"/>
+<area shape="rect" id="node5" href="$d1/d2e/xmpp__server_8h.html#a27bfc8e4d424a8bc17ab21a4a09cdf92" title="Allocates and initializes the XMPP server." alt="" coords="486,5,629,32"/>
+<area shape="rect" id="node7" href="$d0/d29/main_8c.html#a0ddf1224851353fc92bfbff6f499fa97" title="main" alt="" coords="678,5,733,32"/>
+</map>

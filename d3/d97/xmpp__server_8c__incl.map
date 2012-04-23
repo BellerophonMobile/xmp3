@@ -1,0 +1,14 @@
+<map id="G" name="G">
+<area shape="rect" id="node19" href="$d7/d7f/log_8h.html" title="Debugging and logging functions/macros." alt="" coords="1713,80,1775,107"/>
+<area shape="rect" id="node27" href="$d9/d71/client__socket_8h.html" title="Abstracts basic socket interactions." alt="" coords="579,80,721,107"/>
+<area shape="rect" id="node34" href="$dd/d20/event_8h.html" title="Simple event loop." alt="" coords="2171,80,2249,107"/>
+<area shape="rect" id="node36" href="$d6/d24/jid_8h.html" title="Functions and data structure to manipulate a JID." alt="" coords="2274,80,2336,107"/>
+<area shape="rect" id="node38" href="$d5/d60/utils_8h.html" title="Miscellaneous utility functions." alt="" coords="1610,80,1688,107"/>
+<area shape="rect" id="node42" href="$dc/d25/xmp3__options_8h.html" title="Functions for maintaining settings for XMP3." alt="" coords="897,80,1031,107"/>
+<area shape="rect" id="node46" href="$d4/d2f/xmpp__client_8h.html" title="A connected XMPP server client." alt="" coords="2361,80,2487,107"/>
+<area shape="rect" id="node48" href="$d8/d28/xmpp__core_8h.html" title="Handles base stanza routing." alt="" coords="1055,80,1165,107"/>
+<area shape="rect" id="node51" href="$d9/dd7/xmpp__im_8h.html" title="Implements the parsing for RFC6121 IM and Presence." alt="" coords="1190,80,1284,107"/>
+<area shape="rect" id="node54" href="$d8/d55/xmpp__parser_8h.html" title="DOM&#45;style XML parser for XMPP stanzas." alt="" coords="1309,80,1435,107"/>
+<area shape="rect" id="node57" href="$dd/d21/xmpp__stanza_8h.html" title="Represents top&#45;level XMPP stanzas received from clients." alt="" coords="1459,80,1585,107"/>
+<area shape="rect" id="node60" href="$d1/d2e/xmpp__server_8h.html" title="Main XMPP server data/functions." alt="" coords="746,80,872,107"/>
+</map>

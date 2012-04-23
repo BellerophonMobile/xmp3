@@ -1,0 +1,18 @@
+<map id="G" name="G">
+<area shape="rect" id="node3" href="$d4/d8e/client__socket_8c.html" title="Abstracts basic socket interactions." alt="" coords="5,80,179,107"/>
+<area shape="rect" id="node5" href="$d0/deb/event_8c.html" title="Simple event loop." alt="" coords="203,80,313,107"/>
+<area shape="rect" id="node7" href="$d3/d5a/jid_8c.html" title="Defines structures and functions for XMP3 extension modules." alt="" coords="338,80,432,107"/>
+<area shape="rect" id="node9" href="$d0/d29/main_8c.html" title="Main function and argument parsing." alt="" coords="457,80,559,107"/>
+<area shape="rect" id="node11" href="$d3/d91/utils_8c.html" title="Miscellaneous utility functions." alt="" coords="583,80,693,107"/>
+<area shape="rect" id="node13" href="$d7/d71/xep__muc_8c.html" title="Implements XEP&#45;0045 Multi&#45;User Chat." alt="" coords="718,80,844,107"/>
+<area shape="rect" id="node15" href="$d3/dd8/xmp3__module_8c.html" title="Defines structures and functions for XMP3 extension modules." alt="" coords="869,80,1027,107"/>
+<area shape="rect" id="node17" href="$d6/d78/xmp3__multicast_8c.html" title="Simple extension module that multicasts messages to other XMP3 instances." alt="" coords="1051,80,1233,107"/>
+<area shape="rect" id="node19" href="$dd/d68/xmp3__options_8c.html" title="Functions for maintaining settings for XMP3." alt="" coords="1258,80,1424,107"/>
+<area shape="rect" id="node21" href="$df/da9/xmpp__auth_8c.html" title="Implement initial XMPP authendication." alt="" coords="1449,80,1591,107"/>
+<area shape="rect" id="node23" href="$dd/d4d/xmpp__client_8c.html" title="A connected XMPP server client." alt="" coords="1615,80,1773,107"/>
+<area shape="rect" id="node25" href="$d6/d13/xmpp__core_8c.html" title="Handles base stanza routing." alt="" coords="1798,80,1940,107"/>
+<area shape="rect" id="node27" href="$dc/da6/xmpp__im_8c.html" title="Implements the parsing for RFC6121 IM and Presence." alt="" coords="1965,80,2091,107"/>
+<area shape="rect" id="node29" href="$d1/dc2/xmpp__parser_8c.html" title="DOM&#45;style XML parser for XMPP stanzas." alt="" coords="2115,80,2273,107"/>
+<area shape="rect" id="node31" href="$d0/df0/xmpp__server_8c.html" title="Main XMPP server data/functions." alt="" coords="2298,80,2456,107"/>
+<area shape="rect" id="node33" href="$d1/d59/xmpp__stanza_8c.html" title="Represents top&#45;level XMPP stanzas received from clients." alt="" coords="2481,80,2639,107"/>
+</map>

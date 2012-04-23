@@ -1,0 +1,6 @@
+<map id="G" name="G">
+<area shape="rect" id="node5" href="$d7/d7f/log_8h.html" title="Debugging and logging functions/macros." alt="" coords="131,80,193,107"/>
+<area shape="rect" id="node13" href="$d1/d2e/xmpp__server_8h.html" title="Main XMPP server data/functions." alt="" coords="487,80,613,107"/>
+<area shape="rect" id="node19" href="$dd/d21/xmpp__stanza_8h.html" title="Represents top&#45;level XMPP stanzas received from clients." alt="" coords="218,80,344,107"/>
+<area shape="rect" id="node22" href="$d9/dd7/xmpp__im_8h.html" title="Implements the parsing for RFC6121 IM and Presence." alt="" coords="369,80,463,107"/>
+</map>

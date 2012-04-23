@@ -1,0 +1,5 @@
+<map id="G" name="G">
+<area shape="rect" id="node3" href="$dd/d4d/xmpp__client_8c.html#a5ff8a826aface187b00ffcdfb7ce125a" title="Return the server this client is connected to." alt="" coords="326,5,493,32"/>
+<area shape="rect" id="node5" href="$d3/d5a/jid_8c.html#a3d51f2b27d20189e523b0d0b2a77e4a9" title="Converts a JID to a newly allocated string." alt="" coords="358,56,461,83"/>
+<area shape="rect" id="node7" href="$dd/d4d/xmpp__client_8c.html#af963b026952bdbc45a4df0fa3d69b641" title="Return the JID for this client." alt="" coords="338,107,481,133"/>
+</map>

@@ -1,0 +1,26 @@
+<map id="G" name="G">
+<area shape="rect" id="node3" href="$d6/d24/jid_8h.html#a6da80c5b44d3c4ef896850a5d1d790b0" title="Allocate and initialize a new JID from an existing JID structure." alt="" coords="178,189,329,216"/>
+<area shape="rect" id="node30" href="$df/da9/xmpp__auth_8c.html#afb770a216868aa3fb43813b19d2a0115" title="Begins SASL PLAIN authentication." alt="" coords="1158,392,1317,418"/>
+<area shape="rect" id="node52" href="$d6/d24/jid_8h.html#ae6100aaa50b6af23516ebc89e2f8c338" title="Allocate and initialize a new JID from an existing JID without the resource." alt="" coords="158,366,349,393"/>
+<area shape="rect" id="node5" href="$d7/d71/xep__muc_8c.html#acf84f00141033b025df269e540461383" title="handle_message" alt="" coords="674,62,809,89"/>
+<area shape="rect" id="node13" href="$d7/d71/xep__muc_8c.html#a1b52b88e96c04035a9e9f53e6210d149" title="room_new" alt="" coords="458,265,545,292"/>
+<area shape="rect" id="node20" href="$d7/d71/xep__muc_8c.html#ad34287dce9e621d00af71d307f7a22dd" title="room_client_new" alt="" coords="430,113,573,140"/>
+<area shape="rect" id="node23" href="$d7/d71/xep__muc_8c.html#a115281f539cd77f88872ff153ec5b38d" title="send_presence_broadcast" alt="" coords="398,214,605,241"/>
+<area shape="rect" id="node26" href="$df/da9/xmpp__auth_8c.html#a603b4a63af3c4e4af99442805fe89ae8" title="Step 15: Client binds a resource." alt="" coords="674,366,809,393"/>
+<area shape="rect" id="node47" href="$d1/d2e/xmpp__server_8h.html#a1c8e466b41f2895d5a0b57ee9f0a4c0b" title="Add an item to the response for disco item queries." alt="" coords="878,12,1109,38"/>
+<area shape="rect" id="node50" href="$d0/df0/xmpp__server_8c.html#af1d37b8251dd106082d3fe8097dd565b" title="stanza_route_new" alt="" coords="426,164,577,190"/>
+<area shape="rect" id="node7" href="$d7/d71/xep__muc_8c.html#a1798db1c16a1fa62ff8f39fea202a26f" title="stanza_handler" alt="" coords="1170,62,1305,89"/>
+<area shape="rect" id="node9" href="$d7/d71/xep__muc_8c.html#addf05166cf3fbe386ae6650be21ef251" title="xep_muc_start" alt="" coords="1382,12,1509,38"/>
+<area shape="rect" id="node11" href="$d7/d71/xep__muc_8c.html#a20d385a5584d8014ec4d5774eb79d1de" title="xep_muc_stop" alt="" coords="1386,62,1505,89"/>
+<area shape="rect" id="node15" href="$d7/d71/xep__muc_8c.html#aefd23f2960520a68fea212344b85cb0b" title="enter_room_presence" alt="" coords="654,189,829,216"/>
+<area shape="rect" id="node17" href="$d7/d71/xep__muc_8c.html#a9936322b944d46aead9fbd942687ec0a" title="handle_presence" alt="" coords="922,164,1065,190"/>
+<area shape="rect" id="node28" href="$df/da9/xmpp__auth_8c.html#a01804bd53eccc182ce76337fc0863e8d" title="stream_bind_start" alt="" coords="914,366,1073,393"/>
+<area shape="rect" id="node32" href="$d3/d24/xmpp__auth_8h.html#ad3efd9ab093646bdfd8832c34ae2de4d" title="Handler for the inital stream start to begin authentication." alt="" coords="1766,392,1965,418"/>
+<area shape="rect" id="node42" href="$df/da9/xmpp__auth_8c.html#afd7b12689591d40109a88ad108b5c3a2" title="stream_sasl_start" alt="" coords="1366,366,1525,393"/>
+<area shape="rect" id="node34" href="$d4/d2f/xmpp__client_8h.html#a1619c0b8f58b2cf09a322bf34fbc3414" title="xmpp_client_new" alt="" coords="2014,392,2157,418"/>
+<area shape="rect" id="node36" href="$d0/df0/xmpp__server_8c.html#a66363912ef1221a2574f9f99805fe8fd" title="Callback for new client connections." alt="" coords="2206,392,2341,418"/>
+<area shape="rect" id="node38" href="$d1/d2e/xmpp__server_8h.html#a27bfc8e4d424a8bc17ab21a4a09cdf92" title="Allocates and initializes the XMPP server." alt="" coords="2390,392,2533,418"/>
+<area shape="rect" id="node40" href="$d0/d29/main_8c.html#a0ddf1224851353fc92bfbff6f499fa97" title="main" alt="" coords="2582,392,2637,418"/>
+<area shape="rect" id="node44" href="$df/da9/xmpp__auth_8c.html#a8dd789e057b9812e4dd1aa524dfb6a65" title="Begins TLS authentication." alt="" coords="1574,366,1717,393"/>
+<area shape="rect" id="node54" href="$d8/d28/xmpp__core_8h.html#ae6da3d9438fd752c4afd6e50a6af9b66" title="An xmpp_parser handler for stanzas from a local client." alt="" coords="398,366,605,393"/>
+</map>

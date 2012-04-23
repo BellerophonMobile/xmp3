@@ -1,0 +1,7 @@
+<map id="G" name="G">
+<area shape="rect" id="node3" href="$d4/d8e/client__socket_8c.html" title="Abstracts basic socket interactions." alt="" coords="5,80,179,107"/>
+<area shape="rect" id="node5" href="$df/da9/xmpp__auth_8c.html" title="Implement initial XMPP authendication." alt="" coords="203,80,345,107"/>
+<area shape="rect" id="node7" href="$dd/d4d/xmpp__client_8c.html" title="A connected XMPP server client." alt="" coords="370,80,528,107"/>
+<area shape="rect" id="node9" href="$d6/d13/xmpp__core_8c.html" title="Handles base stanza routing." alt="" coords="553,80,695,107"/>
+<area shape="rect" id="node11" href="$d0/df0/xmpp__server_8c.html" title="Main XMPP server data/functions." alt="" coords="719,80,877,107"/>
+</map>

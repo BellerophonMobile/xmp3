@@ -1,0 +1,23 @@
+<map id="G" name="G">
+<area shape="rect" id="node3" href="$d0/df0/xmpp__server_8c.html#af2e493f9f89b437fae7212b941c536cf" title="Remove a callback from the list of routes for stanza delivery." alt="" coords="198,56,445,83"/>
+<area shape="rect" id="node5" href="$d6/d13/xmpp__core_8c.html#a3b41e83061abd7ed5b258c7aa7dda0d6" title="An xmpp_server stanza route for stanzas directed to a local client." alt="" coords="222,107,421,133"/>
+<area shape="rect" id="node32" href="$d3/d5a/jid_8c.html#ab83fd5aae95de2c9d38fb9d9cd161580" title="Cleans up and frees an existing JID." alt="" coords="282,157,361,184"/>
+<area shape="rect" id="node34" href="$d0/deb/event_8c.html#a9c3c87f32e90d8fa0245d154fac61da9" title="Deregisters a callback for a particular file descriptor." alt="" coords="210,208,433,235"/>
+<area shape="rect" id="node36" href="$d0/df0/xmpp__server_8c.html#ac84f99d96a630f056f36dc0aa9cac9dd" title="Gets the event loop instance this server is using." alt="" coords="246,259,397,285"/>
+<area shape="rect" id="node38" href="$d4/d8e/client__socket_8c.html#a66a8a7fa65db357c88039c8589c7aaa9" title="client_socket_fd" alt="" coords="246,309,397,336"/>
+<area shape="rect" id="node40" href="$d4/d8e/client__socket_8c.html#abb4fb0de12fd5f701186d9b641ae0905" title="Closes a client_socket." alt="" coords="234,360,409,387"/>
+<area shape="rect" id="node42" href="$d4/d8e/client__socket_8c.html#a9983d6e2b69132508044b4c07bca147e" title="Closes, cleans up and deallocates a client_socket structure." alt="" coords="242,411,401,437"/>
+<area shape="rect" id="node44" href="$d1/dc2/xmpp__parser_8c.html#a2620ca01bcf1a68025ec51681c6416f2" title="xmpp_parser_del" alt="" coords="250,461,393,488"/>
+<area shape="rect" id="node7" href="$d3/d5a/jid_8c.html#a3d51f2b27d20189e523b0d0b2a77e4a9" title="Converts a JID to a newly allocated string." alt="" coords="570,5,673,32"/>
+<area shape="rect" id="node9" href="$dd/d4d/xmpp__client_8c.html#af963b026952bdbc45a4df0fa3d69b641" title="Return the JID for this client." alt="" coords="550,56,693,83"/>
+<area shape="rect" id="node11" href="$d1/d59/xmpp__stanza_8c.html#a513b6e2da3dce364271ba9315d7b3d95" title="Returns the stanza (and its children) packed into a null&#45;terminated string." alt="" coords="538,107,705,133"/>
+<area shape="rect" id="node21" href="$d4/d8e/client__socket_8c.html#a7cf0a0cfe0cf2bdccee28f6eab9aa632" title="Send all data in a buffer to the connected socket." alt="" coords="526,157,717,184"/>
+<area shape="rect" id="node25" href="$dd/d4d/xmpp__client_8c.html#a07c89140b5b826454868ac9395e2efd7" title="Return the socket used to communicate with this client." alt="" coords="538,208,705,235"/>
+<area shape="rect" id="node27" href="$d0/df0/xmpp__server_8c.html#a79e02871228c509de0c70961d74a1bcb" title="Attempt to cleanly disconnect a client, and clean up its resources." alt="" coords="494,385,749,412"/>
+<area shape="rect" id="node13" href="$d1/d59/xmpp__stanza_8c.html#aae8c30c30fcbc2325d34897f8035ca46" title="Function that gets called recursively to convert a stanza to a string." alt="" coords="822,107,941,133"/>
+<area shape="rect" id="node15" href="$d1/dc2/xmpp__parser_8c.html#acce8bfe5926da4e64c3b5038dc683618" title="xmpp_parser_namespace_prefix" alt="" coords="1014,56,1261,83"/>
+<area shape="rect" id="node17" href="$d1/dc2/xmpp__parser_8c.html#afde3cf0e74a12bfe4ac90fa8dbae51a0" title="xmpp_parser_namespace_uri" alt="" coords="1026,107,1249,133"/>
+<area shape="rect" id="node19" href="$d1/dc2/xmpp__parser_8c.html#af924e15caac53b347a48878fcb046bc4" title="Return the next namespace in the namespace list." alt="" coords="1022,157,1253,184"/>
+<area shape="rect" id="node23" href="$d4/d8e/client__socket_8c.html#a164381b69f823fab1b8bce59ca03aefe" title="Send some data to a client_socket." alt="" coords="798,157,965,184"/>
+<area shape="rect" id="node29" href="$dd/d4d/xmpp__client_8c.html#a5ff8a826aface187b00ffcdfb7ce125a" title="Return the server this client is connected to." alt="" coords="798,385,965,412"/>
+</map>

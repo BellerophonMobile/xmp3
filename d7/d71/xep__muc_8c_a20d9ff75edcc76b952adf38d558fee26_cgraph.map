@@ -1,0 +1,17 @@
+<map id="G" name="G">
+<area shape="rect" id="node3" href="$d1/d59/xmpp__stanza_8c.html#a20c90c791fa856784f2d43c9f44f1d3c" title="Returns the value of an attribute of this stanza." alt="" coords="514,157,665,184"/>
+<area shape="rect" id="node5" href="$d1/d59/xmpp__stanza_8c.html#aa80dd21d794b5c63fcb13c49745cc373" title="Allocate and initialize a new XMPP stanza structure." alt="" coords="250,56,393,83"/>
+<area shape="rect" id="node11" href="$d1/d59/xmpp__stanza_8c.html#ac13c8bb45e2ca03b99836e8d52b265b4" title="Appends a child stanza." alt="" coords="214,107,429,133"/>
+<area shape="rect" id="node15" href="$d0/df0/xmpp__server_8c.html#a6d3f7e5e289f785b1c8c52f95068c627" title="Deliver a stanza to a registered callback function." alt="" coords="214,233,429,260"/>
+<area shape="rect" id="node29" href="$d1/d59/xmpp__stanza_8c.html#af40757ae1d137034570b1bb33303d024" title="Cleans up and frees an XMPP stanza." alt="" coords="250,411,393,437"/>
+<area shape="rect" id="node7" href="$d1/d59/xmpp__stanza_8c.html#a5a80203f56df7a360fa457c0111686f6" title="Parse the namespace triple that Expat gives us." alt="" coords="546,5,633,32"/>
+<area shape="rect" id="node9" href="$d1/d59/xmpp__stanza_8c.html#aff4b8f6e10ce1c351d2a5bc39f0e819f" title="Convenience function to build a key for the attribute hash table." alt="" coords="546,56,633,83"/>
+<area shape="rect" id="node13" href="$d1/d59/xmpp__stanza_8c.html#afc77f00b7f38c79566a7b16876230e30" title="Removes a child stanza." alt="" coords="482,107,697,133"/>
+<area shape="rect" id="node17" href="$d3/d5a/jid_8c.html#a0151ea37a9f52813a8d48d2b7eec2044" title="Allocate and initialize a new JID from an existing JID string." alt="" coords="514,309,665,336"/>
+<area shape="rect" id="node21" href="$d3/d5a/jid_8c.html#ab83fd5aae95de2c9d38fb9d9cd161580" title="Cleans up and frees an existing JID." alt="" coords="750,360,829,387"/>
+<area shape="rect" id="node24" href="$d3/d5a/jid_8c.html#a3d51f2b27d20189e523b0d0b2a77e4a9" title="Converts a JID to a newly allocated string." alt="" coords="538,208,641,235"/>
+<area shape="rect" id="node26" href="$d3/d5a/jid_8c.html#a5b2f969326a86fa7e585f633d7b0f565" title="Compare two JIDs with wildcard matches." alt="" coords="510,259,669,285"/>
+<area shape="rect" id="node19" href="$d3/d5a/jid_8c.html#abd2028a1e581e6374acaa6beaf6e5413" title="Allocate and initialize a new blank JID." alt="" coords="750,309,829,336"/>
+<area shape="rect" id="node31" href="$d1/d59/xmpp__stanza_8c.html#a2fb472c6bf9b7f540a97ddc6c11adb74" title="attribute_del" alt="" coords="526,411,653,437"/>
+<area shape="rect" id="node33" href="$d1/dc2/xmpp__parser_8c.html#a87065f39f10a449e7af17fa45ca475f2" title="xmpp_parser_namespace_del" alt="" coords="478,461,701,488"/>
+</map>

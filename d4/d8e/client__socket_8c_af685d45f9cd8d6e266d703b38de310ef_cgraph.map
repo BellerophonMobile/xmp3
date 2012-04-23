@@ -1,0 +1,8 @@
+<map id="G" name="G">
+<area shape="rect" id="node3" href="$d4/d8e/client__socket_8c.html#a3510c2cbd6f8303922074764cdfa28b8" title="fd_del" alt="" coords="222,5,293,32"/>
+<area shape="rect" id="node5" href="$d4/d8e/client__socket_8c.html#a34d5d01cce23fb12e74071a740d8cc7f" title="fd_close" alt="" coords="214,56,301,83"/>
+<area shape="rect" id="node7" href="$d4/d8e/client__socket_8c.html#afb341ead37f80db55a6f6881f80232df" title="fd_fd" alt="" coords="226,107,289,133"/>
+<area shape="rect" id="node9" href="$d4/d8e/client__socket_8c.html#afa72ec1928026594d8b251d5ef4c47be" title="fd_send" alt="" coords="218,157,297,184"/>
+<area shape="rect" id="node11" href="$d4/d8e/client__socket_8c.html#a028add7463a7ddb9275710c75d983c08" title="fd_recv" alt="" coords="218,208,297,235"/>
+<area shape="rect" id="node13" href="$d4/d8e/client__socket_8c.html#ae76cf67a4a1f29e78973e5158a22afd4" title="fd_str" alt="" coords="222,259,293,285"/>
+</map>

@@ -1,0 +1,17 @@
+<map id="G" name="G">
+<area shape="rect" id="node28" href="$dd/d4d/xmpp__client_8c.html#de/de2/structxmpp__client" title="Data on a connected client." alt="" coords="382,477,492,504"/>
+<area shape="rect" id="node2" href="$d0/df0/xmpp__server_8c.html#d4/d94/structstanza__route" title="Holds data on how to send a stanza to a particular JID." alt="" coords="478,233,596,260"/>
+<area shape="rect" id="node5" href="$d1/d59/xmpp__stanza_8c.html#d5/d6b/structxmpp__stanza" title="xmpp_stanza" alt="" coords="238,112,348,139"/>
+<area shape="rect" id="node34" href="$d1/dc2/xmpp__parser_8c.html#d2/da4/structxmpp__parser" title="Structure holding state for the XML parser." alt="" coords="45,233,155,260"/>
+<area shape="rect" id="node45" href="$d0/df0/xmpp__server_8c.html#dd/d35/structiq__route" title="Holds data on how to handle a particular iq stanza." alt="" coords="250,233,336,260"/>
+<area shape="rect" id="node7" href="$d1/dc2/xmpp__parser_8c.html#dc/d9d/structxmpp__parser__namespace" title="Structure representing an XML namespace." alt="" coords="5,5,195,32"/>
+<area shape="rect" id="node11" href="$d1/d59/xmpp__stanza_8c.html#d9/d18/structattribute" title="Structure to store a stanza attribute." alt="" coords="285,5,379,32"/>
+<area shape="rect" id="node13" href="$d3/d5a/jid_8c.html#df/d09/structjid" title="Represents a JID (local/resource)." alt="" coords="643,112,689,139"/>
+<area shape="rect" id="node21" href="$d0/df0/xmpp__server_8c.html#d9/dbe/structdisco__item" title="Holds data for items to report during a DISCO items query." alt="" coords="919,233,1021,260"/>
+<area shape="rect" id="node15" href="$d0/deb/event_8c.html#d9/de5/structevent__loop" title="Contains data about the whole event loop." alt="" coords="1115,233,1217,260"/>
+<area shape="rect" id="node17" href="$d0/deb/event_8c.html#de/dcb/structevent__item" title="Contains data for one callback function." alt="" coords="1151,356,1253,383"/>
+<area shape="rect" id="node25" href="$d0/df0/xmpp__server_8c.html#d2/d06/structclient__listener" title="Holds data on how to notify a component when a client disconnects." alt="" coords="625,583,767,609"/>
+<area shape="rect" id="node39" href="$d0/df0/xmpp__server_8c.html#d5/da1/structc__client" title="c_client" alt="" coords="430,583,516,609"/>
+<area shape="rect" id="node31" href="$d9/d71/client__socket_8h.html#df/d6d/structclient__socket" title="client_socket" alt="" coords="170,356,296,383"/>
+<area shape="rect" id="node43" href="$d9/db0/structauth__callback.html" title="Holds data for an authentication callback." alt="" coords="769,233,895,260"/>
+</map>

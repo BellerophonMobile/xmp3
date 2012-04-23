@@ -1,0 +1,12 @@
+<map id="G" name="G">
+<area shape="rect" id="node3" href="$d7/d71/xep__muc_8c.html#afc00603220e2d60fd5204e1992931337" title="xep_muc_del" alt="" coords="334,5,445,32"/>
+<area shape="rect" id="node5" href="$d7/d71/xep__muc_8c.html#af88baacca4f1cccf8ec2bc295db0e063" title="leave_room" alt="" coords="338,68,441,95"/>
+<area shape="rect" id="node22" href="$d7/d71/xep__muc_8c.html#ac6bfec1825c03d5493622565c77302f8" title="room_del" alt="" coords="198,31,285,57"/>
+<area shape="rect" id="node7" href="$d7/d71/xep__muc_8c.html#a40cdc65e1b60c76aef97dfc9d3f2510f" title="leave_room_presence" alt="" coords="702,43,877,69"/>
+<area shape="rect" id="node17" href="$d7/d71/xep__muc_8c.html#a0214cd898b2f0c746cb45f79746e5095" title="client_disconnect" alt="" coords="494,93,653,120"/>
+<area shape="rect" id="node9" href="$d7/d71/xep__muc_8c.html#a9936322b944d46aead9fbd942687ec0a" title="handle_presence" alt="" coords="926,68,1069,95"/>
+<area shape="rect" id="node11" href="$d7/d71/xep__muc_8c.html#a1798db1c16a1fa62ff8f39fea202a26f" title="stanza_handler" alt="" coords="1118,68,1253,95"/>
+<area shape="rect" id="node13" href="$d7/d71/xep__muc_8c.html#addf05166cf3fbe386ae6650be21ef251" title="xep_muc_start" alt="" coords="1302,43,1429,69"/>
+<area shape="rect" id="node15" href="$d7/d71/xep__muc_8c.html#a20d385a5584d8014ec4d5774eb79d1de" title="xep_muc_stop" alt="" coords="1306,93,1425,120"/>
+<area shape="rect" id="node19" href="$d7/d71/xep__muc_8c.html#aefd23f2960520a68fea212344b85cb0b" title="enter_room_presence" alt="" coords="702,93,877,120"/>
+</map>

@@ -1,0 +1,15 @@
+<map id="G" name="G">
+<area shape="rect" id="node3" href="$d1/dc2/xmpp__parser_8c.html#adc3f7670edafd5b590af11d276887f1e" title="Expat callback for end elements." alt="" coords="222,81,269,108"/>
+<area shape="rect" id="node5" href="$d1/dc2/xmpp__parser_8c.html#a03a135f29e3d4e01abbb60e53ac6967c" title="init_parser" alt="" coords="318,81,429,108"/>
+<area shape="rect" id="node7" href="$d8/d55/xmpp__parser_8h.html#adf25a1d2047994dfa6cc71a9482548c2" title="xmpp_parser_new" alt="" coords="486,56,629,83"/>
+<area shape="rect" id="node19" href="$d8/d55/xmpp__parser_8h.html#af5e1eb5bbef0496c3543bd35113766ac" title="Reset the state of the parser as if it was just created." alt="" coords="478,107,637,133"/>
+<area shape="rect" id="node9" href="$d6/d78/xmp3__multicast_8c.html#a08afc39c59ec9297d756a99c395eff3c" title="multicast_new" alt="" coords="702,5,829,32"/>
+<area shape="rect" id="node11" href="$d4/d2f/xmpp__client_8h.html#a1619c0b8f58b2cf09a322bf34fbc3414" title="xmpp_client_new" alt="" coords="894,56,1037,83"/>
+<area shape="rect" id="node13" href="$d0/df0/xmpp__server_8c.html#a66363912ef1221a2574f9f99805fe8fd" title="Callback for new client connections." alt="" coords="1090,81,1225,108"/>
+<area shape="rect" id="node15" href="$d1/d2e/xmpp__server_8h.html#a27bfc8e4d424a8bc17ab21a4a09cdf92" title="Allocates and initializes the XMPP server." alt="" coords="1278,81,1421,108"/>
+<area shape="rect" id="node17" href="$d0/d29/main_8c.html#a0ddf1224851353fc92bfbff6f499fa97" title="main" alt="" coords="1470,81,1525,108"/>
+<area shape="rect" id="node21" href="$d6/d78/xmp3__multicast_8c.html#a9865e8026fb8ee000629fc1da465716d" title="socket_handler" alt="" coords="898,157,1033,184"/>
+<area shape="rect" id="node25" href="$d8/d55/xmpp__parser_8h.html#a578b7a9a50212eb204a86789001287af" title="xmpp_parser_parse" alt="" coords="686,107,845,133"/>
+<area shape="rect" id="node23" href="$d6/d78/xmp3__multicast_8c.html#a991c928ab73b350c4b7029352e91a219" title="multicast_start" alt="" coords="1086,157,1229,184"/>
+<area shape="rect" id="node28" href="$d0/df0/xmpp__server_8c.html#abece91815ef240322d79073f5bfca1db" title="Callback for new data from a client." alt="" coords="910,107,1021,133"/>
+</map>

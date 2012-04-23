@@ -1,0 +1,11 @@
+<map id="G" name="G">
+<area shape="rect" id="node3" href="$d3/d5a/jid_8c.html#a6da80c5b44d3c4ef896850a5d1d790b0" title="Allocate and initialize a new JID from an existing JID structure." alt="" coords="198,157,349,184"/>
+<area shape="rect" id="node5" href="$d3/d5a/jid_8c.html#abd2028a1e581e6374acaa6beaf6e5413" title="Allocate and initialize a new blank JID." alt="" coords="434,5,513,32"/>
+<area shape="rect" id="node7" href="$d3/d5a/jid_8c.html#a1a93fd4eaa48c375952cb6f9c9127907" title="Sets the localpart of a JID." alt="" coords="410,56,537,83"/>
+<area shape="rect" id="node11" href="$d3/d5a/jid_8c.html#ac1dcf40e9090a5a9717b685b6b055feb" title="Returns the localpart of a JID." alt="" coords="426,107,521,133"/>
+<area shape="rect" id="node13" href="$d3/d5a/jid_8c.html#aeefeabfe802b3db2ce1b8894ae6a0d05" title="Sets the domainpart of a JID." alt="" coords="406,157,541,184"/>
+<area shape="rect" id="node16" href="$d3/d5a/jid_8c.html#a32b3d0744d90d33622986e4989042ee6" title="Returns the domainpart of a JID." alt="" coords="422,208,525,235"/>
+<area shape="rect" id="node18" href="$d3/d5a/jid_8c.html#ad4e057d210bd0776fcb89289e5d59f81" title="Sets the resourcepart of a JID." alt="" coords="398,259,549,285"/>
+<area shape="rect" id="node21" href="$d3/d5a/jid_8c.html#a54f945004eef842630b39c94a3689e28" title="Returns the resourcepart of a JID." alt="" coords="414,309,533,336"/>
+<area shape="rect" id="node9" href="$d3/d91/utils_8c.html#a07891e77aee8f9b825d52bd33e474f30" title="Simple string copy, freeing original if neccessary." alt="" coords="598,157,709,184"/>
+</map>

@@ -1,0 +1,10 @@
+<map id="G" name="G">
+<area shape="rect" id="node3" href="$d0/d29/main_8c.html" title="Main function and argument parsing." alt="" coords="5,80,107,107"/>
+<area shape="rect" id="node5" href="$d7/d71/xep__muc_8c.html" title="Implements XEP&#45;0045 Multi&#45;User Chat." alt="" coords="131,80,257,107"/>
+<area shape="rect" id="node7" href="$d6/d78/xmp3__multicast_8c.html" title="Simple extension module that multicasts messages to other XMP3 instances." alt="" coords="282,80,464,107"/>
+<area shape="rect" id="node9" href="$df/da9/xmpp__auth_8c.html" title="Implement initial XMPP authendication." alt="" coords="489,80,631,107"/>
+<area shape="rect" id="node11" href="$dd/d4d/xmpp__client_8c.html" title="A connected XMPP server client." alt="" coords="655,80,813,107"/>
+<area shape="rect" id="node13" href="$d6/d13/xmpp__core_8c.html" title="Handles base stanza routing." alt="" coords="838,80,980,107"/>
+<area shape="rect" id="node15" href="$dc/da6/xmpp__im_8c.html" title="Implements the parsing for RFC6121 IM and Presence." alt="" coords="1005,80,1131,107"/>
+<area shape="rect" id="node17" href="$d0/df0/xmpp__server_8c.html" title="Main XMPP server data/functions." alt="" coords="1155,80,1313,107"/>
+</map>

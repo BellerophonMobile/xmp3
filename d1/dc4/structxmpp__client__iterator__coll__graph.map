@@ -1,0 +1,18 @@
+<map id="G" name="G">
+<area shape="rect" id="node2" href="$d0/df0/xmpp__server_8c.html#d5/da1/structc__client" title="c_client" alt="" coords="599,220,686,247"/>
+<area shape="rect" id="node7" href="$d0/df0/xmpp__server_8c.html#d8/d34/structxmpp__server" title="Holds data on a XMPP server (connected clients, routes, etc.)." alt="" coords="906,492,1017,519"/>
+<area shape="rect" id="node5" href="$dd/d4d/xmpp__client_8c.html#de/de2/structxmpp__client" title="Data on a connected client." alt="" coords="1174,343,1285,369"/>
+<area shape="rect" id="node32" href="$d0/df0/xmpp__server_8c.html#d2/d06/structclient__listener" title="Holds data on how to notify a component when a client disconnects." alt="" coords="1406,604,1549,631"/>
+<area shape="rect" id="node9" href="$d0/df0/xmpp__server_8c.html#d4/d94/structstanza__route" title="Holds data on how to send a stanza to a particular JID." alt="" coords="583,597,702,624"/>
+<area shape="rect" id="node12" href="$d1/d59/xmpp__stanza_8c.html#d5/d6b/structxmpp__stanza" title="xmpp_stanza" alt="" coords="337,673,447,700"/>
+<area shape="rect" id="node39" href="$d0/df0/xmpp__server_8c.html#dd/d35/structiq__route" title="Holds data on how to handle a particular iq stanza." alt="" coords="599,701,686,728"/>
+<area shape="rect" id="node47" href="$d1/dc2/xmpp__parser_8c.html#d2/da4/structxmpp__parser" title="Structure holding state for the XML parser." alt="" coords="587,752,698,779"/>
+<area shape="rect" id="node14" href="$d1/dc2/xmpp__parser_8c.html#dc/d9d/structxmpp__parser__namespace" title="Structure representing an XML namespace." alt="" coords="6,769,197,796"/>
+<area shape="rect" id="node18" href="$d1/d59/xmpp__stanza_8c.html#d9/d18/structattribute" title="Structure to store a stanza attribute." alt="" coords="54,673,149,700"/>
+<area shape="rect" id="node20" href="$d3/d5a/jid_8c.html#df/d09/structjid" title="Represents a JID (local/resource)." alt="" coords="369,365,415,392"/>
+<area shape="rect" id="node28" href="$d0/df0/xmpp__server_8c.html#d9/dbe/structdisco__item" title="Holds data for items to report during a DISCO items query." alt="" coords="591,443,694,469"/>
+<area shape="rect" id="node22" href="$d0/deb/event_8c.html#d9/de5/structevent__loop" title="Contains data about the whole event loop." alt="" coords="591,803,694,829"/>
+<area shape="rect" id="node24" href="$d0/deb/event_8c.html#de/dcb/structevent__item" title="Contains data for one callback function." alt="" coords="910,801,1013,828"/>
+<area shape="rect" id="node37" href="$d9/db0/structauth__callback.html" title="Holds data for an authentication callback." alt="" coords="579,493,706,520"/>
+<area shape="rect" id="node44" href="$d9/d71/client__socket_8h.html#df/d6d/structclient__socket" title="client_socket" alt="" coords="898,168,1025,195"/>
+</map>

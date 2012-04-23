@@ -1,0 +1,7 @@
+<map id="G" name="G">
+<area shape="rect" id="node3" href="$d0/d29/main_8c.html" title="Main function and argument parsing." alt="" coords="5,80,107,107"/>
+<area shape="rect" id="node5" href="$d7/d71/xep__muc_8c.html" title="Implements XEP&#45;0045 Multi&#45;User Chat." alt="" coords="131,80,257,107"/>
+<area shape="rect" id="node7" href="$d3/dd8/xmp3__module_8c.html" title="Defines structures and functions for XMP3 extension modules." alt="" coords="282,80,440,107"/>
+<area shape="rect" id="node9" href="$d6/d78/xmp3__multicast_8c.html" title="Simple extension module that multicasts messages to other XMP3 instances." alt="" coords="465,80,647,107"/>
+<area shape="rect" id="node11" href="$dd/d68/xmp3__options_8c.html" title="Functions for maintaining settings for XMP3." alt="" coords="671,80,837,107"/>
+</map>

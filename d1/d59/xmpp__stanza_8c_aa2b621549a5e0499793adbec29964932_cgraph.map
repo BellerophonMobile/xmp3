@@ -1,0 +1,5 @@
+<map id="G" name="G">
+<area shape="rect" id="node3" href="$d1/d59/xmpp__stanza_8c.html#aa80dd21d794b5c63fcb13c49745cc373" title="Allocate and initialize a new XMPP stanza structure." alt="" coords="222,31,365,57"/>
+<area shape="rect" id="node5" href="$d1/d59/xmpp__stanza_8c.html#a5a80203f56df7a360fa457c0111686f6" title="Parse the namespace triple that Expat gives us." alt="" coords="414,5,501,32"/>
+<area shape="rect" id="node7" href="$d1/d59/xmpp__stanza_8c.html#aff4b8f6e10ce1c351d2a5bc39f0e819f" title="Convenience function to build a key for the attribute hash table." alt="" coords="414,56,501,83"/>
+</map>

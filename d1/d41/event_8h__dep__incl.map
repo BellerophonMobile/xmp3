@@ -1,0 +1,7 @@
+<map id="G" name="G">
+<area shape="rect" id="node3" href="$d0/deb/event_8c.html" title="Simple event loop." alt="" coords="5,80,115,107"/>
+<area shape="rect" id="node5" href="$d0/d29/main_8c.html" title="Main function and argument parsing." alt="" coords="139,80,241,107"/>
+<area shape="rect" id="node7" href="$d6/d78/xmp3__multicast_8c.html" title="Simple extension module that multicasts messages to other XMP3 instances." alt="" coords="266,80,448,107"/>
+<area shape="rect" id="node9" href="$dd/d4d/xmpp__client_8c.html" title="A connected XMPP server client." alt="" coords="473,80,631,107"/>
+<area shape="rect" id="node11" href="$d0/df0/xmpp__server_8c.html" title="Main XMPP server data/functions." alt="" coords="655,80,813,107"/>
+</map>

@@ -1,0 +1,23 @@
+var searchData=
+[
+  ['send_5fnickname_5fconflict',['send_nickname_conflict',['../d7/d71/xep__muc_8c.html#a8333f88612fa054ae107699f5bb548cc',1,'xep_muc.c']]],
+  ['send_5fpresence_5fbroadcast',['send_presence_broadcast',['../d7/d71/xep__muc_8c.html#a115281f539cd77f88872ff153ec5b38d',1,'xep_muc.c']]],
+  ['send_5fservice_5funavailable',['send_service_unavailable',['../d0/df0/xmpp__server_8c.html#a3b400cb24e5bc51623f63c96c8a0a342',1,'xmpp_server.c']]],
+  ['signal_5fhandler',['signal_handler',['../d0/d29/main_8c.html#a5a2cb997ac731840ca1dbea80f7ba042',1,'main.c']]],
+  ['socket_5fhandler',['socket_handler',['../d6/d78/xmp3__multicast_8c.html#a9865e8026fb8ee000629fc1da465716d',1,'xmp3_multicast.c']]],
+  ['ssl_5fclose',['ssl_close',['../d4/d8e/client__socket_8c.html#a4775c361e3ebc0c98b1dbb2fd220b98e',1,'client_socket.c']]],
+  ['ssl_5fdel',['ssl_del',['../d4/d8e/client__socket_8c.html#a5c1958aab3c7c992e98ac203b226fe8c',1,'client_socket.c']]],
+  ['ssl_5ffd',['ssl_fd',['../d4/d8e/client__socket_8c.html#a3ed3a8df4e69fce15425a5b5a8dd4be0',1,'client_socket.c']]],
+  ['ssl_5frecv',['ssl_recv',['../d4/d8e/client__socket_8c.html#a31a1c59dff1188459ab171f5723ba4bd',1,'client_socket.c']]],
+  ['ssl_5fsend',['ssl_send',['../d4/d8e/client__socket_8c.html#aa78ce3c05fc615d02a9834abdeec4165',1,'client_socket.c']]],
+  ['ssl_5fstr',['ssl_str',['../d4/d8e/client__socket_8c.html#a2265e7fcd86868df5584cf4cd1d79d2d',1,'client_socket.c']]],
+  ['stanza_5fhandler',['stanza_handler',['../d7/d71/xep__muc_8c.html#a1798db1c16a1fa62ff8f39fea202a26f',1,'xep_muc.c']]],
+  ['stanza_5froute_5fcmp',['stanza_route_cmp',['../d0/df0/xmpp__server_8c.html#ad9c33d7262b8e6c8651e5bc47223243c',1,'xmpp_server.c']]],
+  ['stanza_5froute_5fdel',['stanza_route_del',['../d0/df0/xmpp__server_8c.html#a07640ab572017beaddfb546ce12dd3c6',1,'xmpp_server.c']]],
+  ['stanza_5froute_5fnew',['stanza_route_new',['../d0/df0/xmpp__server_8c.html#af1d37b8251dd106082d3fe8097dd565b',1,'xmpp_server.c']]],
+  ['stanza_5ftostr',['stanza_tostr',['../d1/d59/xmpp__stanza_8c.html#aae8c30c30fcbc2325d34897f8035ca46',1,'xmpp_stanza.c']]],
+  ['start',['start',['../d1/dc2/xmpp__parser_8c.html#a0f2993ab3e982d5e2b4a5635dcaf291c',1,'xmpp_parser.c']]],
+  ['stream_5fbind_5fstart',['stream_bind_start',['../df/da9/xmpp__auth_8c.html#a01804bd53eccc182ce76337fc0863e8d',1,'xmpp_auth.c']]],
+  ['stream_5fsasl_5fstart',['stream_sasl_start',['../df/da9/xmpp__auth_8c.html#afd7b12689591d40109a88ad108b5c3a2',1,'xmpp_auth.c']]],
+  ['stream_5fstart',['stream_start',['../d1/dc2/xmpp__parser_8c.html#a2268b636f6d02bbe04f3033ff93d829c',1,'xmpp_parser.c']]]
+];

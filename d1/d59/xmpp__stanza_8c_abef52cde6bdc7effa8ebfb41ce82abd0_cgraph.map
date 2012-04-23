@@ -1,0 +1,6 @@
+<map id="G" name="G">
+<area shape="rect" id="node3" href="$d1/d59/xmpp__stanza_8c.html#af338ba30125abf5027089206578817b6" title="Set the value of an attribute qualified by a namespace." alt="" coords="270,31,477,57"/>
+<area shape="rect" id="node5" href="$d1/d59/xmpp__stanza_8c.html#aff4b8f6e10ce1c351d2a5bc39f0e819f" title="Convenience function to build a key for the attribute hash table." alt="" coords="574,5,661,32"/>
+<area shape="rect" id="node7" href="$d1/d59/xmpp__stanza_8c.html#a7ca8bf259143d7ff53b24de8b666026d" title="Sets the value of an attribute in a stanza." alt="" coords="526,56,709,83"/>
+<area shape="rect" id="node9" href="$d1/d59/xmpp__stanza_8c.html#a2fb472c6bf9b7f540a97ddc6c11adb74" title="attribute_del" alt="" coords="758,56,885,83"/>
+</map>

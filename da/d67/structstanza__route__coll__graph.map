@@ -1,0 +1,6 @@
+<map id="G" name="G">
+<area shape="rect" id="node3" href="$d1/d59/xmpp__stanza_8c.html#d5/d6b/structxmpp__stanza" title="xmpp_stanza" alt="" coords="217,112,327,139"/>
+<area shape="rect" id="node5" href="$d1/dc2/xmpp__parser_8c.html#dc/d9d/structxmpp__parser__namespace" title="Structure representing an XML namespace." alt="" coords="5,5,195,32"/>
+<area shape="rect" id="node9" href="$d1/d59/xmpp__stanza_8c.html#d9/d18/structattribute" title="Structure to store a stanza attribute." alt="" coords="285,5,379,32"/>
+<area shape="rect" id="node11" href="$d3/d5a/jid_8c.html#df/d09/structjid" title="Represents a JID (local/resource)." alt="" coords="441,112,487,139"/>
+</map>

@@ -1,0 +1,25 @@
+var searchData=
+[
+  ['data',['data',['../d0/deb/event_8c.html#a84c9c3d65ffff76e5b1f3bbdfe35a2f1',1,'event_item::data()'],['../d3/dd8/xmp3__module_8c.html#adf9be006e8cff26b4ee08ce0ad1b14ef',1,'module::data()'],['../d1/dc2/xmpp__parser_8c.html#a1d28701b870897ecad955d24964b9614',1,'xmpp_parser::data()'],['../d0/df0/xmpp__server_8c.html#a73b9da72ec0e16d4311aee38004bdb62',1,'stanza_route::data()'],['../d0/df0/xmpp__server_8c.html#a246d69808d13f86cf90382685684af61',1,'iq_route::data()'],['../d0/df0/xmpp__server_8c.html#aadb6d5eead3cccf21ce6e460cb7c29a2',1,'client_listener::data()'],['../d9/db0/structauth__callback.html#a92412ad981d0d4982047f779439c789e',1,'auth_callback::data()'],['../d1/d59/xmpp__stanza_8c.html#af0182ee012b8169180727f1753bb4894',1,'xmpp_stanza::data()']]],
+  ['debug',['debug',['../d7/d7f/log_8h.html#adaa78f48cc5f16815291697278ab4ab5',1,'log.h']]],
+  ['default_5faddr',['DEFAULT_ADDR',['../dd/d68/xmp3__options_8c.html#abf4044df18364c5d04670b9b2b57ab78',1,'DEFAULT_ADDR():&#160;xmp3_options.c'],['../dc/d25/xmp3__options_8h.html#abf4044df18364c5d04670b9b2b57ab78',1,'DEFAULT_ADDR():&#160;xmp3_options.c']]],
+  ['default_5faddress',['DEFAULT_ADDRESS',['../d6/d78/xmp3__multicast_8c.html#a9b9769fe1b64bb2e2dec2075ac0a8735',1,'xmp3_multicast.c']]],
+  ['default_5fbacklog',['DEFAULT_BACKLOG',['../dd/d68/xmp3__options_8c.html#a0ef89cc62d9d1b314f869ab933322606',1,'DEFAULT_BACKLOG():&#160;xmp3_options.c'],['../dc/d25/xmp3__options_8h.html#a0ef89cc62d9d1b314f869ab933322606',1,'DEFAULT_BACKLOG():&#160;xmp3_options.c']]],
+  ['default_5fbuffer_5fsize',['DEFAULT_BUFFER_SIZE',['../d6/d78/xmp3__multicast_8c.html#adf36dffa82ddf0986f5a5108a061f618',1,'DEFAULT_BUFFER_SIZE():&#160;xmp3_multicast.c'],['../dd/d68/xmp3__options_8c.html#adf36dffa82ddf0986f5a5108a061f618',1,'DEFAULT_BUFFER_SIZE():&#160;xmp3_options.c'],['../dc/d25/xmp3__options_8h.html#adf36dffa82ddf0986f5a5108a061f618',1,'DEFAULT_BUFFER_SIZE():&#160;xmp3_options.c']]],
+  ['default_5fcertfile',['DEFAULT_CERTFILE',['../dd/d68/xmp3__options_8c.html#a1c844a8b46a53a04a2718e84b7672c67',1,'DEFAULT_CERTFILE():&#160;xmp3_options.c'],['../dc/d25/xmp3__options_8h.html#a1c844a8b46a53a04a2718e84b7672c67',1,'DEFAULT_CERTFILE():&#160;xmp3_options.c']]],
+  ['default_5fdomain',['DEFAULT_DOMAIN',['../d7/d71/xep__muc_8c.html#ad734f75156812b12c939c9475ab68f8b',1,'xep_muc.c']]],
+  ['default_5fkeyfile',['DEFAULT_KEYFILE',['../dd/d68/xmp3__options_8c.html#a109bacba933fc22ad61ddbd351d54413',1,'DEFAULT_KEYFILE():&#160;xmp3_options.c'],['../dc/d25/xmp3__options_8h.html#a109bacba933fc22ad61ddbd351d54413',1,'DEFAULT_KEYFILE():&#160;xmp3_options.c']]],
+  ['default_5fport',['DEFAULT_PORT',['../d6/d78/xmp3__multicast_8c.html#a8840c75df3021954d0105dd4e0b88c41',1,'DEFAULT_PORT():&#160;xmp3_multicast.c'],['../dd/d68/xmp3__options_8c.html#a8840c75df3021954d0105dd4e0b88c41',1,'DEFAULT_PORT():&#160;xmp3_options.c'],['../dc/d25/xmp3__options_8h.html#a8840c75df3021954d0105dd4e0b88c41',1,'DEFAULT_PORT():&#160;xmp3_options.c']]],
+  ['default_5fserver_5fname',['DEFAULT_SERVER_NAME',['../dd/d68/xmp3__options_8c.html#aab732e11e15d212f52585e0e82857820',1,'DEFAULT_SERVER_NAME():&#160;xmp3_options.c'],['../dc/d25/xmp3__options_8h.html#aab732e11e15d212f52585e0e82857820',1,'DEFAULT_SERVER_NAME():&#160;xmp3_options.c']]],
+  ['default_5fttl',['DEFAULT_TTL',['../d6/d78/xmp3__multicast_8c.html#a125bc9f37ef2719a3684232cc39fbedd',1,'xmp3_multicast.c']]],
+  ['default_5fuse_5fssl',['DEFAULT_USE_SSL',['../dd/d68/xmp3__options_8c.html#ac0b1e3475c5e43ef18ecbc7a9bc9e475',1,'DEFAULT_USE_SSL():&#160;xmp3_options.c'],['../dc/d25/xmp3__options_8h.html#ac0b1e3475c5e43ef18ecbc7a9bc9e475',1,'DEFAULT_USE_SSL():&#160;xmp3_options.c']]],
+  ['del',['del',['../d9/db0/structauth__callback.html#ab329863d38572f5ef71cc3422cda78d5',1,'auth_callback']]],
+  ['del_5fcallback',['DEL_CALLBACK',['../d0/df0/xmpp__server_8c.html#ad5e84aa4055a6a2bafbf205d406f0351',1,'xmpp_server.c']]],
+  ['del_5ffunc',['del_func',['../d9/d71/client__socket_8h.html#ac77d7a78c3c07f7f4783a34b0b515ea3',1,'client_socket']]],
+  ['delete_5flist',['DELETE_LIST',['../d0/df0/xmpp__server_8c.html#a91c4e03cae2b8a2bafa225257120e906',1,'xmpp_server.c']]],
+  ['depth',['depth',['../d1/dc2/xmpp__parser_8c.html#ab5d8b4483f797367e15a0f22d122295f',1,'xmpp_parser']]],
+  ['disco_5fitem',['disco_item',['../d0/df0/xmpp__server_8c.html#d9/dbe/structdisco__item',1,'']]],
+  ['disco_5fitem_5fdel',['disco_item_del',['../d0/df0/xmpp__server_8c.html#a08a02a13f3a5da6b1d666b0a3ecd2409',1,'xmpp_server.c']]],
+  ['disco_5fitems',['disco_items',['../d0/df0/xmpp__server_8c.html#afb0089d247379663f181f0e095981e4e',1,'xmpp_server']]],
+  ['domain',['domain',['../d3/d5a/jid_8c.html#adc3409f0f48316324d5f36b085be69f6',1,'jid']]]
+];

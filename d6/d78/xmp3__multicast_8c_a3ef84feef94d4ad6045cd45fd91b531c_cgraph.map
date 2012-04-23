@@ -1,0 +1,15 @@
+<map id="G" name="G">
+<area shape="rect" id="node3" href="$d1/d59/xmpp__stanza_8c.html#a10c606a11c37c01bf59881827dc2229a" title="Returns the name of the tag of this stanza (message/presence/IQ)" alt="" coords="266,5,417,32"/>
+<area shape="rect" id="node5" href="$d3/d5a/jid_8c.html#a0151ea37a9f52813a8d48d2b7eec2044" title="Allocate and initialize a new JID from an existing JID string." alt="" coords="266,56,417,83"/>
+<area shape="rect" id="node9" href="$d3/d5a/jid_8c.html#ab83fd5aae95de2c9d38fb9d9cd161580" title="Cleans up and frees an existing JID." alt="" coords="526,107,605,133"/>
+<area shape="rect" id="node11" href="$d1/d59/xmpp__stanza_8c.html#a20c90c791fa856784f2d43c9f44f1d3c" title="Returns the value of an attribute of this stanza." alt="" coords="266,157,417,184"/>
+<area shape="rect" id="node13" href="$d0/df0/xmpp__server_8c.html#a312f47af548e12ec5d866bea1d142d5e" title="Find a locally connected client by JID." alt="" coords="238,208,445,235"/>
+<area shape="rect" id="node20" href="$d1/d59/xmpp__stanza_8c.html#a513b6e2da3dce364271ba9315d7b3d95" title="Returns the stanza (and its children) packed into a null&#45;terminated string." alt="" coords="258,259,425,285"/>
+<area shape="rect" id="node7" href="$d3/d5a/jid_8c.html#abd2028a1e581e6374acaa6beaf6e5413" title="Allocate and initialize a new blank JID." alt="" coords="526,56,605,83"/>
+<area shape="rect" id="node15" href="$d3/d5a/jid_8c.html#a03139cec95c699c543f239f338c0c568" title="Compare two JIDs exactly." alt="" coords="526,157,605,184"/>
+<area shape="rect" id="node17" href="$dd/d4d/xmpp__client_8c.html#af963b026952bdbc45a4df0fa3d69b641" title="Return the JID for this client." alt="" coords="494,208,637,235"/>
+<area shape="rect" id="node22" href="$d1/d59/xmpp__stanza_8c.html#aae8c30c30fcbc2325d34897f8035ca46" title="Function that gets called recursively to convert a stanza to a string." alt="" coords="506,259,625,285"/>
+<area shape="rect" id="node24" href="$d1/dc2/xmpp__parser_8c.html#acce8bfe5926da4e64c3b5038dc683618" title="xmpp_parser_namespace_prefix" alt="" coords="686,208,933,235"/>
+<area shape="rect" id="node26" href="$d1/dc2/xmpp__parser_8c.html#afde3cf0e74a12bfe4ac90fa8dbae51a0" title="xmpp_parser_namespace_uri" alt="" coords="698,259,921,285"/>
+<area shape="rect" id="node28" href="$d1/dc2/xmpp__parser_8c.html#af924e15caac53b347a48878fcb046bc4" title="Return the next namespace in the namespace list." alt="" coords="694,309,925,336"/>
+</map>

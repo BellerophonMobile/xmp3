@@ -1,0 +1,8 @@
+<map id="G" name="G">
+<area shape="rect" id="node3" href="$d3/d5a/jid_8c.html#a0151ea37a9f52813a8d48d2b7eec2044" title="Allocate and initialize a new JID from an existing JID string." alt="" coords="274,5,425,32"/>
+<area shape="rect" id="node7" href="$d3/d5a/jid_8c.html#ab83fd5aae95de2c9d38fb9d9cd161580" title="Cleans up and frees an existing JID." alt="" coords="478,56,557,83"/>
+<area shape="rect" id="node9" href="$d1/d59/xmpp__stanza_8c.html#a20c90c791fa856784f2d43c9f44f1d3c" title="Returns the value of an attribute of this stanza." alt="" coords="274,107,425,133"/>
+<area shape="rect" id="node11" href="$d3/d5a/jid_8c.html#a3d51f2b27d20189e523b0d0b2a77e4a9" title="Converts a JID to a newly allocated string." alt="" coords="298,157,401,184"/>
+<area shape="rect" id="node13" href="$d3/d5a/jid_8c.html#a5b2f969326a86fa7e585f633d7b0f565" title="Compare two JIDs with wildcard matches." alt="" coords="270,208,429,235"/>
+<area shape="rect" id="node5" href="$d3/d5a/jid_8c.html#abd2028a1e581e6374acaa6beaf6e5413" title="Allocate and initialize a new blank JID." alt="" coords="478,5,557,32"/>
+</map>

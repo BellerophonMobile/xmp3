@@ -1,0 +1,37 @@
+<map id="G" name="G">
+<area shape="rect" id="node3" href="$d7/d71/xep__muc_8c.html#af88baacca4f1cccf8ec2bc295db0e063" title="leave_room" alt="" coords="230,31,333,57"/>
+<area shape="rect" id="node20" href="$d7/d71/xep__muc_8c.html#a4b26d057ea25fe1b3c99edff73a82d78" title="handle_items_query" alt="" coords="198,183,365,209"/>
+<area shape="rect" id="node25" href="$d7/d71/xep__muc_8c.html#a20d9ff75edcc76b952adf38d558fee26" title="handle_info_query" alt="" coords="202,233,361,260"/>
+<area shape="rect" id="node28" href="$d7/d71/xep__muc_8c.html#a8333f88612fa054ae107699f5bb548cc" title="send_nickname_conflict" alt="" coords="422,81,621,108"/>
+<area shape="rect" id="node31" href="$d7/d71/xep__muc_8c.html#a115281f539cd77f88872ff153ec5b38d" title="send_presence_broadcast" alt="" coords="418,132,625,159"/>
+<area shape="rect" id="node34" href="$d9/dd7/xmpp__im_8h.html#aee8f65a08bdaf68accfdcee40ed1488d" title="IQ stanza callback for handling a session IQ." alt="" coords="1170,487,1337,513"/>
+<area shape="rect" id="node40" href="$d9/dd7/xmpp__im_8h.html#a7542fa668dcf982bb5d3725c5cacb0ca" title="IQ stanza callback for handling a disco items query." alt="" coords="910,537,1109,564"/>
+<area shape="rect" id="node43" href="$d9/dd7/xmpp__im_8h.html#a93be77ae71bc544a1c23fae07f39fd23" title="IQ stanza callback for handling a disco info query." alt="" coords="1158,588,1349,615"/>
+<area shape="rect" id="node46" href="$dc/da6/xmpp__im_8c.html#af5cf3adac08463b9b6029c8814e4f972" title="get_roster" alt="" coords="718,196,821,223"/>
+<area shape="rect" id="node51" href="$d1/dc2/xmpp__parser_8c.html#a2268b636f6d02bbe04f3033ff93d829c" title="Expat callback for the start of an XMPP stream." alt="" coords="222,436,341,463"/>
+<area shape="rect" id="node76" href="$d1/dc2/xmpp__parser_8c.html#adc3f7670edafd5b590af11d276887f1e" title="Expat callback for end elements." alt="" coords="258,385,305,412"/>
+<area shape="rect" id="node79" href="$d0/df0/xmpp__server_8c.html#a3b400cb24e5bc51623f63c96c8a0a342" title="Sends a &lt;service&#45;unavailable&gt; error stanza to a client." alt="" coords="414,335,629,361"/>
+<area shape="rect" id="node5" href="$d7/d71/xep__muc_8c.html#a40cdc65e1b60c76aef97dfc9d3f2510f" title="leave_room_presence" alt="" coords="682,5,857,32"/>
+<area shape="rect" id="node15" href="$d7/d71/xep__muc_8c.html#a0214cd898b2f0c746cb45f79746e5095" title="client_disconnect" alt="" coords="442,31,601,57"/>
+<area shape="rect" id="node7" href="$d7/d71/xep__muc_8c.html#a9936322b944d46aead9fbd942687ec0a" title="handle_presence" alt="" coords="938,81,1081,108"/>
+<area shape="rect" id="node9" href="$d7/d71/xep__muc_8c.html#a1798db1c16a1fa62ff8f39fea202a26f" title="stanza_handler" alt="" coords="1186,132,1321,159"/>
+<area shape="rect" id="node11" href="$d7/d71/xep__muc_8c.html#addf05166cf3fbe386ae6650be21ef251" title="xep_muc_start" alt="" coords="1414,183,1541,209"/>
+<area shape="rect" id="node13" href="$d7/d71/xep__muc_8c.html#a20d385a5584d8014ec4d5774eb79d1de" title="xep_muc_stop" alt="" coords="1418,132,1537,159"/>
+<area shape="rect" id="node17" href="$d7/d71/xep__muc_8c.html#aefd23f2960520a68fea212344b85cb0b" title="enter_room_presence" alt="" coords="682,81,857,108"/>
+<area shape="rect" id="node22" href="$d7/d71/xep__muc_8c.html#aec1096d47742f472668c4905fa3c299a" title="handle_iq" alt="" coords="474,183,569,209"/>
+<area shape="rect" id="node36" href="$d1/d2e/xmpp__server_8h.html#a27bfc8e4d424a8bc17ab21a4a09cdf92" title="Allocates and initializes the XMPP server." alt="" coords="1606,436,1749,463"/>
+<area shape="rect" id="node38" href="$d0/d29/main_8c.html#a0ddf1224851353fc92bfbff6f499fa97" title="main" alt="" coords="1798,436,1853,463"/>
+<area shape="rect" id="node48" href="$d9/dd7/xmpp__im_8h.html#a40f3cf6fffd6aafe9c7cde476fdbc9c2" title="IQ stanza callback for handing a roster query." alt="" coords="1398,233,1557,260"/>
+<area shape="rect" id="node53" href="$d1/dc2/xmpp__parser_8c.html#a03a135f29e3d4e01abbb60e53ac6967c" title="init_parser" alt="" coords="466,385,577,412"/>
+<area shape="rect" id="node55" href="$d8/d55/xmpp__parser_8h.html#adf25a1d2047994dfa6cc71a9482548c2" title="xmpp_parser_new" alt="" coords="698,335,841,361"/>
+<area shape="rect" id="node64" href="$d8/d55/xmpp__parser_8h.html#af5e1eb5bbef0496c3543bd35113766ac" title="Reset the state of the parser as if it was just created." alt="" coords="690,385,849,412"/>
+<area shape="rect" id="node57" href="$d6/d78/xmp3__multicast_8c.html#a08afc39c59ec9297d756a99c395eff3c" title="multicast_new" alt="" coords="946,335,1073,361"/>
+<area shape="rect" id="node59" href="$d4/d2f/xmpp__client_8h.html#a1619c0b8f58b2cf09a322bf34fbc3414" title="xmpp_client_new" alt="" coords="938,284,1081,311"/>
+<area shape="rect" id="node61" href="$d0/df0/xmpp__server_8c.html#a66363912ef1221a2574f9f99805fe8fd" title="Callback for new client connections." alt="" coords="1410,385,1545,412"/>
+<area shape="rect" id="node66" href="$d6/d78/xmp3__multicast_8c.html#a9865e8026fb8ee000629fc1da465716d" title="socket_handler" alt="" coords="1186,436,1321,463"/>
+<area shape="rect" id="node70" href="$d8/d55/xmpp__parser_8h.html#a578b7a9a50212eb204a86789001287af" title="xmpp_parser_parse" alt="" coords="930,385,1089,412"/>
+<area shape="rect" id="node68" href="$d6/d78/xmp3__multicast_8c.html#a991c928ab73b350c4b7029352e91a219" title="multicast_start" alt="" coords="1406,436,1549,463"/>
+<area shape="rect" id="node73" href="$d0/df0/xmpp__server_8c.html#abece91815ef240322d79073f5bfca1db" title="Callback for new data from a client." alt="" coords="1198,385,1309,412"/>
+<area shape="rect" id="node81" href="$d1/d2e/xmpp__server_8h.html#a8ddb3bbfd497811c13e9426ce6f02003" title="Deliver an IQ stanza to a registered callback function." alt="" coords="678,272,861,299"/>
+<area shape="rect" id="node83" href="$d8/d28/xmpp__core_8h.html#a777c384ae6685d30bfa255c4b33022aa" title="An xmpp_server stanza route for stanzas directed to the server itself." alt="" coords="910,233,1109,260"/>
+</map>

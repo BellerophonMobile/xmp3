@@ -1,0 +1,13 @@
+<map id="G" name="G">
+<area shape="rect" id="node3" href="$dd/d68/xmp3__options_8c.html#aa1ba3db850b890eb6401b0d27bf5808e" title="Set the address that the server should bind to." alt="" coords="178,5,401,32"/>
+<area shape="rect" id="node5" href="$dd/d68/xmp3__options_8c.html#acbb98846d1b189c321da9c3344924ff2" title="Set the port that the server should bind to using a string." alt="" coords="178,56,401,83"/>
+<area shape="rect" id="node9" href="$dd/d68/xmp3__options_8c.html#a68168550518ba4dc66d7fd7cd8c9ea35" title="Enable/disable SSL support for the XMPP server." alt="" coords="198,107,381,133"/>
+<area shape="rect" id="node11" href="$dd/d68/xmp3__options_8c.html#aff95f741533b65ab175d8db8364ac47a" title="Set the path to the OpenSSL private key file to use." alt="" coords="182,157,397,184"/>
+<area shape="rect" id="node15" href="$dd/d68/xmp3__options_8c.html#a9c72728768403b4b28237b0a9595e2c4" title="Set the path to the OpenSSL certificate file." alt="" coords="166,208,413,235"/>
+<area shape="rect" id="node18" href="$dd/d68/xmp3__options_8c.html#a2a3941189614387781d9ce32974cdf69" title="Set the name of the XMPP server (used for the domainpart)." alt="" coords="166,259,413,285"/>
+<area shape="rect" id="node21" href="$dd/d68/xmp3__options_8c.html#ac86ab03d220a93f6927fc22a79192b22" title="Adds a path to the extension module search path." alt="" coords="166,309,413,336"/>
+<area shape="rect" id="node23" href="$d3/dd8/xmp3__module_8c.html#afcade838b5776e223ce72dcf9eccaceb" title="xmp3_modules_load" alt="" coords="210,360,369,387"/>
+<area shape="rect" id="node25" href="$d3/dd8/xmp3__module_8c.html#a9ab0467f25b9c9a2e33ac3cdecdb315f" title="xmp3_modules_config" alt="" coords="202,411,377,437"/>
+<area shape="rect" id="node7" href="$d3/d91/utils_8c.html#a9b37013d0f910039c8e0fb81b04af602" title="Converts a string to an integer with error checking." alt="" coords="474,56,561,83"/>
+<area shape="rect" id="node13" href="$d3/d91/utils_8c.html#a07891e77aee8f9b825d52bd33e474f30" title="Simple string copy, freeing original if neccessary." alt="" coords="462,208,573,235"/>
+</map>

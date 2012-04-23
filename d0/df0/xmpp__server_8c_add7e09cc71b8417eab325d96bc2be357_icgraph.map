@@ -1,0 +1,14 @@
+<map id="G" name="G">
+<area shape="rect" id="node3" href="$d7/d71/xep__muc_8c.html#addf05166cf3fbe386ae6650be21ef251" title="xep_muc_start" alt="" coords="310,5,437,32"/>
+<area shape="rect" id="node5" href="$d6/d78/xmp3__multicast_8c.html#a991c928ab73b350c4b7029352e91a219" title="multicast_start" alt="" coords="302,56,445,83"/>
+<area shape="rect" id="node7" href="$df/da9/xmpp__auth_8c.html#a603b4a63af3c4e4af99442805fe89ae8" title="Step 15: Client binds a resource." alt="" coords="306,107,441,133"/>
+<area shape="rect" id="node19" href="$d1/d2e/xmpp__server_8h.html#a27bfc8e4d424a8bc17ab21a4a09cdf92" title="Allocates and initializes the XMPP server." alt="" coords="1934,132,2077,159"/>
+<area shape="rect" id="node9" href="$df/da9/xmpp__auth_8c.html#a01804bd53eccc182ce76337fc0863e8d" title="stream_bind_start" alt="" coords="494,107,653,133"/>
+<area shape="rect" id="node11" href="$df/da9/xmpp__auth_8c.html#afb770a216868aa3fb43813b19d2a0115" title="Begins SASL PLAIN authentication." alt="" coords="702,107,861,133"/>
+<area shape="rect" id="node13" href="$d3/d24/xmpp__auth_8h.html#ad3efd9ab093646bdfd8832c34ae2de4d" title="Handler for the inital stream start to begin authentication." alt="" coords="1310,107,1509,133"/>
+<area shape="rect" id="node23" href="$df/da9/xmpp__auth_8c.html#afd7b12689591d40109a88ad108b5c3a2" title="stream_sasl_start" alt="" coords="910,107,1069,133"/>
+<area shape="rect" id="node15" href="$d4/d2f/xmpp__client_8h.html#a1619c0b8f58b2cf09a322bf34fbc3414" title="xmpp_client_new" alt="" coords="1558,107,1701,133"/>
+<area shape="rect" id="node17" href="$d0/df0/xmpp__server_8c.html#a66363912ef1221a2574f9f99805fe8fd" title="Callback for new client connections." alt="" coords="1750,107,1885,133"/>
+<area shape="rect" id="node21" href="$d0/d29/main_8c.html#a0ddf1224851353fc92bfbff6f499fa97" title="main" alt="" coords="2126,132,2181,159"/>
+<area shape="rect" id="node25" href="$df/da9/xmpp__auth_8c.html#a8dd789e057b9812e4dd1aa524dfb6a65" title="Begins TLS authentication." alt="" coords="1118,107,1261,133"/>
+</map>

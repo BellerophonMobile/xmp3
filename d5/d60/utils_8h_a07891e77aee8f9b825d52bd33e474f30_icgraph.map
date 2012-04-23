@@ -1,0 +1,43 @@
+<map id="G" name="G">
+<area shape="rect" id="node3" href="$d6/d24/jid_8h.html#a1a93fd4eaa48c375952cb6f9c9127907" title="Sets the localpart of a JID." alt="" coords="226,512,353,539"/>
+<area shape="rect" id="node63" href="$d6/d24/jid_8h.html#aeefeabfe802b3db2ce1b8894ae6a0d05" title="Sets the domainpart of a JID." alt="" coords="222,157,357,184"/>
+<area shape="rect" id="node72" href="$d6/d24/jid_8h.html#ad4e057d210bd0776fcb89289e5d59f81" title="Sets the resourcepart of a JID." alt="" coords="214,689,365,716"/>
+<area shape="rect" id="node88" href="$d6/d78/xmp3__multicast_8c.html#aa3dacdad2e28d57eeb2682791ad855e1" title="multicast_conf" alt="" coords="222,892,357,919"/>
+<area shape="rect" id="node90" href="$dc/d25/xmp3__options_8h.html#aff95f741533b65ab175d8db8364ac47a" title="Set the path to the OpenSSL private key file to use." alt="" coords="182,943,397,969"/>
+<area shape="rect" id="node98" href="$dc/d25/xmp3__options_8h.html#a9c72728768403b4b28237b0a9595e2c4" title="Set the path to the OpenSSL certificate file." alt="" coords="166,1044,413,1071"/>
+<area shape="rect" id="node102" href="$dc/d25/xmp3__options_8h.html#a2a3941189614387781d9ce32974cdf69" title="Set the name of the XMPP server (used for the domainpart)." alt="" coords="166,993,413,1020"/>
+<area shape="rect" id="node105" href="$dd/d21/xmpp__stanza_8h.html#a7d2f9f8539e4f809a81fa446ce8c37a0" title="Set the URI of the stanza, copy the URI." alt="" coords="198,1095,381,1121"/>
+<area shape="rect" id="node107" href="$dd/d21/xmpp__stanza_8h.html#a67bfe859e3234b211c110e54606e27c5" title="Set the prefix of the stanza, copy the prefix." alt="" coords="186,1145,393,1172"/>
+<area shape="rect" id="node109" href="$dd/d21/xmpp__stanza_8h.html#ad769e5a7ea7f28b03b84120f18e7fe98" title="Set the name of the stanza, copy the name." alt="" coords="194,1196,385,1223"/>
+<area shape="rect" id="node5" href="$d6/d24/jid_8h.html#a6da80c5b44d3c4ef896850a5d1d790b0" title="Allocate and initialize a new JID from an existing JID structure." alt="" coords="482,512,633,539"/>
+<area shape="rect" id="node11" href="$d7/d71/xep__muc_8c.html#addf05166cf3fbe386ae6650be21ef251" title="xep_muc_start" alt="" coords="1670,576,1797,603"/>
+<area shape="rect" id="node13" href="$d7/d71/xep__muc_8c.html#a20d385a5584d8014ec4d5774eb79d1de" title="xep_muc_stop" alt="" coords="1674,867,1793,893"/>
+<area shape="rect" id="node15" href="$d7/d71/xep__muc_8c.html#a1b52b88e96c04035a9e9f53e6210d149" title="room_new" alt="" coords="762,563,849,589"/>
+<area shape="rect" id="node32" href="$df/da9/xmpp__auth_8c.html#afb770a216868aa3fb43813b19d2a0115" title="Begins SASL PLAIN authentication." alt="" coords="1446,157,1605,184"/>
+<area shape="rect" id="node54" href="$d6/d24/jid_8h.html#ae6100aaa50b6af23516ebc89e2f8c338" title="Allocate and initialize a new JID from an existing JID without the resource." alt="" coords="462,208,653,235"/>
+<area shape="rect" id="node7" href="$d7/d71/xep__muc_8c.html#acf84f00141033b025df269e540461383" title="handle_message" alt="" coords="738,816,873,843"/>
+<area shape="rect" id="node22" href="$d7/d71/xep__muc_8c.html#ad34287dce9e621d00af71d307f7a22dd" title="room_client_new" alt="" coords="734,512,877,539"/>
+<area shape="rect" id="node25" href="$d7/d71/xep__muc_8c.html#a115281f539cd77f88872ff153ec5b38d" title="send_presence_broadcast" alt="" coords="702,664,909,691"/>
+<area shape="rect" id="node28" href="$df/da9/xmpp__auth_8c.html#a603b4a63af3c4e4af99442805fe89ae8" title="Step 15: Client binds a resource." alt="" coords="1006,284,1141,311"/>
+<area shape="rect" id="node49" href="$d1/d2e/xmpp__server_8h.html#a1c8e466b41f2895d5a0b57ee9f0a4c0b" title="Add an item to the response for disco item queries." alt="" coords="958,512,1189,539"/>
+<area shape="rect" id="node52" href="$d0/df0/xmpp__server_8c.html#af1d37b8251dd106082d3fe8097dd565b" title="stanza_route_new" alt="" coords="730,411,881,437"/>
+<area shape="rect" id="node9" href="$d7/d71/xep__muc_8c.html#a1798db1c16a1fa62ff8f39fea202a26f" title="stanza_handler" alt="" coords="1458,791,1593,817"/>
+<area shape="rect" id="node17" href="$d7/d71/xep__muc_8c.html#aefd23f2960520a68fea212344b85cb0b" title="enter_room_presence" alt="" coords="986,664,1161,691"/>
+<area shape="rect" id="node19" href="$d7/d71/xep__muc_8c.html#a9936322b944d46aead9fbd942687ec0a" title="handle_presence" alt="" coords="1246,765,1389,792"/>
+<area shape="rect" id="node30" href="$df/da9/xmpp__auth_8c.html#a01804bd53eccc182ce76337fc0863e8d" title="stream_bind_start" alt="" coords="1238,259,1397,285"/>
+<area shape="rect" id="node34" href="$d3/d24/xmpp__auth_8h.html#ad3efd9ab093646bdfd8832c34ae2de4d" title="Handler for the inital stream start to begin authentication." alt="" coords="2150,208,2349,235"/>
+<area shape="rect" id="node44" href="$df/da9/xmpp__auth_8c.html#afd7b12689591d40109a88ad108b5c3a2" title="stream_sasl_start" alt="" coords="1654,208,1813,235"/>
+<area shape="rect" id="node36" href="$d4/d2f/xmpp__client_8h.html#a1619c0b8f58b2cf09a322bf34fbc3414" title="xmpp_client_new" alt="" coords="2398,297,2541,324"/>
+<area shape="rect" id="node38" href="$d0/df0/xmpp__server_8c.html#a66363912ef1221a2574f9f99805fe8fd" title="Callback for new client connections." alt="" coords="2590,652,2725,679"/>
+<area shape="rect" id="node40" href="$d1/d2e/xmpp__server_8h.html#a27bfc8e4d424a8bc17ab21a4a09cdf92" title="Allocates and initializes the XMPP server." alt="" coords="2774,829,2917,856"/>
+<area shape="rect" id="node42" href="$d0/d29/main_8c.html#a0ddf1224851353fc92bfbff6f499fa97" title="main" alt="" coords="2966,993,3021,1020"/>
+<area shape="rect" id="node46" href="$df/da9/xmpp__auth_8c.html#a8dd789e057b9812e4dd1aa524dfb6a65" title="Begins TLS authentication." alt="" coords="1910,208,2053,235"/>
+<area shape="rect" id="node56" href="$d8/d28/xmpp__core_8h.html#ae6da3d9438fd752c4afd6e50a6af9b66" title="An xmpp_parser handler for stanzas from a local client." alt="" coords="702,259,909,285"/>
+<area shape="rect" id="node67" href="$d7/d71/xep__muc_8c.html#abb84073037b532fc678cfa29dbb0f78b" title="xep_muc_new" alt="" coords="502,5,613,32"/>
+<area shape="rect" id="node69" href="$d7/d71/xep__muc_8c.html#a09d3d369f554ab215c1b8cd0328c4fc4" title="xep_muc_conf" alt="" coords="498,56,617,83"/>
+<area shape="rect" id="node78" href="$d7/d71/xep__muc_8c.html#af88baacca4f1cccf8ec2bc295db0e063" title="leave_room" alt="" coords="506,715,609,741"/>
+<area shape="rect" id="node80" href="$d7/d71/xep__muc_8c.html#a40cdc65e1b60c76aef97dfc9d3f2510f" title="leave_room_presence" alt="" coords="986,765,1161,792"/>
+<area shape="rect" id="node83" href="$d7/d71/xep__muc_8c.html#a0214cd898b2f0c746cb45f79746e5095" title="client_disconnect" alt="" coords="726,715,885,741"/>
+<area shape="rect" id="node93" href="$dd/d68/xmp3__options_8c.html#a8414633ed403260567569dbc9ee00434" title="Callback used by config file parser." alt="" coords="502,1019,613,1045"/>
+<area shape="rect" id="node95" href="$dc/d25/xmp3__options_8h.html#a5df01d376481ee0326ff253fa9af2e11" title="Load a configuration from an ini&#45;style config." alt="" coords="1862,1019,2101,1045"/>
+</map>

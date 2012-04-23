@@ -1,0 +1,41 @@
+<map id="G" name="G">
+<area shape="rect" id="node3" href="$d1/d59/xmpp__stanza_8c.html#a20c90c791fa856784f2d43c9f44f1d3c" title="Returns the value of an attribute of this stanza." alt="" coords="1098,92,1249,118"/>
+<area shape="rect" id="node5" href="$d3/d5a/jid_8c.html#a0151ea37a9f52813a8d48d2b7eec2044" title="Allocate and initialize a new JID from an existing JID string." alt="" coords="1098,294,1249,321"/>
+<area shape="rect" id="node9" href="$d3/d5a/jid_8c.html#ab83fd5aae95de2c9d38fb9d9cd161580" title="Cleans up and frees an existing JID." alt="" coords="1334,864,1413,890"/>
+<area shape="rect" id="node11" href="$d3/d5a/jid_8c.html#a54f945004eef842630b39c94a3689e28" title="Returns the resourcepart of a JID." alt="" coords="846,142,965,169"/>
+<area shape="rect" id="node13" href="$d7/d71/xep__muc_8c.html#a1b52b88e96c04035a9e9f53e6210d149" title="room_new" alt="" coords="322,345,409,372"/>
+<area shape="rect" id="node34" href="$d7/d71/xep__muc_8c.html#a8333f88612fa054ae107699f5bb548cc" title="send_nickname_conflict" alt="" coords="550,750,749,777"/>
+<area shape="rect" id="node68" href="$d7/d71/xep__muc_8c.html#ad34287dce9e621d00af71d307f7a22dd" title="room_client_new" alt="" coords="294,294,437,321"/>
+<area shape="rect" id="node71" href="$d0/df0/xmpp__server_8c.html#a312f47af548e12ec5d866bea1d142d5e" title="Find a locally connected client by JID." alt="" coords="262,1004,469,1030"/>
+<area shape="rect" id="node77" href="$d0/df0/xmpp__server_8c.html#a68a2a60f0e4a333e4262e4cebbf85d72" title="Add a callback to be notified when a client disconnects." alt="" coords="230,1080,501,1106"/>
+<area shape="rect" id="node83" href="$d7/d71/xep__muc_8c.html#a0214cd898b2f0c746cb45f79746e5095" title="client_disconnect" alt="" coords="286,928,445,954"/>
+<area shape="rect" id="node104" href="$d7/d71/xep__muc_8c.html#a115281f539cd77f88872ff153ec5b38d" title="send_presence_broadcast" alt="" coords="262,598,469,625"/>
+<area shape="rect" id="node7" href="$d3/d5a/jid_8c.html#abd2028a1e581e6374acaa6beaf6e5413" title="Allocate and initialize a new blank JID." alt="" coords="1334,244,1413,270"/>
+<area shape="rect" id="node15" href="$d3/d5a/jid_8c.html#a6da80c5b44d3c4ef896850a5d1d790b0" title="Allocate and initialize a new JID from an existing JID structure." alt="" coords="574,294,725,321"/>
+<area shape="rect" id="node18" href="$d3/d5a/jid_8c.html#a1a93fd4eaa48c375952cb6f9c9127907" title="Sets the localpart of a JID." alt="" coords="842,396,969,422"/>
+<area shape="rect" id="node22" href="$d3/d5a/jid_8c.html#ac1dcf40e9090a5a9717b685b6b055feb" title="Returns the localpart of a JID." alt="" coords="858,294,953,321"/>
+<area shape="rect" id="node24" href="$d3/d5a/jid_8c.html#aeefeabfe802b3db2ce1b8894ae6a0d05" title="Sets the domainpart of a JID." alt="" coords="838,244,973,270"/>
+<area shape="rect" id="node27" href="$d3/d5a/jid_8c.html#a32b3d0744d90d33622986e4989042ee6" title="Returns the domainpart of a JID." alt="" coords="854,345,957,372"/>
+<area shape="rect" id="node29" href="$d3/d5a/jid_8c.html#ad4e057d210bd0776fcb89289e5d59f81" title="Sets the resourcepart of a JID." alt="" coords="830,446,981,473"/>
+<area shape="rect" id="node20" href="$d3/d91/utils_8c.html#a07891e77aee8f9b825d52bd33e474f30" title="Simple string copy, freeing original if neccessary." alt="" coords="1118,396,1229,422"/>
+<area shape="rect" id="node36" href="$d1/d59/xmpp__stanza_8c.html#aa80dd21d794b5c63fcb13c49745cc373" title="Allocate and initialize a new XMPP stanza structure." alt="" coords="834,649,977,676"/>
+<area shape="rect" id="node42" href="$d1/d59/xmpp__stanza_8c.html#a7ca8bf259143d7ff53b24de8b666026d" title="Sets the value of an attribute in a stanza." alt="" coords="814,700,997,726"/>
+<area shape="rect" id="node46" href="$d3/d91/utils_8c.html#abaedf4730d92cefc0be67f69f2a17ca6" title="Allocate and return a null&#45;terminated string with a UUID." alt="" coords="858,548,953,574"/>
+<area shape="rect" id="node48" href="$d1/d59/xmpp__stanza_8c.html#ac13c8bb45e2ca03b99836e8d52b265b4" title="Appends a child stanza." alt="" coords="798,977,1013,1004"/>
+<area shape="rect" id="node52" href="$d3/d5a/jid_8c.html#a3d51f2b27d20189e523b0d0b2a77e4a9" title="Converts a JID to a newly allocated string." alt="" coords="1122,801,1225,828"/>
+<area shape="rect" id="node54" href="$d0/df0/xmpp__server_8c.html#a6d3f7e5e289f785b1c8c52f95068c627" title="Deliver a stanza to a registered callback function." alt="" coords="798,598,1013,625"/>
+<area shape="rect" id="node62" href="$d1/d59/xmpp__stanza_8c.html#af40757ae1d137034570b1bb33303d024" title="Cleans up and frees an XMPP stanza." alt="" coords="834,876,977,902"/>
+<area shape="rect" id="node38" href="$d1/d59/xmpp__stanza_8c.html#a5a80203f56df7a360fa457c0111686f6" title="Parse the namespace triple that Expat gives us." alt="" coords="1130,649,1217,676"/>
+<area shape="rect" id="node40" href="$d1/d59/xmpp__stanza_8c.html#aff4b8f6e10ce1c351d2a5bc39f0e819f" title="Convenience function to build a key for the attribute hash table." alt="" coords="1130,700,1217,726"/>
+<area shape="rect" id="node44" href="$d1/d59/xmpp__stanza_8c.html#a2fb472c6bf9b7f540a97ddc6c11adb74" title="attribute_del" alt="" coords="1110,750,1237,777"/>
+<area shape="rect" id="node50" href="$d1/d59/xmpp__stanza_8c.html#afc77f00b7f38c79566a7b16876230e30" title="Removes a child stanza." alt="" coords="1066,1002,1281,1029"/>
+<area shape="rect" id="node59" href="$d3/d5a/jid_8c.html#a5b2f969326a86fa7e585f633d7b0f565" title="Compare two JIDs with wildcard matches." alt="" coords="1094,548,1253,574"/>
+<area shape="rect" id="node65" href="$d1/dc2/xmpp__parser_8c.html#a87065f39f10a449e7af17fa45ca475f2" title="xmpp_parser_namespace_del" alt="" coords="1062,876,1285,902"/>
+<area shape="rect" id="node73" href="$d3/d5a/jid_8c.html#a03139cec95c699c543f239f338c0c568" title="Compare two JIDs exactly." alt="" coords="610,1004,689,1030"/>
+<area shape="rect" id="node75" href="$dd/d4d/xmpp__client_8c.html#af963b026952bdbc45a4df0fa3d69b641" title="Return the JID for this client." alt="" coords="578,1054,721,1081"/>
+<area shape="rect" id="node79" href="$dd/d4d/xmpp__client_8c.html#a5ff8a826aface187b00ffcdfb7ce125a" title="Return the server this client is connected to." alt="" coords="566,1156,733,1182"/>
+<area shape="rect" id="node87" href="$d7/d71/xep__muc_8c.html#af88baacca4f1cccf8ec2bc295db0e063" title="leave_room" alt="" coords="598,902,701,929"/>
+<area shape="rect" id="node95" href="$d7/d71/xep__muc_8c.html#a160ab04be39d4fb816a725d948738248" title="room_client_del" alt="" coords="1102,1129,1245,1156"/>
+<area shape="rect" id="node100" href="$d7/d71/xep__muc_8c.html#ac6bfec1825c03d5493622565c77302f8" title="room_del" alt="" coords="862,1180,949,1206"/>
+<area shape="rect" id="node114" href="$d1/d59/xmpp__stanza_8c.html#a7cce775ca11aac48b725baaf0a5f3518" title="Sets the value of an attribute in a stanza." alt="" coords="554,700,745,726"/>
+</map>

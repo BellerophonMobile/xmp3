@@ -1,0 +1,14 @@
+<map id="G" name="G">
+<area shape="rect" id="node3" href="$dd/d68/xmp3__options_8c.html#a8414633ed403260567569dbc9ee00434" title="Callback used by config file parser." alt="" coords="294,208,405,235"/>
+<area shape="rect" id="node5" href="$dd/d68/xmp3__options_8c.html#aa1ba3db850b890eb6401b0d27bf5808e" title="Set the address that the server should bind to." alt="" coords="466,5,689,32"/>
+<area shape="rect" id="node7" href="$dd/d68/xmp3__options_8c.html#acbb98846d1b189c321da9c3344924ff2" title="Set the port that the server should bind to using a string." alt="" coords="466,56,689,83"/>
+<area shape="rect" id="node11" href="$dd/d68/xmp3__options_8c.html#a68168550518ba4dc66d7fd7cd8c9ea35" title="Enable/disable SSL support for the XMPP server." alt="" coords="486,107,669,133"/>
+<area shape="rect" id="node13" href="$dd/d68/xmp3__options_8c.html#aff95f741533b65ab175d8db8364ac47a" title="Set the path to the OpenSSL private key file to use." alt="" coords="470,157,685,184"/>
+<area shape="rect" id="node17" href="$dd/d68/xmp3__options_8c.html#a9c72728768403b4b28237b0a9595e2c4" title="Set the path to the OpenSSL certificate file." alt="" coords="454,208,701,235"/>
+<area shape="rect" id="node20" href="$dd/d68/xmp3__options_8c.html#a2a3941189614387781d9ce32974cdf69" title="Set the name of the XMPP server (used for the domainpart)." alt="" coords="454,259,701,285"/>
+<area shape="rect" id="node23" href="$dd/d68/xmp3__options_8c.html#ac86ab03d220a93f6927fc22a79192b22" title="Adds a path to the extension module search path." alt="" coords="454,309,701,336"/>
+<area shape="rect" id="node25" href="$d3/dd8/xmp3__module_8c.html#afcade838b5776e223ce72dcf9eccaceb" title="xmp3_modules_load" alt="" coords="498,360,657,387"/>
+<area shape="rect" id="node27" href="$d3/dd8/xmp3__module_8c.html#a9ab0467f25b9c9a2e33ac3cdecdb315f" title="xmp3_modules_config" alt="" coords="490,411,665,437"/>
+<area shape="rect" id="node9" href="$d3/d91/utils_8c.html#a9b37013d0f910039c8e0fb81b04af602" title="Converts a string to an integer with error checking." alt="" coords="762,56,849,83"/>
+<area shape="rect" id="node15" href="$d3/d91/utils_8c.html#a07891e77aee8f9b825d52bd33e474f30" title="Simple string copy, freeing original if neccessary." alt="" coords="750,208,861,235"/>
+</map>
