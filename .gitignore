@@ -3,3 +3,5 @@
 /.waf*
 /build
 /doc
+server.pem
+server.crt
