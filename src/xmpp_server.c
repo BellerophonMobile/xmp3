@@ -730,7 +730,8 @@ static void read_client(struct event_loop *loop, int fd, void *data) {
     }
 
     char *addrstr = client_socket_addr_str(xmpp_client_socket(client));
-    log_info("%s - Read %zd bytes", addrstr, numrecv);
+    /* On android, %zd is only for size_t, so do an explicit cast. */
+    log_info("%s - Read %zd bytes", addrstr, (size_t)numrecv);
     debug("%s: %.*s", addrstr, (int)numrecv, server->buffer);
     free(addrstr);
 

@@ -114,7 +114,7 @@ tj_solibrary_getNext(tj_solibrary *x, tj_solibrary_entry *e)
 tj_solibrary_entry *
 tj_solibrary_load(tj_solibrary *x, const char *fn)
 {
-  char *error;
+  const char *error;
 
   tj_solibrary_entry *e;
   if ((e = malloc(sizeof(tj_solibrary_entry))) == 0) {
@@ -148,7 +148,7 @@ tj_solibrary_load(tj_solibrary *x, const char *fn)
 void *
 tj_solibrary_entry_getSymbol(tj_solibrary_entry *x, const char *func)
 {
-  char *error;
+  const char *error;
   void *handle;
 
   dlerror();

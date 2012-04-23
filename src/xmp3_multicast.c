@@ -358,9 +358,11 @@ static bool local_stanza_handler(struct xmpp_stanza *stanza,
                               sizeof(mcast->send_addr));
     free(stanza_data);
     check(num_sent > 0, "Failed to send data on multicast socket.");
+    /* On android, %zd is only for size_t, so do an explicit cast. */
     check((size_t)num_sent == stanza_length,
-          "Sent short message: %zd/%zd bytes", num_sent, stanza_length);
-    log_info("Sent %zd bytes to multicast.", num_sent);
+          "Sent short message: %zd/%zd bytes", (size_t)num_sent,
+          (size_t)stanza_length);
+    log_info("Sent %zd bytes to multicast.", (size_t)num_sent);
     return true;
 
 error:
@@ -378,7 +380,8 @@ static void socket_handler(struct event_loop *loop, int fd, void *data) {
                                 &recv_addr_len);
     check(num_recv > 0, "Failed to receive from multicast socket.");
 
-    log_info("Received %zd bytes from %s:%d", num_recv,
+    /* On android, %zd is only for size_t, so do an explicit cast. */
+    log_info("Received %zd bytes from %s:%d", (size_t)num_recv,
              inet_ntoa(recv_addr.sin_addr), ntohs(recv_addr.sin_port));
 
     /* Parse the XMPP stanza string we just received.  Reset the parser before
