@@ -57,7 +57,9 @@ XMP3 has been tested with the following clients:
 
  * Pidgin 2.10.3 (libpurple 2.10.3)
  * iChat in OSX 10.6 and 10.7.
- * Xabber on Android
+ * [Xabber][xabber] on Android
+
+[xabber]: https://play.google.com/store/apps/details?id=com.xabber.android
 
 Requirements
 ------------
@@ -100,7 +102,7 @@ object files:
 
     ./waf clean
 
-To completley remove all compiled files:
+To completely remove all compiled files:
 
     ./waf distclean
 
@@ -110,6 +112,32 @@ See the help output of waf for more options:
 
 To build the Doxygen documentation, just run "doxygen" in the root distribution
 directory.
+
+### Building on Android
+
+To build on Android, pass "--cross-android" to the configure command:
+
+    ./waf configure --cross-android
+
+By default, the script will look at the "ANDROID_NDK" environment variable to
+find the paths to the compilers.  This can be overridden with the
+"--cross-android-ndk" option.  See the help output for options to choose the
+Android API level, and the architecture.
+
+The Android build requires cross-compiling the third-party libraries XMP3 uses
+(Expat, OpenSSL, and UUID functions).  Precompiled binaries of these libraries
+can be found on the [XMP3 download page][downloads].  After extracting this
+package, build XMP3 with the following command:
+
+    export LINKFLAGS="-Landroid_libs/armv6"
+    export CFLAGS="-Iandroid_libs/include"
+    ./waf configure --cross-android
+    ./waf
+
+Change the paths to correspond to where the libraries were extracted.  Also,
+substitute arm7 for arm6 if your device supports it.
+
+[downloads]: http://github.com/tom5760/xmp3/downloads/
 
 Running
 -------
@@ -153,7 +181,7 @@ Loadable Modules
 
 XMP3 currently has two plugins in the source distribution, an implementation of
 XEP-0045 Multi-User chat, and a simple multicast server-to-server forwarding to
-illustrate hooking into XMP3.  Currently, a configuration file is neccessary to
+illustrate hooking into XMP3.  Currently, a configuration file is necessary to
 load and configure these modules, see the "Configuration File" section for
 details.
 
