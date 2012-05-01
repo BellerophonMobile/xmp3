@@ -83,48 +83,48 @@ void xmp3_modules_del(struct xmp3_modules *modules) {
     free(modules);
 }
 
-bool xmp3_modules_load(struct xmp3_modules *modules, const char *path,
-                       const char *name) {
-    tj_solibrary_entry *entry = NULL;
-    struct module *module = NULL;
-
-    entry = tj_solibrary_load(modules->solibrary, path);
-    if (entry == NULL) {
-        log_err("Could not load module '%s'", path);
-        goto error;
-    }
-
-    module = calloc(1, sizeof(*module));
+bool xmp3_modules_add(struct xmp3_modules *modules, const char *name,
+                      struct xmp3_module *funcs) {
+    struct module *module = calloc(1, sizeof(*module));
     check_mem(module);
 
     module->started = false;
     STRDUP_CHECK(module->name, name);
-    module->functions = tj_solibrary_entry_getSymbol(entry, SYMBOL_NAME);
-    if (module->functions == NULL) {
-        log_err("No symbol '%s' defined in '%s'", SYMBOL_NAME, path);
-        goto error;
-    }
-
+    module->functions = funcs;
     module->data = module->functions->mod_new();
     if (module->data == NULL) {
-        log_err("Failed to instantiate module '%s'", path);
+        log_err("Failed to instantiate module '%s'", name);
         goto error;
     }
 
     HASH_ADD_KEYPTR(hh, modules->map, module->name, strlen(module->name),
                     module);
+
     return true;
 
 error:
-    if (module != NULL) {
-        if (module->name != NULL) {
-            free(module->name);
-        }
-        if (module->data != NULL) {
-            module->functions->mod_del(module->data);
-        }
-    };
+    if (module->name != NULL) {
+        free(module->name);
+    }
     return false;
+}
+
+bool xmp3_modules_load(struct xmp3_modules *modules, const char *path,
+                       const char *name) {
+    tj_solibrary_entry *entry = tj_solibrary_load(modules->solibrary, path);
+    if (entry == NULL) {
+        log_err("Could not load module '%s'", path);
+        return false;
+    }
+
+    struct xmp3_module *funcs = tj_solibrary_entry_getSymbol(
+            entry, SYMBOL_NAME);
+    if (funcs == NULL) {
+        log_err("No symbol '%s' defined in '%s'", SYMBOL_NAME, path);
+        return false;
+    }
+
+    return xmp3_modules_add(modules, name, funcs);
 }
 
 bool xmp3_modules_config(struct xmp3_modules *modules, const char *name,

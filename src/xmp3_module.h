@@ -120,6 +120,9 @@ void xmp3_modules_del(struct xmp3_modules *modules);
 bool xmp3_modules_load(struct xmp3_modules *modules, const char *path,
                        const char *name);
 
+bool xmp3_modules_add(struct xmp3_modules *modules, const char *name,
+                      struct xmp3_module *funcs);
+
 bool xmp3_modules_config(struct xmp3_modules *modules, const char *name,
                          const char *key, const char *value);
 
