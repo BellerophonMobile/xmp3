@@ -38,9 +38,10 @@ def options(ctx):
     opts = ctx.add_option_group('XMP3 Options')
     opts.add_option('--debug', action='store_true',
                     help='Build with debugging flags (default optimized).')
-
     opts.add_option('--test', action='store_true',
                     help='Build test programs')
+    opts.add_option('--muc-module', action='store_true',
+                    help='Build the MUC component as an external module.')
 
     cross = ctx.add_option_group('Cross Compiling')
     cross.add_option('--cross-android', action='store_const', dest='cross',
@@ -97,6 +98,9 @@ def configure(ctx):
 
     ctx.env.arch = platform.machine()
     ctx.env.test = ctx.options.test
+    ctx.env.muc_module = ctx.options.muc_module
+    if ctx.env.muc_module:
+        ctx.env.DEFINES += ['MUC_MODULE']
 
     # Mac OSX's uuid stuff is built into its libc
     if ctx.env.target != 'darwin':
@@ -172,12 +176,14 @@ def build(ctx):
         use = ['libxmp3'],
     )
 
-    # Don't need to link modules with libxmp3, bind symbols at runtime.
-    ctx.shlib(
-        target = 'xep_muc',
-        includes = libxmp3.includes,
-        source = ['src/xep_muc.c'],
-    )
+    if ctx.env.muc_module:
+        ctx.shlib(
+            target = 'xep_muc',
+            includes = libxmp3.includes,
+            source = ['src/xep_muc.c'],
+        )
+    else:
+        libxmp3.source.append('src/xep_muc.c')
 
     ctx.shlib(
         target = 'xmp3_multicast',

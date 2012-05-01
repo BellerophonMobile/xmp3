@@ -103,6 +103,10 @@
 #include "xmpp_server.h"
 #include "xmpp_stanza.h"
 
+#ifndef MUC_MODULE
+#include "xep_muc.h"
+#endif
+
 static struct option long_options[] = {
     {"config",   required_argument, NULL, 'f'},
     {"addr",     required_argument, NULL, 'a'},
@@ -187,6 +191,12 @@ int main(int argc, char *argv[]) {
     }
 
     struct xmp3_options *options = xmp3_options_new();
+
+#ifndef MUC_MODULE
+    struct xmp3_module muc = { &xep_muc_new, &xep_muc_del, &xep_muc_conf,
+                               &xep_muc_start, &xep_muc_stop };
+    xmp3_modules_add(xmp3_options_get_modules(options), "muc", &muc);
+#endif
 
     /* Load the config file first, then have the rest of the command line
      * options override settings in it. */
