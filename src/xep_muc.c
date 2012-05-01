@@ -38,6 +38,18 @@
 #include "xmpp_im.h"
 #include "xmpp_server.h"
 #include "xmpp_stanza.h"
+#include "xep_muc.h"
+
+/* Global module definition, only if compiled as an external module. */
+#ifdef MUC_MODULE
+struct xmp3_module XMP3_MODULE = {
+    .mod_new = xep_muc_new,
+    .mod_del = xep_muc_del,
+    .mod_conf = xep_muc_conf,
+    .mod_start = xep_muc_start,
+    .mod_stop = xep_muc_stop,
+};
+#endif
 
 static const char *DEFAULT_DOMAIN = "conference.localhost";
 static const char *XMPP_STANZA_TYPE_GROUPCHAT = "groupchat";
@@ -80,12 +92,6 @@ struct xep_muc {
 };
 
 /* Forward declarations. */
-static void* xep_muc_new(void);
-static void xep_muc_del(void *data);
-static bool xep_muc_conf(void *data, const char *key, const char *value);
-static bool xep_muc_start(void *data, struct xmpp_server *server);
-static bool xep_muc_stop(void *data);
-
 static bool stanza_handler(struct xmpp_stanza *stanza,
                            struct xmpp_server *server, void *data);
 
@@ -126,16 +132,7 @@ static void send_presence_broadcast(struct xep_muc *muc, struct room *room,
                                     const char *to, const char *from,
                                     const char *nickname);
 
-/* Global module definition */
-struct xmp3_module XMP3_MODULE = {
-    .mod_new = xep_muc_new,
-    .mod_del = xep_muc_del,
-    .mod_conf = xep_muc_conf,
-    .mod_start = xep_muc_start,
-    .mod_stop = xep_muc_stop,
-};
-
-static void* xep_muc_new(void) {
+void* xep_muc_new(void) {
     struct xep_muc *muc = calloc(1, sizeof(*muc));
     check_mem(muc);
 
@@ -145,7 +142,7 @@ static void* xep_muc_new(void) {
     return muc;
 }
 
-static void xep_muc_del(void *data) {
+void xep_muc_del(void *data) {
     struct xep_muc *muc = data;
 
     struct room *room, *room_tmp;
@@ -163,7 +160,7 @@ static void xep_muc_del(void *data) {
     free(muc);
 }
 
-static bool xep_muc_conf(void *data, const char *key, const char *value) {
+bool xep_muc_conf(void *data, const char *key, const char *value) {
     struct xep_muc *muc = data;
 
     if (strcmp(key, "domain") == 0) {
@@ -177,7 +174,7 @@ static bool xep_muc_conf(void *data, const char *key, const char *value) {
     return true;
 }
 
-static bool xep_muc_start(void *data, struct xmpp_server *server) {
+bool xep_muc_start(void *data, struct xmpp_server *server) {
     struct xep_muc *muc = data;
 
     muc->server = server;
@@ -193,7 +190,7 @@ static bool xep_muc_start(void *data, struct xmpp_server *server) {
     return true;
 };
 
-static bool xep_muc_stop(void *data) {
+bool xep_muc_stop(void *data) {
     struct xep_muc *muc = data;
 
     jid_set_local(muc->jid, "*");
