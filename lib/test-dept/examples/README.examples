@@ -1,8 +1,0 @@
-These examples are part of the Test Dept. framework.
-To compile and run them, install Test Dept. on your
-system and issue "make check" in each folder.
-
-The examples are actually possible to compile without
-installing Test Dept.  Instructions for this kind of
-trick is included in each project's Makefile. This
-approach is however not recommended.
