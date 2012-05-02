@@ -863,7 +863,7 @@ static int memory_equal_display_error(const char* const a, const char* const b,
  * returned. */
 static int memory_not_equal_display_error(
         const char* const a, const char* const b, const size_t size) {
-    int same = 0;
+    size_t same = 0;
     size_t i;
     for (i = 0; i < size; i++) {
         const char l = a[i];
