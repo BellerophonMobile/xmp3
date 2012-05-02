@@ -111,16 +111,6 @@ def configure(ctx):
     ctx.check_cc(lib='crypto')
     ctx.check_cc(lib='ssl', use='CRYPTO')
 
-    if ctx.env.test:
-        ctx.load('gas')
-        ctx.find_program('nm')
-        ctx.find_program('objdump')
-        ctx.find_program('objcopy')
-        ctx.find_program('as')
-        ctx.find_program('grep')
-        ctx.find_program('awk')
-        ctx.find_program('sed')
-
     if ctx.env.CC_NAME == 'gcc':
         ctx.env.CFLAGS += ['-std=gnu99', '-Wall', '-Wextra', '-Werror',
                            '-Wno-unused-parameter']
@@ -176,6 +166,7 @@ def build(ctx):
         use = ['libxmp3'],
     )
 
+    # Optionally build the MUC component as a module.
     if ctx.env.muc_module:
         ctx.shlib(
             target = 'xep_muc',
@@ -191,25 +182,21 @@ def build(ctx):
         source = ['src/xmp3_multicast.c'],
     )
 
-def test(ctx):
-    if not ctx.env.test:
-        ctx.fatal('Run configure with "--test" option first.')
+    # Unit tests
+    ctx.stlib(
+        target = 'cmockery',
+        defines = ['HAVE_MALLOC_H'],
+        includes = ['lib/cmockery/src/google'],
+        export_includes = ['lib/cmockery/src/google'],
+        source = ['lib/cmockery/src/cmockery.c'],
+    )
 
-    make_test(ctx, 'jid', ['src/utils.c'], ['UUID'])
     make_test(ctx, 'utils', extra_use=['UUID'])
+    make_test(ctx, 'jid', ['src/utils.c'], ['UUID'])
     make_test(ctx, 'xmpp_stanza', ['src/xmpp_parser.c', 'src/utils.c'],
               ['UUID', 'EXPAT'])
     make_test(ctx, 'xmpp_parser', ['src/xmpp_stanza.c', 'src/utils.c'],
               ['UUID', 'EXPAT']);
-
-
-##################################################
-# Should not need to change anything below here. #
-##################################################
-
-class TestContext(waflib.Build.BuildContext):
-    cmd = 'test'
-    fun = 'test'
 
 def make_test(ctx, target, extra_source=None, extra_use=None):
     if extra_source is None:
@@ -220,8 +207,7 @@ def make_test(ctx, target, extra_source=None, extra_use=None):
 
     ctx.program(
         target = target + '_test',
-        features = ['test-dept'],
-        use = extra_use,
+        use = ['cmockery'] + extra_use,
         includes = [
             'src',
             'lib/uthash/src',
@@ -229,96 +215,9 @@ def make_test(ctx, target, extra_source=None, extra_use=None):
             'lib/tj-tools/src',
             'lib/test-dept/src',
             ],
+        #defines = ['UNIT_TESTING'],
         source = [
-            'src/{0}.c'.format(target),
+            #'src/{0}.c'.format(target),
             'test/{0}_test.c'.format(target),
         ] + extra_source,
     )
-
-@waflib.TaskGen.feature('test-dept')
-@waflib.TaskGen.before('apply_link')
-@waflib.TaskGen.after('process_source')
-def test_dept(self):
-    # Assumes sources in particular order, should be done better.
-    mod_src = self.source[0]
-    test_src = self.source[1]
-
-    # Find the compilation task associated with compiling each file
-    for t in self.compiled_tasks:
-        if test_src in t.inputs:
-            test_task = t
-        elif mod_src in t.inputs:
-            mod_task = t
-
-    # We need to compile the main module, but not link it in with the rest of
-    # the test program.  test-dept will extract symbols from it to build a
-    # proxy object.
-    self.compiled_tasks.remove(mod_task)
-
-    # Make a node referencing the output directory
-    dir_node = test_src.parent.get_bld()
-
-    main_c = self.create_task('test_dept_main', test_task.outputs,
-                              dir_node.make_node(self.target + '_main.c'))
-
-    main_o = self.create_task('c', main_c.outputs,
-        dir_node.make_node(self.target + '_without_proxies.o'))
-    self.compiled_tasks.append(main_o)
-
-    undef_syms = self.create_task('test_dept_undef_syms', mod_task.outputs,
-        dir_node.make_node(self.target + '_undef_syms.txt'))
-
-    tmp = mod_task.outputs[:]
-    for t in self.compiled_tasks:
-        tmp += t.outputs
-    main_wo_proxies_prog = self.create_task('cprogram', tmp,
-            dir_node.make_node(self.target + '_without_proxies'))
-
-    accessible_funcs = self.create_task('test_dept_accessible_functions',
-            main_wo_proxies_prog.outputs,
-            dir_node.make_node(self.target + '_accessible_functions.txt'))
-
-    replacement_symbols = self.create_task('test_dept_replacement_symbols',
-            undef_syms.outputs + accessible_funcs.outputs,
-            dir_node.make_node(self.target + '_replacement_symbols.txt'))
-
-    using_proxies = self.create_task('test_dept_using_proxies',
-            replacement_symbols.outputs + mod_task.outputs,
-            dir_node.make_node(self.target + '_using_proxies.o'))
-    self.compiled_tasks.append(using_proxies)
-
-    proxies = self.create_task('test_dept_proxies',
-            mod_task.outputs + main_o.outputs,
-            dir_node.make_node(self.target + '_proxies.s'))
-
-    self.create_compiled_task('asm', proxies.outputs[0])
-
-@waflib.TaskGen.feature('test-dept')
-@waflib.TaskGen.after('apply_link')
-def test_dept_run(self):
-    self.create_task('test_dept_execute', self.link_task.outputs
-            ).set_run_after(self.link_task)
-
-class test_dept_main(waflib.Task.Task):
-    run_str = '${NM} -p ${SRC} | ../lib/test-dept/src/build_main_from_symbols > ${TGT}'
-
-class test_dept_undef_syms(waflib.Task.Task):
-    run_str = '${NM} -p ${SRC} | ${AWK} \'/ U / {print $(NF-1) " " $(NF) " "}\' | ${SED} \'s/[^A-Za-z_0-9 ].*$//\' > ${TGT} || true'
-
-class test_dept_accessible_functions(waflib.Task.Task):
-    run_str = '${OBJDUMP} -t ${SRC} | ${AWK} \'$3 == "F"||$2 == "F" {print "U " $NF " "}\' | ${SED} \'s/@@.*$/ /\' > ${TGT}'
-
-class test_dept_replacement_symbols(waflib.Task.Task):
-    # -f {undef_syms.txt} {accessible_functions.txt}
-    run_str = '${GREP} -f ${SRC} | ../lib/test-dept/src/sym2repl > ${TGT} || true'
-
-class test_dept_using_proxies(waflib.Task.Task):
-    # --redefine-syms=replacement_symbols.txt *.o
-    run_str = '${OBJCOPY} --redefine-syms ${SRC} ${TGT}'
-
-class test_dept_proxies(waflib.Task.Task):
-    run_str = '../lib/test-dept/src/sym2asm ${SRC} ../lib/test-dept/src/sym2asm_${arch}.awk nm > ${TGT}'
-
-@waflib.Task.always_run
-class test_dept_execute(waflib.Task.Task):
-    run_str = '../lib/test-dept/src/test_dept ${SRC}'
