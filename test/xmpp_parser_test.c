@@ -34,70 +34,84 @@
 
 #include "xmpp_parser.c"
 
-static int called = 0;
+struct test_data {
+    struct xmpp_parser *parser;
+    int called;
+};
+
+static bool cb1(struct xmpp_stanza *stanza, struct xmpp_parser *parser,
+                void *state) {
+    struct test_data *data = state;
+    debug("adsf");
+    data->called++;
+    return true;
+}
+
+struct test_data *test_data_new(bool is_stream_start) {
+    struct test_data *data = calloc(1, sizeof(*data));
+    check_mem(data);
+
+    data->called = 0;
+    data->parser = xmpp_parser_new(is_stream_start);
+    xmpp_parser_set_handler(data->parser, &cb1);
+    xmpp_parser_set_data(data->parser, data);
+
+    return data;
+}
 
 void setup(void **state) {
-    called = 0;
+    *state = (void*)test_data_new(false);
+}
+
+void setup_stream_start(void **state) {
+    *state = (void*)test_data_new(true);
 }
 
 void teardown(void **state) {
-    /* Don't need to do any teardown. */
-}
-
-static bool cb1(struct xmpp_stanza *stanza, struct xmpp_parser *parser,
-                void *data) {
-    called++;
-    return true;
+    struct test_data *data = *state;
+    xmpp_parser_del(data->parser);
 }
 
 /** Tests that the stanza callback gets called. */
 void test_handler1(void **state) {
-    static const char *DATA = "<a/>";
-
-    struct xmpp_parser* parser = xmpp_parser_new(false);
-    xmpp_parser_set_handler(parser, &cb1);
-    assert_true(xmpp_parser_parse(parser, DATA, strlen(DATA)));
-    assert_int_equal(called, 1);
+    static const char *XML = "<a/>";
+    struct test_data *data = *state;
+    assert_true(xmpp_parser_parse(data->parser, XML, strlen(XML)));
+    assert_int_equal(data->called, 1);
 }
 
 /** Tests that the stanza callback gets called twice for the stream start. */
 void test_handler2(void **state) {
-    static const char *DATA = "<stream><a/></stream>";
-
-    struct xmpp_parser* parser = xmpp_parser_new(true);
-    xmpp_parser_set_handler(parser, &cb1);
-    assert_true(xmpp_parser_parse(parser, DATA, strlen(DATA)));
-    assert_int_equal(called, 2);
+    struct test_data *data = *state;
+    static const char *XML = "<stream><a/></stream>";
+    assert_true(xmpp_parser_parse(data->parser, XML, strlen(XML)));
+    assert_int_equal(data->called, 2);
 }
 
 /** Tests that the stanza callback gets called for each of the top-level
  * stanzas. */
 void test_handler3(void **state) {
-    static const char *DATA = "<stream><a/><b/><c/></stream>";
-
-    struct xmpp_parser* parser = xmpp_parser_new(true);
-    xmpp_parser_set_handler(parser, &cb1);
-    assert_true(xmpp_parser_parse(parser, DATA, strlen(DATA)));
-    assert_int_equal(called, 4);
+    struct test_data *data = *state;
+    static const char *XML = "<stream><a/><b/><c/></stream>";
+    assert_true(xmpp_parser_parse(data->parser, XML, strlen(XML)));
+    assert_int_equal(data->called, 4);
 }
 
 /** Tests that the stanza callback gets called for each of the top-level
  * stanzas. */
 void test_handler4(void **state) {
-    static const char *DATA = "<stream><a><a><a></a></a></a><b/><c/></stream>";
-
-    struct xmpp_parser* parser = xmpp_parser_new(true);
-    xmpp_parser_set_handler(parser, &cb1);
-    assert_true(xmpp_parser_parse(parser, DATA, strlen(DATA)));
-    assert_int_equal(called, 4);
+    struct test_data *data = *state;
+    static const char *XML = "<stream><a><a><a></a></a></a><b/><c/></stream>";
+    assert_true(xmpp_parser_parse(data->parser, XML, strlen(XML)));
+    assert_int_equal(data->called, 4);
 }
 
 int main(int argc, char *argv[]) {
     const UnitTest tests[] = {
         unit_test_setup_teardown(test_handler1, setup, teardown),
-        unit_test_setup_teardown(test_handler2, setup, teardown),
-        unit_test_setup_teardown(test_handler3, setup, teardown),
-        unit_test_setup_teardown(test_handler4, setup, teardown),
+        unit_test_setup_teardown(test_handler2, setup_stream_start, teardown),
+        unit_test_setup_teardown(test_handler3, setup_stream_start, teardown),
+        unit_test_setup_teardown(test_handler4, setup_stream_start, teardown),
     };
     return run_tests(tests);
 }
