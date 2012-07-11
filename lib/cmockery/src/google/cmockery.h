@@ -179,6 +179,14 @@
 #define assert_false(c) _assert_true(!(cast_to_largest_integral_type(c)), #c, \
                                      __FILE__, __LINE__)
 
+// Assert that the given pointer is NULL, otherwise fail.
+#define assert_ptr_null(a) \
+    _assert_ptr_null((void*)a, __FILE__, __LINE__)
+
+// Assert that the given pointer not is NULL, otherwise fail.
+#define assert_ptr_not_null(a) \
+    _assert_ptr_not_null((void*)a, __FILE__, __LINE__)
+
 // Assert that the two given integers are equal, otherwise fail.
 #define assert_int_equal(a, b) \
     _assert_int_equal(cast_to_largest_integral_type(a), \
@@ -435,6 +443,10 @@ void _will_return(const char * const function_name, const char * const file,
 void _assert_true(const LargestIntegralType result,
                   const char* const expression,
                   const char * const file, const int line);
+void _assert_ptr_null(const void * a,
+                      const char * const file, const int line);
+void _assert_ptr_not_null(const void * a,
+                          const char * const file, const int line);
 void _assert_int_equal(
     const LargestIntegralType a, const LargestIntegralType b,
     const char * const file, const int line);
