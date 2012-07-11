@@ -75,9 +75,6 @@ XMP3 requires the following third-party libraries:
 
 Building XMP3 requires Python (versions 2.6, 2.7, and 3 work).
 
-Building and running the unit tests requires: as, nm, objdump, objcopy, grep,
-awk, and sed.
-
 XMP3 and the tests can be built with gcc or clang.
 
 Compiling
