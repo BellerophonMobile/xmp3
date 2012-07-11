@@ -86,12 +86,10 @@ To build the default optimized build, without unit tests, run:
 
 To build with no optimizations and debugging symbols:
 
-    ./waf configure --debug
-    ./waf
+    ./waf configure --debug build
 
-To build and run the tests, run:
+To run the tests, run:
 
-    ./waf configure --test
     ./waf test
 
 Each build command will put output in the "build" directory.  To remove built

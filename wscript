@@ -30,16 +30,18 @@ import os.path
 import platform
 
 import waflib
+import waflib.Tools.waf_unit_test
+
+# Hack to control when the unit tests are run
+run_tests = False
 
 def options(ctx):
     ctx.load('compiler_c')
-    ctx.load('asm')
+    ctx.load('waf_unit_test')
 
     opts = ctx.add_option_group('XMP3 Options')
     opts.add_option('--debug', action='store_true',
                     help='Build with debugging flags (default optimized).')
-    opts.add_option('--test', action='store_true',
-                    help='Build test programs')
     opts.add_option('--muc-module', action='store_true',
                     help='Build the MUC component as an external module.')
 
@@ -95,9 +97,9 @@ def configure(ctx):
         ctx.env.LINKFLAGS += ['--sysroot=' + ctx.env.android_sysroot]
 
     ctx.load('compiler_c')
+    ctx.load('waf_unit_test')
 
     ctx.env.arch = platform.machine()
-    ctx.env.test = ctx.options.test
     ctx.env.muc_module = ctx.options.muc_module
     if ctx.env.muc_module:
         ctx.env.DEFINES += ['MUC_MODULE']
@@ -127,6 +129,8 @@ def configure(ctx):
             ctx.env.DEFINES += ['NDEBUG']
 
 def build(ctx):
+    ctx.add_post_fun(waflib.Tools.waf_unit_test.summary)
+
     libxmp3 = ctx.stlib(
         target = 'xmp3',
         name = 'libxmp3',
@@ -191,14 +195,25 @@ def build(ctx):
         source = ['lib/cmockery/src/cmockery.c'],
     )
 
-    make_test(ctx, 'utils', extra_use=['UUID'])
-    make_test(ctx, 'jid', ['src/utils.c'], ['UUID'])
-    make_test(ctx, 'xmpp_stanza', ['src/xmpp_parser.c', 'src/utils.c'],
-              ['UUID', 'EXPAT'])
-    make_test(ctx, 'xmpp_parser', ['src/xmpp_stanza.c', 'src/utils.c'],
-              ['UUID', 'EXPAT']);
+    _make_test(ctx, 'utils', extra_use=['UUID'])
+    _make_test(ctx, 'jid', ['src/utils.c'], ['UUID'])
+    _make_test(ctx, 'xmpp_stanza', ['src/xmpp_parser.c', 'src/utils.c'],
+               ['UUID', 'EXPAT'])
+    _make_test(ctx, 'xmpp_parser', ['src/xmpp_stanza.c', 'src/utils.c'],
+               ['UUID', 'EXPAT']);
 
-def make_test(ctx, target, extra_source=None, extra_use=None):
+def test(ctx):
+    global run_tests
+    run_tests = True
+    waflib.Options.options.all_tests = True
+    waflib.Options.commands = ['build'] + waflib.Options.commands
+
+class Test(waflib.Build.BuildContext):
+    'Context class for our unit testing command.'
+    cmd = 'test'
+    fun = 'test'
+
+def _make_test(ctx, target, extra_source=None, extra_use=None):
     if extra_source is None:
         extra_source = []
 
@@ -206,6 +221,7 @@ def make_test(ctx, target, extra_source=None, extra_use=None):
         extra_use = []
 
     ctx.program(
+        features = 'test',
         target = target + '_test',
         use = ['cmockery'] + extra_use,
         includes = [
@@ -221,3 +237,16 @@ def make_test(ctx, target, extra_source=None, extra_use=None):
             'test/{0}_test.c'.format(target),
         ] + extra_source,
     )
+
+def _test_runnable_status(self):
+    'Control when unit tests are run'
+    global run_tests
+    if not run_tests:
+        return waflib.Task.SKIP_ME
+    else:
+        return old_runnable_status(self)
+
+# Monkey-patch this function to take over control of when unit-tests are run.
+# Normally, they are run every time you build.
+old_runnable_status = waflib.Tools.waf_unit_test.utest.runnable_status
+waflib.Tools.waf_unit_test.utest.runnable_status = _test_runnable_status
