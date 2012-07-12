@@ -136,15 +136,15 @@ def build(ctx):
         name = 'libxmp3',
         includes = [
             'src',
-            'lib/uthash/src',
-            'lib/inih',
-            'lib/tj-tools/src',
+            'deps/uthash/src',
+            'deps/inih',
+            'deps/tj-tools/src',
         ],
         use = ['DYNAMIC', 'DL', 'EXPAT', 'CRYPTO', 'SSL', 'UUID'],
         source = [
-            'lib/inih/ini.c',
-            'lib/tj-tools/src/tj_searchpathlist.c',
-            'lib/tj-tools/src/tj_solibrary.c',
+            'deps/inih/ini.c',
+            'deps/tj-tools/src/tj_searchpathlist.c',
+            'deps/tj-tools/src/tj_solibrary.c',
             'src/client_socket.c',
             'src/event.c',
             'src/jid.c',
@@ -190,9 +190,9 @@ def build(ctx):
     ctx.stlib(
         target = 'cmockery',
         defines = ['HAVE_MALLOC_H'],
-        includes = ['lib/cmockery/src/google'],
-        export_includes = ['lib/cmockery/src/google'],
-        source = ['lib/cmockery/src/cmockery.c'],
+        includes = ['deps/cmockery/src/google'],
+        export_includes = ['deps/cmockery/src/google'],
+        source = ['deps/cmockery/src/cmockery.c'],
     )
 
     _make_test(ctx, 'utils', extra_use=['UUID'])
@@ -226,10 +226,10 @@ def _make_test(ctx, target, extra_source=None, extra_use=None):
         use = ['cmockery'] + extra_use,
         includes = [
             'src',
-            'lib/uthash/src',
-            'lib/inih',
-            'lib/tj-tools/src',
-            'lib/test-dept/src',
+            'deps/uthash/src',
+            'deps/inih',
+            'deps/tj-tools/src',
+            'deps/test-dept/src',
             ],
         #defines = ['UNIT_TESTING'],
         source = [
