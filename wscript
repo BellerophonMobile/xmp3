@@ -114,7 +114,8 @@ def configure(ctx):
     ctx.check_cc(lib='ssl', use='CRYPTO')
 
     if ctx.env.CC_NAME == 'gcc':
-        ctx.env.CFLAGS += ['-std=gnu99', '-Wall', '-Wextra', '-Werror',
+        # -Werror - Removed for now due to cmockery
+        ctx.env.CFLAGS += ['-std=gnu99', '-Wall', '-Wextra',
                            '-Wno-unused-parameter']
 
         if ctx.env.target == 'darwin':

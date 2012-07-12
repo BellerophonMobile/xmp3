@@ -1582,13 +1582,10 @@ void print_error(const char* const format, ...) {
     va_end(args);
 }
 
-
 int _run_test(
         const char * const function_name,  const UnitTestFunction Function,
         void ** const state, const UnitTestFunctionType function_type,
         const void* const heap_check_point) {
-    const ListNode * const check_point = heap_check_point ?
-        heap_check_point : check_point_allocated_blocks();
     void *current_state = NULL;
     int rc = 1;
     int handle_exceptions = 1;
@@ -1624,6 +1621,8 @@ int _run_test(
         /* If this is a setup function then ignore any allocated blocks
          * only ensure they're deallocated on tear down. */
         if (function_type != UNIT_TEST_FUNCTION_TYPE_SETUP) {
+            const ListNode * const check_point = heap_check_point ?
+                heap_check_point : check_point_allocated_blocks();
             fail_if_blocks_allocated(check_point, function_name);
         }
 
