@@ -124,8 +124,8 @@ The Android build requires cross-compiling the third-party libraries XMP3 uses
 can be found on the [XMP3 download page][downloads].  After extracting this
 package, build XMP3 with the following command:
 
-    export LINKFLAGS="-Landroid_libs/armv6"
-    export CFLAGS="-Iandroid_libs/include"
+    export LINKFLAGS="-L/path/to/android_libs/armv6"
+    export CFLAGS="-I/path/toandroid_libs/include"
     ./waf configure --cross-android
     ./waf
 
