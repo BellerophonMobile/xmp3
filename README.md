@@ -110,7 +110,16 @@ directory.
 
 ### Building on Android
 
-To build on Android, pass "--cross-android" to the configure command:
+To build on Android, first build its dependencies.  Inside the "deps"
+directory, type:
+
+    ./build_android.sh
+
+Any arguments passed to the script are passed to make, so the "-j" flag is
+useful to specify parallel jobs.  Also, edit the script in order to compile for
+arm7 architectures instead of arm6.
+
+Next, in the main directory, pass "--cross-android" to the configure command:
 
     ./waf configure --cross-android
 
@@ -118,21 +127,6 @@ By default, the script will look at the "ANDROID_NDK" environment variable to
 find the paths to the compilers.  This can be overridden with the
 "--cross-android-ndk" option.  See the help output for options to choose the
 Android API level, and the architecture.
-
-The Android build requires cross-compiling the third-party libraries XMP3 uses
-(Expat, OpenSSL, and UUID functions).  Precompiled binaries of these libraries
-can be found on the [XMP3 download page][downloads].  After extracting this
-package, build XMP3 with the following command:
-
-    export LINKFLAGS="-L/path/to/android_libs/armv6"
-    export CFLAGS="-I/path/toandroid_libs/include"
-    ./waf configure --cross-android
-    ./waf
-
-Change the paths to correspond to where the libraries were extracted.  Also,
-substitute arm7 for arm6 if your device supports it.
-
-[downloads]: http://github.com/tom5760/xmp3/downloads/
 
 Running
 -------
