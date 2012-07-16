@@ -66,6 +66,14 @@ def configure(ctx):
 
     # Check if cross-compiling
     if ctx.env.target == 'android':
+        if os.path.isdir('deps/android-prefix'):
+            ctx.env.INCLUDES += ['deps/android-prefix/include']
+            ctx.env.LIBPATH += [ctx.path.find_dir('deps/android-prefix/lib')
+                                   .abspath()]
+        else:
+            ctx.fatal('Android dependencies not built, run "build_android.sh"'
+                      ' in the "deps" directory.')
+
         ctx.env.android_ndk = ctx.options.cross_android_ndk
         ctx.env.android_level = ctx.options.cross_android_level
         ctx.env.android_arch = ctx.options.cross_android_arch
@@ -141,7 +149,7 @@ def build(ctx):
             'deps/inih',
             'deps/tj-tools/src',
         ],
-        use = ['DYNAMIC', 'DL', 'EXPAT', 'CRYPTO', 'SSL', 'UUID'],
+        use = ['DYNAMIC', 'DL', 'EXPAT', 'SSL', 'CRYPTO', 'UUID'],
         source = [
             'deps/inih/ini.c',
             'deps/tj-tools/src/tj_searchpathlist.c',
