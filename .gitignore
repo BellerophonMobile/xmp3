@@ -3,5 +3,7 @@
 /.waf*
 /build
 /doc
+/deps/android-build
+/deps/android-prefix
 server.pem
 server.crt
