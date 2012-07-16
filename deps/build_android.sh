@@ -76,7 +76,7 @@ then
             --disable-schedutils --disable-wall --disable-write \
             --without-ncurses --disable-shared
         pushd libuuid
-        make $1
+        make $@
         make install
         popd
         popd
@@ -90,7 +90,7 @@ then
         pushd "expat-$EXPAT_VER"
         ./configure --host=arm-linux-androideabi --prefix="$PREFIX" \
             --disable-shared
-        make $1
+        make $@
         make install
         popd
     fi
@@ -105,8 +105,8 @@ then
         # The dependencies seem screwed up or something, so make fails the
         # first time...
         make deps
-        make -k $1
-        make $1
+        make -k $@
+        make $@
         make install
         popd
     fi
