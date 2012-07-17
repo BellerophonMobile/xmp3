@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash -e
 
 # Get the directory of where this script is located
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
