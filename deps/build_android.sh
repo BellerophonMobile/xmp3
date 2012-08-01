@@ -35,6 +35,9 @@ TOOLCHAIN_VERSION=4.6
 # automake files)
 AUTOMAKE_DIR="/usr/share/automake-1.12"
 
+# Flags to pass to Make
+MAKEFLAGS=""
+
 ## For armv7 platforms
 #FLAGS="-march=armv7-a -mfloat-abi=softfp"
 #export CFLAGS="$FLAGS"
@@ -59,22 +62,77 @@ export PATH="$TOOLCHAIN_PATH:$PATH"
 
 SYSROOT="$ANDROID_NDK/platforms/android-$PLATFORM/arch-$ARCH/"
 
-#export CC="$TOOLCHAIN-gcc --sysroot=$SYSROOT -Wl,-rpath-link=$PREFIX/lib"
 export CC="$TOOLCHAIN-gcc --sysroot=$SYSROOT"
 export CXX="$TOOLCHAIN-g++ --sysroot=$SYSROOT"
-export LD="$TOOLCHAIN-ld --sysroot=$SYSROOT"
+#export LD="$TOOLCHAIN-ld --sysroot=$SYSROOT"
+export LD="$CC"
 
 export PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig"
 export LD_LIBRARY_PATH="$PREFIX/lib"
 export LDFLAGS="-L$PREFIX/lib"
 export CPPFLAGS="-I$PREFIX/include"
 
-# Versions of dependent libraries
-UTIL_LINUX_BASE_VER=2.21
-UTIL_LINUX=util-linux-2.21.2
-EXPAT_VER=2.1.0
-EXPAT="expat-$EXPAT_VER"
-OPENSSL=openssl-1.0.1c
+TARGETS="util_linux expat openssl"
+
+# util_linux - For libuuid
+build_util_linux() {
+    local base_ver=2.21
+    local ver=2.21.2
+    local dir="util-linux-$ver"
+    local pkg="$dir.tar.xz"
+    local url="http://www.kernel.org/pub/linux/utils/util-linux/v$base_ver/$pkg"
+
+    download_package "$pkg" "$url"
+    cd "$dir"
+
+    update_autotools config/
+    #autoreconf -fi
+    ./configure --host=arm-linux-androideabi --prefix="$PREFIX" \
+        --disable-libblkid --disable-libmount --disable-mount \
+        --disable-losetup --disable-fsck --disable-partx --disable-uuidd \
+        --disable-mountpoint --disable-fallocate --disable-unshare \
+        --disable-agetty --disable-cramfs --disable-switch_root \
+        --disable-pivot_root --disable-kill --disable-rename \
+        --disable-schedutils --disable-wall --disable-write \
+        --without-ncurses --disable-shared
+    cd libuuid
+    make $MAKEFLAGS
+    make install
+}
+
+# expat - For XML parsing
+build_expat() {
+    local ver=2.1.0
+    local dir="expat-$ver"
+    local pkg="$dir.tar.gz"
+    local url="http://downloads.sourceforge.net/project/expat/expat/$ver/$pkg"
+
+    download_package "$pkg" "$url"
+    cd "$dir"
+
+    ./configure --host=arm-linux-androideabi --prefix="$PREFIX" \
+        --disable-shared
+    make $MAKEFLAGS
+    make install
+}
+
+# openssl - For TLS support
+build_openssl() {
+    local ver=1.0.1c
+    local dir="openssl-$ver"
+    local pkg="$dir.tar.gz"
+    local url="http://www.openssl.org/source/$pkg"
+
+    download_package "$pkg" "$url"
+    cd "$dir"
+
+    #./Configure --prefix="$PREFIX" android no-idea no-cast no-seed no-md2 no-sha0 no-whrlpool no-whirlpool -DL_ENDIAN
+    ./Configure --prefix="$PREFIX" android
+    make MAKEDEPPROG="$CC" depend
+    # Parallel makes are totally unreliable it seems
+    make
+    make install
+}
 
 # Simple function to download (if they haven't been already) and extract
 # packages if they don't exist.
@@ -86,47 +144,71 @@ download_package() {
     tar -xf "$1"
 }
 
-mkdir -p "$BUILD_DIR"
-pushd "$BUILD_DIR"
+# For packages with outdated autotools scripts which don't have Android support
+update_autotools() {
+    cp "$AUTOMAKE_DIR/config.guess" "$AUTOMAKE_DIR/config.sub" $1
+}
 
-# util_linux - For libuuid
-download_package "$UTIL_LINUX.tar.xz" "http://www.kernel.org/pub/linux/utils/util-linux/v$UTIL_LINUX_BASE_VER/$UTIL_LINUX.tar.xz"
-pushd "$UTIL_LINUX"
-## Need to update Autoconf's OS detection support for Android
-cp "$AUTOMAKE_DIR/config.guess" "$AUTOMAKE_DIR/config.sub" config/
-#autoreconf -fi
-./configure --host=arm-linux-androideabi --prefix="$PREFIX" \
-    --disable-libblkid --disable-libmount --disable-mount \
-    --disable-losetup --disable-fsck --disable-partx --disable-uuidd \
-    --disable-mountpoint --disable-fallocate --disable-unshare \
-    --disable-agetty --disable-cramfs --disable-switch_root \
-    --disable-pivot_root --disable-kill --disable-rename \
-    --disable-schedutils --disable-wall --disable-write \
-    --without-ncurses --disable-shared
-pushd libuuid
-make $@
-make install
-popd
-popd
+build_target() {
+    local targets
+    if [ "$#" -eq 0 ]
+    then
+        targets="$TARGETS"
+    else
+        targets="$@"
+    fi
 
-# Expat - For XML parsing
-download_package "$EXPAT.tar.gz" "http://downloads.sourceforge.net/project/expat/expat/$EXPAT_VER/$EXPAT.tar.gz"
-pushd "$EXPAT"
-./configure --host=arm-linux-androideabi --prefix="$PREFIX" --disable-shared
-make $@
-make install
-popd
+    mkdir -p "$BUILD_DIR"
+    pushd "$BUILD_DIR"
 
-# openssl for SSL/TLS support
-download_package "$OPENSSL.tar.gz" "http://www.openssl.org/source/$OPENSSL.tar.gz"
-pushd "$OPENSSL"
-./Configure --prefix="$PREFIX" android no-idea no-cast no-seed no-md2 no-sha0 no-whrlpool no-whirlpool -DL_ENDIAN
-# The dependencies seem screwed up or something, so make fails the
-# first time...
-make MAKEDEPPROG="$CC" depend
-# Can't do parallel make for some reason.  It seems unreliable
-make
-make install
-popd
+    for t in $targets
+    do
+        (eval "build_$t")
+    done
+}
 
-popd
+get_help() {
+    cat << EOF
+Usage: $0 [options] [targets...]
+
+Options:
+    -p     Android NDK platform to build for (Default: $PLATFORM)
+               (see $ANDROID_NDK/platforms)
+    -t     Toolchain version (Default: $TOOLCHAIN_VERSION)
+               (see $ANDROID_NDK/toolchains)
+    -a     Automake directory (used to update some build systems)
+               (Default: $AUTOMAKE_DIR)
+    -m     Quoted flags to pass to make
+    -h     This help output
+
+Targets: $TARGETS
+EOF
+}
+
+while getopts "p:t:m:h" flag
+do
+    case "$flag" in
+        p)
+            PLATFORM="$OPTARG"
+            ;;
+        t)
+            TOOLCHAIN_VERSION="$OPTARG"
+            ;;
+        m)
+            MAKEFLAGS="$OPTARG"
+            ;;
+        h)
+            get_help
+            exit 0
+            ;;
+        *)
+            get_help
+            exit 1
+            ;;
+    esac
+done
+
+# Clear all option flags
+shift $(( OPTIND - 1 ))
+
+build_target $@

@@ -87,7 +87,7 @@ def configure(ctx):
             arch = ctx.options.cross_android_arch
 
         path = os.path.join(ctx.options.cross_android_ndk, 'toolchains',
-                            'arm-linux-androideabi-4.4.3', 'prebuilt',
+                            'arm-linux-androideabi-4.6', 'prebuilt',
                             'linux-x86', 'bin')
         ctx.find_program('arm-linux-androideabi-gcc', var='CC',
                          path_list=[path])
