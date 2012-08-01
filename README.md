@@ -113,11 +113,15 @@ directory.
 To build on Android, first build its dependencies.  Inside the "deps"
 directory, type:
 
-    ./build_android.sh
+    ./build_android.sh [options]
 
-Any arguments passed to the script are passed to make, so the "-j" flag is
-useful to specify parallel jobs.  Also, edit the script in order to compile for
-arm7 architectures instead of arm6.
+See the output of "./build_android.sh -h" to see possible flags.  For example,
+to run make with 4 parallel jobs, run:
+
+    ./build_android,sh -m '-j5'
+
+Currently, you need to edit the script in order to compile for arm7
+architectures instead of arm6.
 
 Next, in the main directory, pass "--cross-android" to the configure command:
 
@@ -125,8 +129,8 @@ Next, in the main directory, pass "--cross-android" to the configure command:
 
 By default, the script will look at the "ANDROID_NDK" environment variable to
 find the paths to the compilers.  This can be overridden with the
-"--cross-android-ndk" option.  See the help output for options to choose the
-Android API level, and the architecture.
+"--cross-android-ndk" option to waf.  See the help output for options to choose
+the Android API level, and the architecture.
 
 Running
 -------
