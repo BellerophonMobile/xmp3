@@ -57,21 +57,6 @@ then
     TOOLCHAIN_ARCH=darwin-x86
 fi
 
-TOOLCHAIN_PATH="$ANDROID_NDK/toolchains/$TOOLCHAIN-$TOOLCHAIN_VERSION/prebuilt/$TOOLCHAIN_ARCH/bin/"
-export PATH="$TOOLCHAIN_PATH:$PATH"
-
-SYSROOT="$ANDROID_NDK/platforms/android-$PLATFORM/arch-$ARCH/"
-
-export CC="$TOOLCHAIN-gcc --sysroot=$SYSROOT"
-export CXX="$TOOLCHAIN-g++ --sysroot=$SYSROOT"
-#export LD="$TOOLCHAIN-ld --sysroot=$SYSROOT"
-export LD="$CC"
-
-export PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig"
-export LD_LIBRARY_PATH="$PREFIX/lib"
-export LDFLAGS="-L$PREFIX/lib"
-export CPPFLAGS="-I$PREFIX/include"
-
 TARGETS="util_linux expat openssl"
 
 # util_linux - For libuuid
@@ -149,7 +134,56 @@ update_autotools() {
     cp "$AUTOMAKE_DIR/config.guess" "$AUTOMAKE_DIR/config.sub" $1
 }
 
+export_environment() {
+    PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig"
+    LD_LIBRARY_PATH="$PREFIX/lib"
+    LDFLAGS="-L$PREFIX/lib"
+    CPPFLAGS="-I$PREFIX/include"
+
+    if [ "$ARCH" = "arm" -o "$ARCH" = "armv7" ]
+    then
+        CFLAGS="-fpic -ffunction-sections -funwind-tables -fstack-protector -D__ARM_ARCH_5__ -D__ARM_ARCH_5T__ -D__ARM_ARCH_5E__ -D__ARM_ARCH_5TE__"
+        if [ "$ARCH" = "armv7" ]
+        then
+            ARCH="arm"
+            CFLAGS+=" -march=armv7-a -mfloat-abi=softfp -mfpu=vfp -mthumb -Os -fomit-frame-pointer -fno-strict-aliasing -finline-limit=64"
+            CXXFLAGS+=" -march=armv7-a -mfloat-abi=softfp -mfpu=vfp -mthumb -Os -fomit-frame-pointer -fno-strict-aliasing -finline-limit=64"
+            LDFLAGS+=" -Wl,--fix-cortex-a8"
+        elif [ "$ARCH" = "arm" ]
+        then
+            CFLAGS+=" -march=armv5te -mtune=xscale -msoft-float"
+            CXXFLAGS+=" -march=armv5te -mtune=xscale -msoft-float"
+        fi
+    elif [ "$ARCH" = "mips" ]
+    then
+        CFLAGS="-fpic -fno-strict-aliasing -finline-functions -ffunction-sections -funwind-tables -fmessage-length=0 -fno-inline-functions-called-once -fgcse-after-reload -frerun-cse-after-loop -frename-registers -O2 -fomit-frame-pointer -funswitch-loops -finline-limit=300"
+    elif [ "$ARCH" = "x86" ]
+    then
+        CFLAGS="-ffunction-sections -funwind-tables -O2 -fomit-frame-pointer -fstrict-aliasing -funswitch-loops -finline-limit=300"
+    fi
+
+    CXXFLAGS="$CFLAGS"
+
+    local toolchain_path="$ANDROID_NDK/toolchains/$TOOLCHAIN-$TOOLCHAIN_VERSION/prebuilt/$TOOLCHAIN_ARCH/bin/"
+    local sysroot="$ANDROID_NDK/platforms/android-$PLATFORM/arch-$ARCH/"
+
+    export PATH="$toolchain_path:$PATH"
+
+    export CC="$TOOLCHAIN-gcc --sysroot=$sysroot"
+    export CXX="$TOOLCHAIN-g++ --sysroot=$sysroot"
+    export LD="$CC"
+
+    export PKG_CONFIG_PATH
+    export LD_LIBRARY_PATH
+    export LDFLAGS
+    export CPPFLAGS
+    export CFLAGS
+    export CXXFLAGS
+}
+
 build_target() {
+    export_environment
+
     local targets
     if [ "$#" -eq 0 ]
     then
@@ -172,6 +206,8 @@ get_help() {
 Usage: $0 [options] [targets...]
 
 Options:
+    -r     Android processor architecture to build for (Default: $ARCH)
+               (arm, armv7, mips, x86)
     -p     Android NDK platform to build for (Default: $PLATFORM)
                (see $ANDROID_NDK/platforms)
     -t     Toolchain version (Default: $TOOLCHAIN_VERSION)
@@ -185,9 +221,12 @@ Targets: $TARGETS
 EOF
 }
 
-while getopts "p:t:m:h" flag
+while getopts "r:p:t:m:h" flag
 do
     case "$flag" in
+        r)
+            ARCH="$OPTARG"
+            ;;
         p)
             PLATFORM="$OPTARG"
             ;;
