@@ -519,7 +519,10 @@ bool xmpp_server_route_stanza(struct xmpp_server *server,
         if (jid_cmp_wildcards(search_jid, route->jid) == 0) {
             debug("Yes");
             if (route->cb(stanza, server, route->data)) {
+                debug("Stanza handled");
                 was_handled = true;
+            } else {
+                debug("Stanza not yet handled");
             }
         } else {
             debug("No");
@@ -571,9 +574,12 @@ bool xmpp_server_route_iq(struct xmpp_server *server,
         debug("Is it '%s'?", route->ns);
         /* These strings come from Expat, so they should be null-terminated. */
         if (strcmp(search_uri, route->ns) == 0) {
-            debug("Yes!");
+            debug("Yes");
             if (route->cb(stanza, server, route->data)) {
+                debug("IQ handled");
                 was_handled = true;
+            } else {
+                debug("IQ not yet handled");
             }
         }
     }
