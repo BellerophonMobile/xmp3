@@ -116,10 +116,12 @@ def configure(ctx):
     if ctx.env.target != 'darwin':
         ctx.check_cc(lib='uuid')
 
+    ctx.check_cc(lib='m')
     ctx.check_cc(lib='dl')
     ctx.check_cc(lib='expat')
     ctx.check_cc(lib='crypto')
     ctx.check_cc(lib='ssl', use='CRYPTO')
+    ctx.check_cc(lib='ev')
 
     if ctx.env.CC_NAME == 'gcc':
         # -Werror - Removed for now due to cmockery
@@ -149,13 +151,12 @@ def build(ctx):
             'deps/inih',
             'deps/tj-tools/src',
         ],
-        use = ['DYNAMIC', 'DL', 'EXPAT', 'SSL', 'CRYPTO', 'UUID'],
+        use = ['DYNAMIC', 'M', 'DL', 'EXPAT', 'SSL', 'CRYPTO', 'UUID', 'EV'],
         source = [
             'deps/inih/ini.c',
             'deps/tj-tools/src/tj_searchpathlist.c',
             'deps/tj-tools/src/tj_solibrary.c',
             'src/client_socket.c',
-            'src/event.c',
             'src/jid.c',
             'src/utils.c',
             'src/xmp3_module.c',

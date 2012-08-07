@@ -30,7 +30,6 @@
 #include "log.h"
 
 #include "client_socket.h"
-#include "event.h"
 #include "jid.h"
 #include "xmpp_auth.h"
 #include "xmpp_core.h"
@@ -85,9 +84,6 @@ void xmpp_client_del(struct xmpp_client *client) {
     }
 
     if (client->socket) {
-        event_deregister_callback(xmpp_server_loop(client->server),
-                                  client_socket_fd(client->socket));
-
         client_socket_close(client->socket);
         client_socket_del(client->socket);
     }
