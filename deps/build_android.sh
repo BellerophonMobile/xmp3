@@ -57,7 +57,7 @@ then
     TOOLCHAIN_ARCH=darwin-x86
 fi
 
-TARGETS="util_linux expat openssl"
+TARGETS="util_linux expat openssl libev"
 
 # util_linux - For libuuid
 build_util_linux() {
@@ -71,7 +71,6 @@ build_util_linux() {
     cd "$dir"
 
     update_autotools config/
-    #autoreconf -fi
     ./configure --host=arm-linux-androideabi --prefix="$PREFIX" \
         --disable-libblkid --disable-libmount --disable-mount \
         --disable-losetup --disable-fsck --disable-partx --disable-uuidd \
@@ -116,6 +115,23 @@ build_openssl() {
     make MAKEDEPPROG="$CC" depend
     # Parallel makes are totally unreliable it seems
     make
+    make install
+}
+
+# libev - Event loop
+build_libev() {
+    local ver=4.11
+    local dir="libev-$ver"
+    local pkg="$dir.tar.gz"
+    local url="http://dist.schmorp.de/libev/$pkg"
+
+    download_package "$pkg" "$url"
+    cd "$dir"
+
+    update_autotools .
+    ./configure --host=arm-linux-androideabi --prefix="$PREFIX" \
+        --disable-shared --enable-static
+    make $MAKEFLAGS CFLAGS="$CFLAGS -DEV_SELECT_USE_FD_SET"
     make install
 }
 
