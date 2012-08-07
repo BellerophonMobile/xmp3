@@ -76,8 +76,8 @@
  *  If a module creates and listens on its own sockets, it can utilize XMP3's
  *  event loop, instead of implementing its own in a thread.  Using the
  *  xmpp_server_loop() function to retrieve the instance of the main event
- *  loop, a module can then register its own callbacks with sockets with the
- *  event_register_callback() function.
+ *  loop, a module can then register its own callbacks with sockets with
+ *  libev's ev_io watchers.
  *
  *  @see multicast_start() in xmp3_multicast.c for an example.
  *
@@ -87,7 +87,7 @@
  *  The xmp3_module.mod_stop function will be called just after the server
  *  stops.  Here, the module should deregister any stanza routes it used (with
  *  xmp3_server_del_stanza_route()), and remove any event loop callbacks (with
- *  event_deregister_callback()).
+ *  ev_io_stop()).
  *
  *  @see multicast_stop() in xmp3_multicast.c for an example.
  *
@@ -121,6 +121,7 @@
  *
  */
 
+#include <fcntl.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -131,7 +132,8 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
-#include "event.h"
+#include <ev.h>
+
 #include "jid.h"
 #include "log.h"
 #include "utils.h"
@@ -152,7 +154,7 @@ static bool multicast_stop(void *data);
 static bool local_stanza_handler(struct xmpp_stanza *stanza,
                                  struct xmpp_server *server, void *data);
 
-static void socket_handler(struct event_loop *loop, int fd, void *data);
+static void socket_handler(struct ev_loop *loop, struct ev_io *w, int revents);
 static bool remote_stanza_handler(struct xmpp_stanza *stanza,
                                   struct xmpp_parser *parser, void *data);
 
@@ -187,8 +189,8 @@ struct xmp3_multicast {
     /** The size of the receive buffer. */
     size_t buffer_size;
 
-    /** The socket file descriptor. */
-    int sock;
+    /** The socket file descriptor event object. */
+    struct ev_io fd_readable;
 
     /** The address to send to. */
     struct sockaddr_in send_addr;
@@ -279,11 +281,6 @@ static bool multicast_start(void *data, struct xmpp_server *server) {
     mcast->buffer = malloc(mcast->buffer_size * sizeof(char));
     check_mem(mcast->buffer);
 
-    /* Add a callback to the event loop so we can get messages over our
-     * multicast socket. */
-    event_register_callback(xmpp_server_loop(server), mcast->sock,
-                            socket_handler, mcast);
-
     return true;
 error:
     return false;
@@ -297,29 +294,24 @@ static bool multicast_stop(void *data) {
                                  mcast);
     jid_del(jid);
 
-    event_deregister_callback(xmpp_server_loop(mcast->server), mcast->sock);
+    ev_io_stop(xmpp_server_loop(mcast->server), &mcast->fd_readable);
 
-    /* Currently, the event loop closes all sockets when the event loop exits.
-     * This should probably be changed.  When it does, we will need to clean
-     * up our own socket. */
-#if 0
     struct ip_mreq req = {
         .imr_multiaddr = { inet_addr(mcast->address) },
         .imr_interface.s_addr = htonl(INADDR_ANY),
     };
-    if (setsockopt(mcast->sock, IPPROTO_IP, IP_DROP_MEMBERSHIP, &req,
+    if (setsockopt(mcast->fd_readable.fd, IPPROTO_IP, IP_DROP_MEMBERSHIP, &req,
                    sizeof(req)) != 0) {
         log_err("Cannot leave multicast group.");
     }
 
-    if (shutdown(mcast->sock, SHUT_RDWR) == -1) {
+    if (shutdown(mcast->fd_readable.fd, SHUT_RDWR) == -1) {
         log_err("Unable to shut down multicast socket.");
     }
 
-    if (close(mcast->sock) == -1) {
+    if (close(mcast->fd_readable.fd) == -1) {
         log_err("Unable to close multicast socket");
     }
-#endif
 
     if (mcast->buffer != NULL) {
         free(mcast->buffer);
@@ -353,7 +345,8 @@ static bool local_stanza_handler(struct xmpp_stanza *stanza,
     size_t stanza_length;
     char *stanza_data = xmpp_stanza_string(stanza, &stanza_length);
 
-    ssize_t num_sent = sendto(mcast->sock, stanza_data, stanza_length, 0,
+    ssize_t num_sent = sendto(mcast->fd_readable.fd, stanza_data,
+                              stanza_length, 0,
                               (struct sockaddr*)&mcast->send_addr,
                               sizeof(mcast->send_addr));
     free(stanza_data);
@@ -369,13 +362,14 @@ error:
     return false;
 }
 
-static void socket_handler(struct event_loop *loop, int fd, void *data) {
-    struct xmp3_multicast *mcast = data;
+static void socket_handler(struct ev_loop *loop, struct ev_io *w,
+                           int revents) {
+    struct xmp3_multicast *mcast = (struct xmp3_multicast*)w->data;
 
     struct sockaddr_in recv_addr;
     socklen_t recv_addr_len = sizeof(recv_addr);
 
-    ssize_t num_recv = recvfrom(fd, mcast->buffer, mcast->buffer_size, 0,
+    ssize_t num_recv = recvfrom(w->fd, mcast->buffer, mcast->buffer_size, 0,
                                 (struct sockaddr*)&recv_addr,
                                 &recv_addr_len);
     check(num_recv > 0, "Failed to receive from multicast socket.");
@@ -400,20 +394,28 @@ static bool remote_stanza_handler(struct xmpp_stanza *stanza,
 }
 
 static bool bind_socket(struct xmp3_multicast *mcast) {
-    check((mcast->sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) >= 0,
+    int fd;
+    check((fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) >= 0,
           "Cannot create multicast socket.");
 
+    /* Set non-blocking mode on the socket. */
+    int flags = fcntl(fd, F_GETFL, 0);
+    fcntl(fd, F_SETFL, O_NONBLOCK);
+    check(flags >= 0, "Error getting socket flags.");
+    check(fcntl(fd, F_SETFL, flags | O_NONBLOCK) == 0,
+            "Error setting non-blocking mode on socket.");
+
     int flag = 0;
-    check(setsockopt(mcast->sock, IPPROTO_IP, IP_MULTICAST_LOOP, &flag,
+    check(setsockopt(fd, IPPROTO_IP, IP_MULTICAST_LOOP, &flag,
                      sizeof(flag)) == 0,
           "Cannot disable multicast loopback.");
 
-    check(setsockopt(mcast->sock, IPPROTO_IP, IP_MULTICAST_TTL, &mcast->ttl,
+    check(setsockopt(fd, IPPROTO_IP, IP_MULTICAST_TTL, &mcast->ttl,
                      sizeof(mcast->ttl)) == 0,
           "Cannot set multicast TTL.");
 
     flag = 1;
-    check(setsockopt(mcast->sock, SOL_SOCKET, SO_REUSEADDR, &flag,
+    check(setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &flag,
                      sizeof(flag)) == 0,
           "Cannot make socket reusable.");
 
@@ -422,14 +424,14 @@ static bool bind_socket(struct xmp3_multicast *mcast) {
         .sin_port = htons(mcast->port),
         .sin_addr = { htonl(INADDR_ANY) },
     };
-    check(bind(mcast->sock, (struct sockaddr*)&sa, sizeof(sa)) == 0,
+    check(bind(fd, (struct sockaddr*)&sa, sizeof(sa)) == 0,
           "Cannot bind multicast socket.");
 
     struct ip_mreq req = {
         .imr_multiaddr.s_addr = inet_addr(mcast->address),
         .imr_interface.s_addr = htonl(INADDR_ANY),
     };
-    check(setsockopt(mcast->sock, IPPROTO_IP, IP_ADD_MEMBERSHIP,
+    check(setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP,
                      &req, sizeof(req)) == 0,
           "Cannot join multicast group.");
 
@@ -437,6 +439,12 @@ static bool bind_socket(struct xmp3_multicast *mcast) {
     mcast->send_addr.sin_family = AF_INET;
     mcast->send_addr.sin_addr.s_addr = inet_addr(mcast->address);
     mcast->send_addr.sin_port = htons(mcast->port);
+
+    /* Add a callback to the event loop so we can get messages over our
+     * multicast socket. */
+    ev_io_init(&mcast->fd_readable, socket_handler, fd, EV_READ);
+    mcast->fd_readable.data = mcast;
+    ev_io_start(xmpp_server_loop(mcast->server), &mcast->fd_readable);
 
     log_info("Joined multicast group %s:%d", mcast->address, mcast->port);
 

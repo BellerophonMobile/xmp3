@@ -93,9 +93,10 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
+#include <ev.h>
+
 #include "log.h"
 
-#include "event.h"
 #include "jid.h"
 #include "xmp3_module.h"
 #include "xmp3_options.h"
@@ -136,13 +137,8 @@ static void print_usage(void) {
     printf("  -h, --help     This help output\n");
 }
 
-/* File-global event loop handle, so we can stop it from the signal handler. */
-static struct event_loop *loop = NULL;
-
-static void signal_handler(int signal) {
-    if (signal == SIGINT) {
-        event_loop_stop(loop);
-    }
+static void signal_handler(struct ev_loop *loop, ev_signal *w, int revents) {
+    ev_break(loop, EVBREAK_ALL);
 }
 
 int main(int argc, char *argv[]) {
@@ -227,14 +223,13 @@ int main(int argc, char *argv[]) {
 
     printf("Starting xmp3...\n");
 
-    struct sigaction sa = {
-        .sa_handler = signal_handler,
-        .sa_flags = 0,
-    };
+    struct ev_loop *loop = ev_loop_new(EVFLAG_AUTO);
+    check(loop != NULL, "Could not initialize libev.");
 
-    check(sigaction(SIGINT, &sa, NULL) != -1, "Cannot set signal handler.");
-
-    loop = event_loop_new();
+    /* Set up the signal handler */
+    ev_signal signal_watcher;
+    ev_signal_init(&signal_watcher, signal_handler, SIGINT);
+    ev_signal_start(loop, &signal_watcher);
 
     if (xmp3_options_get_ssl(options)) {
         /* Initialize OpenSSL. */
@@ -248,7 +243,7 @@ int main(int argc, char *argv[]) {
     xmp3_modules_start(xmp3_options_get_modules(options), server);
 
     log_info("Starting event loop...");
-    event_loop_start(loop);
+    ev_run(loop, 0);
     log_info("Event loop exited");
 
     if (xmp3_options_get_ssl(options)) {
@@ -259,13 +254,11 @@ int main(int argc, char *argv[]) {
 
     xmp3_options_del(options);
     xmpp_server_del(server);
-    event_loop_del(loop);
+
+    ev_loop_destroy(loop);
 
     return EXIT_SUCCESS;
 
 error:
-    if (loop) {
-        event_loop_del(loop);
-    }
     return EXIT_FAILURE;
 }

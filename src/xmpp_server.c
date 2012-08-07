@@ -27,13 +27,16 @@
  * Main XMPP server data/functions
  */
 
-#include <unistd.h>
 #include <arpa/inet.h>
-#include <sys/types.h>
+#include <fcntl.h>
 #include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+
+#include <ev.h>
 
 #include "uthash.h"
 #include "utlist.h"
@@ -41,7 +44,6 @@
 #include "log.h"
 
 #include "client_socket.h"
-#include "event.h"
 #include "jid.h"
 #include "utils.h"
 #include "xmp3_options.h"
@@ -107,7 +109,11 @@
 } while (0)
 
 struct c_client {
-    struct xmpp_client *client;
+    /** The event object listening for incoming data. */
+    struct ev_io fd_readable;
+
+    /** The connected client object. */
+    //struct xmpp_client *client;
 
     /** @{ Clients are stored in a doubly-linked list. */
     struct c_client *prev;
@@ -204,8 +210,8 @@ struct xmpp_client_iterator {
 
 /** Holds data on a XMPP server (connected clients, routes, etc.). */
 struct xmpp_server {
-    /** The bound and listening file descriptor. */
-    int fd;
+    /** The event struct for our listening server file descriptor. */
+    struct ev_io fd_readable;
 
     /** Buffer used to store incoming data. */
     char *buffer;
@@ -216,7 +222,7 @@ struct xmpp_server {
     int backlog;
 
     /** The event loop this server is registered on. */
-    struct event_loop *loop;
+    struct ev_loop *loop;
 
     /** OpenSSL context. */
     SSL_CTX *ssl_context;
@@ -249,8 +255,8 @@ static bool init_socket(struct xmpp_server *server,
 static bool init_ssl(struct xmpp_server *server,
                      const struct xmp3_options *options);
 
-static void connect_client(struct event_loop *loop, int fd, void *data);
-static void read_client(struct event_loop *loop, int fd, void *data);
+static void connect_client(struct ev_loop *loop, struct ev_io *w, int revents);
+static void read_client(struct ev_loop *loop, struct ev_io *w, int revents);
 
 static void send_service_unavailable(struct xmpp_server *server,
                                      struct xmpp_stanza *stanza);
@@ -274,7 +280,7 @@ static int iq_route_cmp(const struct iq_route *a, const struct iq_route *b);
 
 static void disco_item_del(struct disco_item *item);
 
-struct xmpp_server* xmpp_server_new(struct event_loop *loop,
+struct xmpp_server* xmpp_server_new(struct ev_loop *loop,
                                     const struct xmp3_options *options) {
     struct xmpp_server *server = calloc(1, sizeof(*server));
     check_mem(server);
@@ -306,9 +312,6 @@ struct xmpp_server* xmpp_server_new(struct event_loop *loop,
     xmpp_server_add_iq_route(server, XMPP_IQ_ROSTER_NS,
                              xmpp_im_iq_roster, NULL);
 
-    /* Register the event handler so we can get notified of new connections. */
-    event_register_callback(loop, server->fd, connect_client, server);
-
     log_info("Listening for XMPP connections on %s:%d",
              inet_ntoa(xmp3_options_get_addr(options)),
              xmp3_options_get_port(options));
@@ -331,7 +334,8 @@ void xmpp_server_del(struct xmpp_server *server) {
 
     DL_FOREACH_SAFE(server->clients, connected_client, connected_client_tmp) {
         DL_DELETE(server->clients, connected_client);
-        xmpp_client_del(connected_client->client);
+        ev_io_stop(server->loop, &connected_client->fd_readable);
+        xmpp_client_del(connected_client->fd_readable.data);
         free(connected_client);
     }
 
@@ -343,8 +347,8 @@ void xmpp_server_del(struct xmpp_server *server) {
     if (server->jid) {
         jid_del(server->jid);
     }
-    if (server->fd != -1) {
-        close(server->fd);
+    if (ev_is_active(&server->fd_readable)) {
+        ev_io_stop(server->loop, &server->fd_readable);
     }
     if (server->buffer) {
         free(server->buffer);
@@ -355,7 +359,7 @@ void xmpp_server_del(struct xmpp_server *server) {
     free(server);
 }
 
-struct event_loop* xmpp_server_loop(const struct xmpp_server *server) {
+struct ev_loop* xmpp_server_loop(const struct xmpp_server *server) {
     return server->loop;
 }
 
@@ -413,7 +417,7 @@ void xmpp_server_disconnect_client(struct xmpp_client *client) {
     /* Sanity check that the client is registered with the server. */
     struct c_client *search = NULL;
     DL_FOREACH(server->clients, search) {
-        if (client == search->client) {
+        if (client == search->fd_readable.data) {
             break;
         }
     }
@@ -423,6 +427,7 @@ void xmpp_server_disconnect_client(struct xmpp_client *client) {
     }
 
     DL_DELETE(server->clients, search);
+    ev_io_stop(server->loop, &search->fd_readable);
 
     struct client_listener *listener = NULL;
     struct client_listener *tmp = NULL;
@@ -442,8 +447,8 @@ struct xmpp_client* xmpp_server_find_client(const struct xmpp_server *server,
                                             const struct jid *jid) {
     struct c_client *search = NULL;
     DL_FOREACH(server->clients, search) {
-        if (jid_cmp(jid, xmpp_client_jid(search->client)) == 0) {
-            return search->client;
+        if (jid_cmp(jid, xmpp_client_jid(search->fd_readable.data)) == 0) {
+            return search->fd_readable.data;
         }
     }
     return NULL;
@@ -463,7 +468,7 @@ struct xmpp_client* xmpp_client_iterator_next(
     if (iter->client == NULL) {
         return NULL;
     }
-    struct xmpp_client *rv = iter->client->client;
+    struct xmpp_client *rv = iter->client->fd_readable.data;
     iter->client = iter->client->next;
     return rv;
 }
@@ -607,14 +612,22 @@ void xmpp_server_append_disco_items(struct xmpp_server *server,
 /** Simple function to create and bind the server socket. */
 static bool init_socket(struct xmpp_server *server,
                         const struct xmp3_options *options) {
-    server->fd = socket(AF_INET, SOCK_STREAM, 0);
-    check(server->fd != -1, "Error creating XMPP server socket");
+    int fd = socket(AF_INET, SOCK_STREAM, 0);
+    check(fd != -1, "Error creating XMPP server socket");
 
     /* Allow address reuse when in the TIME_WAIT state. */
     static const int on = 1;
-    check(setsockopt(server->fd, SOL_SOCKET, SO_REUSEADDR, &on,
+    check(setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &on,
                      sizeof(on)) != -1,
           "Error setting SO_REUSEADDR on server socket");
+
+    /* Set non-blocking mode on the socket. */
+    int flags = fcntl(fd, F_GETFL, 0);
+    fcntl(fd, F_SETFL, O_NONBLOCK);
+    check(flags >= 0, "Error getting socket flags.");
+
+    check(fcntl(fd, F_SETFL, flags | O_NONBLOCK) == 0,
+            "Error setting non-blocking mode on socket.");
 
     struct sockaddr_in saddr = {
         .sin_family = AF_INET,
@@ -622,10 +635,15 @@ static bool init_socket(struct xmpp_server *server,
         .sin_addr = xmp3_options_get_addr(options),
     };
 
-    check(bind(server->fd, (struct sockaddr*)&saddr, sizeof(saddr)) != -1,
+    check(bind(fd, (struct sockaddr*)&saddr, sizeof(saddr)) != -1,
           "XMPP server socket bind error");
-    check(listen(server->fd, server->backlog) != -1,
+    check(listen(fd, server->backlog) != -1,
           "XMPP server socket listen error");
+
+    /* Register the event handler so we can get notified of new connections. */
+    ev_io_init(&server->fd_readable, connect_client, fd, EV_READ);
+    server->fd_readable.data = server;
+    ev_io_start(server->loop, &server->fd_readable);
 
     return true;
 error:
@@ -661,8 +679,9 @@ error:
  *
  * Handles accepting the connection, and setting up XMPP stream parsing.
  */
-static void connect_client(struct event_loop *loop, int fd, void *data) {
-    struct xmpp_server *server = (struct xmpp_server*)data;
+static void connect_client(struct ev_loop *loop, struct ev_io *w,
+                           int revents) {
+    struct xmpp_server *server = (struct xmpp_server*)w->data;
     struct client_socket *socket = NULL;
     struct xmpp_client *client = NULL;
     struct c_client *connected_client = NULL;
@@ -670,17 +689,18 @@ static void connect_client(struct event_loop *loop, int fd, void *data) {
     struct sockaddr_in caddr;
     socklen_t caddrlen = sizeof(caddr);
 
-    int client_fd = accept(fd, (struct sockaddr*)&caddr, &caddrlen);
+    int client_fd = accept(w->fd, (struct sockaddr*)&caddr, &caddrlen);
     check(client_fd != -1, "Error accepting new client connection");
 
     socket = client_socket_new(client_fd, caddr);
     client = xmpp_client_new(server, socket);
 
-    event_register_callback(loop, client_fd, read_client, client);
-
     connected_client = calloc(1, sizeof(*connected_client));
     check_mem(connected_client);
-    connected_client->client = client;
+
+    ev_io_init(&connected_client->fd_readable, read_client, client_fd, EV_READ);
+    connected_client->fd_readable.data = client;
+    ev_io_start(server->loop, &connected_client->fd_readable);
 
     log_info("New connection from %s:%d", inet_ntoa(caddr.sin_addr),
              caddr.sin_port);
@@ -708,8 +728,8 @@ error:
  *
  * Handles feeding the data to the XML parser.
  */
-static void read_client(struct event_loop *loop, int fd, void *data) {
-    struct xmpp_client *client = (struct xmpp_client*)data;
+static void read_client(struct ev_loop *loop, struct ev_io *w, int revents) {
+    struct xmpp_client *client = (struct xmpp_client*)w->data;
     struct xmpp_server *server = xmpp_client_server(client);
 
     ssize_t numrecv = client_socket_recv(xmpp_client_socket(client),
@@ -731,7 +751,7 @@ static void read_client(struct event_loop *loop, int fd, void *data) {
 
     char *addrstr = client_socket_addr_str(xmpp_client_socket(client));
     /* On android, %zd is only for size_t, so do an explicit cast. */
-    log_info("%s - Read %zd bytes", addrstr, (size_t)numrecv);
+    debug("%s - Read %zd bytes", addrstr, (size_t)numrecv);
     debug("%s: %.*s", addrstr, (int)numrecv, server->buffer);
     free(addrstr);
 

@@ -34,7 +34,8 @@
 #include <openssl/ssl.h>
 
 /* Forward declarations. */
-struct event_loop;
+struct ev_loop;
+
 struct xmp3_options;
 struct xmpp_client;
 struct xmpp_server;
@@ -81,7 +82,7 @@ typedef bool (*xmpp_server_auth_callback)(const char *authzid,
  * @param options An XMP3 options instance to read for configuration.
  * @return A pointer to the XMPP server instance.
  */
-struct xmpp_server* xmpp_server_new(struct event_loop *loop,
+struct xmpp_server* xmpp_server_new(struct ev_loop *loop,
                                     const struct xmp3_options *options);
 
 /**
@@ -92,7 +93,7 @@ struct xmpp_server* xmpp_server_new(struct event_loop *loop,
 void xmpp_server_del(struct xmpp_server *server);
 
 /** Gets the event loop instance this server is using. */
-struct event_loop* xmpp_server_loop(const struct xmpp_server *server);
+struct ev_loop* xmpp_server_loop(const struct xmpp_server *server);
 
 /** Gets the JID of this server. */
 const struct jid* xmpp_server_jid(const struct xmpp_server *server);
