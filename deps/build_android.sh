@@ -159,10 +159,12 @@ export_environment() {
     if [ "$ARCH" = "arm" -o "$ARCH" = "armv7" ]
     then
         CFLAGS="-fpic -ffunction-sections -funwind-tables -fstack-protector -D__ARM_ARCH_5__ -D__ARM_ARCH_5T__ -D__ARM_ARCH_5E__ -D__ARM_ARCH_5TE__"
+        # For thumb mode
+        CFLAGS+=" -mthumb -Os -fomit-frame-pointer -fno-strict-aliasing -finline-limit=64"
         if [ "$ARCH" = "armv7" ]
         then
             ARCH="arm"
-            CFLAGS+=" -march=armv7-a -mfloat-abi=softfp -mfpu=vfp -mthumb -Os -fomit-frame-pointer -fno-strict-aliasing -finline-limit=64"
+            CFLAGS+=" -march=armv7-a -mfloat-abi=softfp -mfpu=vfp"
             CXXFLAGS+=" -march=armv7-a -mfloat-abi=softfp -mfpu=vfp -mthumb -Os -fomit-frame-pointer -fno-strict-aliasing -finline-limit=64"
             LDFLAGS+=" -Wl,--fix-cortex-a8"
         elif [ "$ARCH" = "arm" ]

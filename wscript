@@ -77,12 +77,30 @@ def configure(ctx):
         ctx.env.android_ndk = ctx.options.cross_android_ndk
         ctx.env.android_level = ctx.options.cross_android_level
         ctx.env.android_arch = ctx.options.cross_android_arch
-        if ctx.options.cross_android_arch == 'armv7':
+
+        if ctx.options.cross_android_arch in ('armv6', 'armv7'):
+            ctx.env.CFLAGS += ['-fpic', '-ffunction-sections',
+                    '-funwind-tables', '-fstack-protector', '-D__ARM_ARCH_5__',
+                    '-D__ARM_ARCH_5T__', '-D__ARM_ARCH_5E__',
+                    '-D__ARM_ARCH_5TE__']
+
+            ctx.env.CFLAGS += ['-mthumb', '-Os', '-fomit-frame-pointer',
+                               '-fno-strict-aliasing', '-finline-limit=64']
+
+            if ctx.options.cross_android_arch == 'armv7':
+                ctx.env.CFLAGS += ['-march=armv7-a', '-mfloat-abi=softfp',
+                        '-mfpu=vfp']
+                ctx.env.LINKFLAGS += ['-Wl,--fix-cortex-a8']
+
+            elif ctx.options.cross_android_arch == 'armv6':
+                ctx.env.CFLAGS += ['-march=armv5te', '-mtune=xscale',
+                        '-msoft-float']
+
             arch = 'arm'
-            ctx.env.CFLAGS += ['-march=armv7-a', '-mfloat-abi=softfp']
-            ctx.env.LINKFLAGS += ['-Wl,--fix-cortex-a8']
-        elif ctx.options.cross_android_arch == 'armv6':
-            arch = 'arm'
+
+            if ctx.options.debug:
+                ctx.env.CFLAGS += ['-marm', '-fno-omit-frame-pointer']
+
         else:
             arch = ctx.options.cross_android_arch
 
@@ -92,8 +110,6 @@ def configure(ctx):
         ctx.find_program('arm-linux-androideabi-gcc', var='CC',
                          path_list=[path])
         ctx.find_program('arm-linux-androideabi-g++', var='CXX',
-                         path_list=[path])
-        ctx.find_program('arm-linux-androideabi-as', var='AS',
                          path_list=[path])
 
         ctx.env.android_sysroot = os.path.join(
