@@ -325,7 +325,7 @@ static bool local_stanza_handler(struct xmpp_stanza *stanza,
 
     if (strcmp(xmpp_stanza_name(stanza), XMPP_STANZA_IQ) == 0) {
         debug("Ignoring IQ stanza.");
-        return true;
+        return false;
     }
 
     /* We only want to send out stanzas originating from locally connected
