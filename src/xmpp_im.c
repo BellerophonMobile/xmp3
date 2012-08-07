@@ -142,12 +142,12 @@ bool xmpp_im_iq_disco_info(struct xmpp_stanza *stanza,
     xmpp_stanza_append_child(res_query, tmp);
 
     tmp = xmpp_stanza_new("feature", (const char*[]){
-            "var", "http://jabber.org/protocol/disco#info",
+            "var", XMPP_IQ_DISCO_INFO_NS,
             NULL});
     xmpp_stanza_append_child(res_query, tmp);
 
     tmp = xmpp_stanza_new("feature", (const char*[]){
-            "var", "http://jabber.org/protocol/disco#items",
+            "var", XMPP_IQ_DISCO_ITEMS_NS,
             NULL});
     xmpp_stanza_append_child(res_query, tmp);
 
