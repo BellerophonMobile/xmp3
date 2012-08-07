@@ -449,7 +449,15 @@ struct xmpp_client* xmpp_server_find_client(const struct xmpp_server *server,
                                             const struct jid *jid) {
     struct c_client *search = NULL;
     DL_FOREACH(server->clients, search) {
-        if (jid_cmp(jid, xmpp_client_jid(search->fd_readable.data)) == 0) {
+        struct jid *search_jid = xmpp_client_jid(search->fd_readable.data);
+        /* If jid is NULL, then we have a client that is still in the process
+         * of authenticating. */
+        if (search_jid == NULL) {
+            debug("Found non-authenticated client, skipping...");
+            continue;
+        }
+
+        if (jid_cmp(jid, search_jid) == 0) {
             return search->fd_readable.data;
         }
     }
