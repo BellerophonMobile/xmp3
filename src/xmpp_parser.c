@@ -153,6 +153,9 @@ static void init_parser(struct xmpp_parser *parser, bool is_stream_start) {
     XML_SetUserData(parser->parser, parser);
     XML_SetStartNamespaceDeclHandler(parser->parser, ns_start);
 
+    /* Inhibit the expansion of any external entities. */
+    XML_SetParamEntityParsing(parser->parser, XML_PARAM_ENTITY_PARSING_NEVER);
+
     parser->needs_reset = false;
 
     if (is_stream_start) {
