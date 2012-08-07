@@ -527,6 +527,9 @@ bool xmpp_server_route_stanza(struct xmpp_server *server,
     }
     if (!was_handled) {
         log_info("No route for destination");
+        if (strcmp(xmpp_stanza_name(stanza), XMPP_STANZA_IQ) == 0) {
+            send_service_unavailable(server, stanza);
+        }
     }
     jid_del(search_jid);
     return was_handled;
