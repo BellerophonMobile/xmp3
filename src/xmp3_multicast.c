@@ -377,6 +377,8 @@ static void socket_handler(struct ev_loop *loop, struct ev_io *w,
     /* On android, %zd is only for size_t, so do an explicit cast. */
     log_info("Received %zd bytes from %s:%d", (size_t)num_recv,
              inet_ntoa(recv_addr.sin_addr), ntohs(recv_addr.sin_port));
+    debug("%s: %.*s", inet_ntoa(recv_addr.sin_addr), (int)num_recv,
+          mcast->buffer);
 
     /* Parse the XMPP stanza string we just received.  Reset the parser before
      * to clear any state from previous stanzas. */
