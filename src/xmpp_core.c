@@ -75,6 +75,17 @@ bool xmpp_core_route_client(struct xmpp_stanza *stanza,
                             struct xmpp_server *server, void *data) {
     struct xmpp_client *client = (struct xmpp_client*)data;
 
+    /* If an IQ is addressed to a bare JID, it should be handled by the server
+     * on behalf of the client. */
+    if (strcmp(xmpp_stanza_name(stanza), XMPP_STANZA_IQ) == 0) {
+        const char *to_jid_str = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_TO);
+        struct jid* to_jid = jid_new_from_str(to_jid_str);
+
+        if (jid_resource(to_jid) == NULL) {
+            return xmpp_server_route_iq(server, stanza);
+        }
+    }
+
     char *strjid = jid_to_str(xmpp_client_jid(client));
     debug("Routing to local client '%s'", strjid);
     free(strjid);
