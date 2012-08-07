@@ -40,6 +40,7 @@ const char *XMPP_IQ_SESSION_NS = "urn:ietf:params:xml:ns:xmpp-session";
 const char *XMPP_IQ_DISCO_ITEMS_NS = "http://jabber.org/protocol/disco#items";
 const char *XMPP_IQ_DISCO_INFO_NS = "http://jabber.org/protocol/disco#info";
 const char *XMPP_IQ_ROSTER_NS = "jabber:iq:roster";
+const char *XMPP_IQ_PING_NS = "urn:xmpp:ping";
 
 static const char *IQ_SESSION = "session";
 static const char *IQ_QUERY = "query";
@@ -150,6 +151,11 @@ bool xmpp_im_iq_disco_info(struct xmpp_stanza *stanza,
             NULL});
     xmpp_stanza_append_child(res_query, tmp);
 
+    tmp = xmpp_stanza_new("feature", (const char*[]){
+            "var", XMPP_IQ_PING_NS,
+            NULL});
+    xmpp_stanza_append_child(res_query, tmp);
+
     xmpp_server_route_stanza(server, response);
     xmpp_stanza_del(response, true);
 
@@ -190,6 +196,23 @@ static bool get_roster(struct xmpp_stanza *stanza,
     xmpp_stanza_append_child(response, query);
 
     // TODO: Iterate over user's roster here.
+
+    xmpp_server_route_stanza(server, response);
+    xmpp_stanza_del(response, true);
+    return true;
+}
+
+bool xmpp_im_iq_ping(struct xmpp_stanza *stanza, struct xmpp_server *server,
+                     void *data) {
+    const char *id = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_ID);
+    const char *from = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_FROM);
+
+    struct xmpp_stanza *response = xmpp_stanza_new("iq", (const char*[]){
+            XMPP_STANZA_ATTR_ID, id,
+            XMPP_STANZA_ATTR_FROM, "localhost",
+            XMPP_STANZA_ATTR_TO, from,
+            XMPP_STANZA_ATTR_TYPE, XMPP_STANZA_TYPE_RESULT,
+            NULL});
 
     xmpp_server_route_stanza(server, response);
     xmpp_stanza_del(response, true);

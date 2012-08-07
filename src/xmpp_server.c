@@ -311,6 +311,8 @@ struct xmpp_server* xmpp_server_new(struct ev_loop *loop,
                              xmpp_im_iq_disco_info, NULL);
     xmpp_server_add_iq_route(server, XMPP_IQ_ROSTER_NS,
                              xmpp_im_iq_roster, NULL);
+    xmpp_server_add_iq_route(server, XMPP_IQ_PING_NS,
+                             xmpp_im_iq_ping, NULL);
 
     log_info("Listening for XMPP connections on %s:%d",
              inet_ntoa(xmp3_options_get_addr(options)),
