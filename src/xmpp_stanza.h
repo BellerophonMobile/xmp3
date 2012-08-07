@@ -74,8 +74,9 @@ void xmpp_stanza_del(struct xmpp_stanza *stanza, bool recursive);
  *
  * @param stanza The stanza to convert.
  * @param len If not null, is filled in with the length of the string.
+ * @param encode Encode special characters (i.e. & -> &amp;).
  */
-char* xmpp_stanza_string(struct xmpp_stanza *stanza, size_t *len);
+char* xmpp_stanza_string(struct xmpp_stanza *stanza, size_t *len, bool encode);
 
 /**
  * Returns the namespace URI of this stanza.

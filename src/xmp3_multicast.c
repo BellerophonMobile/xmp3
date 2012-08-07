@@ -343,7 +343,7 @@ static bool local_stanza_handler(struct xmpp_stanza *stanza,
     }
 
     size_t stanza_length;
-    char *stanza_data = xmpp_stanza_string(stanza, &stanza_length);
+    char *stanza_data = xmpp_stanza_string(stanza, &stanza_length, true);
 
     ssize_t num_sent = sendto(mcast->fd_readable.fd, stanza_data,
                               stanza_length, 0,

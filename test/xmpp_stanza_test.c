@@ -457,7 +457,7 @@ void test_string1(void **state) {
     static const char *XML = "<a/>";
 
     size_t len = 0;
-    char *str = xmpp_stanza_string(a, &len);
+    char *str = xmpp_stanza_string(a, &len, false);
     assert_string_equal(str, XML);
     assert_int_equal(len, strlen(XML));
 
@@ -471,7 +471,7 @@ void test_string2(void **state) {
     static const char *XML = "<foo:a/>";
 
     size_t len = 0;
-    char *str = xmpp_stanza_string(a, &len);
+    char *str = xmpp_stanza_string(a, &len, false);
     assert_string_equal(str, XML);
     assert_int_equal(len, strlen(XML));
 
@@ -489,7 +489,7 @@ void test_string3(void **state) {
     static const char *XML = "<a foo='bar' bin='baz'/>";
 
     size_t len = 0;
-    char *str = xmpp_stanza_string(a, &len);
+    char *str = xmpp_stanza_string(a, &len, false);
     assert_int_equal(len, strlen(XML));
 
     assert_false(strstr(str, "<a ") == NULL);
@@ -513,7 +513,7 @@ void test_string4(void **state) {
     static const char *XML = "<a foo=\"aaa'bbb\" bin=\"'cc\" bar=\"dd'\" aaa='fff'/>";
 
     size_t len = 0;
-    char *str = xmpp_stanza_string(a, &len);
+    char *str = xmpp_stanza_string(a, &len, false);
     assert_int_equal(len, strlen(XML));
 
     assert_false(strstr(str, "<a ") == NULL);
@@ -527,7 +527,7 @@ void test_string4(void **state) {
     xmpp_stanza_del(a, true);
 }
 
-/** Tests converting a stanza with childeren to a string. */
+/** Tests converting a stanza with children to a string. */
 void test_string5(void **state) {
     struct xmpp_stanza *parent = xmpp_stanza_new("parent", (const char*[]){
             "foo", "bar",
@@ -542,7 +542,7 @@ void test_string5(void **state) {
     static const char *XML = "<parent foo='bar'><child bin='baz'/></parent>";
 
     size_t len = 0;
-    char *str = xmpp_stanza_string(parent, &len);
+    char *str = xmpp_stanza_string(parent, &len, false);
     assert_int_equal(len, strlen(XML));
     assert_string_equal(str, XML);
 
@@ -559,7 +559,7 @@ void test_string6(void **state) {
     static const char *XML = "<a>hello world</a>";
 
     size_t len = 0;
-    char *str = xmpp_stanza_string(a, &len);
+    char *str = xmpp_stanza_string(a, &len, false);
     assert_string_equal(str, XML);
     assert_int_equal(len, strlen(XML));
 
@@ -567,7 +567,7 @@ void test_string6(void **state) {
     xmpp_stanza_del(a, true);
 }
 
-/** Tests converting a stanza with childeren and data to a string. */
+/** Tests converting a stanza with children and data to a string. */
 void test_string7(void **state) {
     struct xmpp_stanza *parent = xmpp_stanza_new("parent", (const char*[]){
             "foo", "bar",
@@ -584,7 +584,32 @@ void test_string7(void **state) {
     static const char *XML = "<parent foo='bar'>hello world<child bin='baz'/></parent>";
 
     size_t len = 0;
-    char *str = xmpp_stanza_string(parent, &len);
+    char *str = xmpp_stanza_string(parent, &len, false);
+    assert_int_equal(len, strlen(XML));
+    assert_string_equal(str, XML);
+
+    free(str);
+    xmpp_stanza_del(parent, true);
+}
+
+/** Tests converting a stanza with children and data to a string. */
+void test_string_encode1(void **state) {
+    struct xmpp_stanza *parent = xmpp_stanza_new("parent", (const char*[]){
+            "foo", "bar",
+            NULL,
+    });
+    struct xmpp_stanza *child = xmpp_stanza_new("child", (const char*[]){
+            "bin", "baz",
+            NULL,
+    });
+    xmpp_stanza_append_child(parent, child);
+    static const char *DATA = "hello & world";
+    xmpp_stanza_append_data(parent, DATA, strlen(DATA));
+
+    static const char *XML = "<parent foo='bar'>hello &amp; world<child bin='baz'/></parent>";
+
+    size_t len = 0;
+    char *str = xmpp_stanza_string(parent, &len, true);
     assert_int_equal(len, strlen(XML));
     assert_string_equal(str, XML);
 
@@ -640,6 +665,7 @@ int main(int argc, char *argv[]) {
         unit_test(test_string5),
         unit_test(test_string6),
         unit_test(test_string7),
+        unit_test(test_string_encode1),
     };
     return run_tests(tests);
 }

@@ -167,7 +167,7 @@ static void stream_start(void *data, const char *ns_name, const char **attrs) {
                                                     parser->namespaces);
 
 #ifndef NDEBUG
-    char *str = xmpp_stanza_string(stanza, NULL);
+    char *str = xmpp_stanza_string(stanza, NULL, false);
     debug("Handling Stanza: %s", str);
     free(str);
 #endif
@@ -213,7 +213,7 @@ static void end(void *data, const char *name) {
         XML_StopParser(parser->parser, false);
     } else if (parser->depth == 0) {
 #ifndef NDEBUG
-        char *stanza_str = xmpp_stanza_string(parser->cur_stanza, NULL);
+        char *stanza_str = xmpp_stanza_string(parser->cur_stanza, NULL, false);
         debug("Handling Stanza: %s", stanza_str);
         free(stanza_str);
 #endif

@@ -80,7 +80,7 @@ bool xmpp_core_route_client(struct xmpp_stanza *stanza,
     free(strjid);
 
     size_t length;
-    char *msg = xmpp_stanza_string(stanza, &length);
+    char *msg = xmpp_stanza_string(stanza, &length, true);
     if (client_socket_sendall(xmpp_client_socket(client), msg, length) <= 0) {
         free(msg);
         xmpp_server_disconnect_client(client);

@@ -78,7 +78,10 @@ struct attribute {
 };
 
 static void parse_ns(const char *ns_name, char **name, char **prefix, char **uri);
-static void stanza_tostr(struct xmpp_stanza *stanza, UT_string *str);
+static void stanza_tostr(struct xmpp_stanza *stanza, UT_string *str,
+                         bool encode);
+static void attr_value_tostr(UT_string *str, const char *value);
+static void data_tostr(UT_string *str, const UT_string *value);
 static void attribute_del(struct attribute *attr);
 static char* make_key(const char *name, const char *uri);
 
@@ -173,10 +176,11 @@ void xmpp_stanza_del(struct xmpp_stanza *stanza, bool recursive) {
     free(stanza);
 }
 
-char* xmpp_stanza_string(struct xmpp_stanza *stanza, size_t *len) {
+char* xmpp_stanza_string(struct xmpp_stanza *stanza, size_t *len,
+                         bool encode) {
     UT_string str;
     utstring_init(&str);
-    stanza_tostr(stanza, &str);
+    stanza_tostr(stanza, &str, encode);
     if (len != NULL) {
         *len = utstring_len(&str);
     }
@@ -385,7 +389,8 @@ static void parse_ns(const char *ns_name, char **name, char **prefix,
  *
  * Also prints child stanzas.
  */
-static void stanza_tostr(struct xmpp_stanza *stanza, UT_string *str) {
+static void stanza_tostr(struct xmpp_stanza *stanza, UT_string *str,
+                         bool encode) {
     if (stanza->prefix) {
         utstring_printf(str, "<%s:%s", stanza->prefix, stanza->name);
     } else {
@@ -413,20 +418,29 @@ static void stanza_tostr(struct xmpp_stanza *stanza, UT_string *str) {
             quot = '\'';
         }
         if (attr->prefix) {
-            utstring_printf(str, " %s:%s=%c%s%c", attr->prefix, attr->name,
-                            quot, attr->value, quot);
-        } else {
-            utstring_printf(str, " %s=%c%s%c", attr->name, quot, attr->value,
+            utstring_printf(str, " %s:%s=%c", attr->prefix, attr->name,
                             quot);
+        } else {
+            utstring_printf(str, " %s=%c", attr->name, quot);
         }
+        if (encode) {
+            attr_value_tostr(str, attr->value);
+        } else {
+            utstring_printf(str, "%s", attr->value);
+        }
+        utstring_printf(str, "%c", quot);
     }
 
     if (stanza->children != NULL || utstring_len(&stanza->data) > 0) {
         utstring_printf(str, ">");
-        utstring_concat(str, &stanza->data);
+        if (encode) {
+            data_tostr(str, &stanza->data);
+        } else {
+            utstring_concat(str, &stanza->data);
+        }
         struct xmpp_stanza *child;
         DL_FOREACH(stanza->children, child) {
-            stanza_tostr(child, str);
+            stanza_tostr(child, str, encode);
         }
         if (stanza->prefix) {
             utstring_printf(str, "</%s:%s>", stanza->prefix, stanza->name);
@@ -435,6 +449,69 @@ static void stanza_tostr(struct xmpp_stanza *stanza, UT_string *str) {
         }
     } else {
         utstring_printf(str, "/>");
+    }
+}
+
+/** Handles properly encoding XML attribute values. */
+static void attr_value_tostr(UT_string *str, const char *value) {
+    /* Adapted from Expat: xmlwf/xmlwf.c */
+    for (const char *c = value; *c != '\0'; c++) {
+        switch (*c) {
+            case 0: /* Explicit fallthrough */
+            case '\001':
+                utstring_printf(str, "%c", '"');
+                break;
+            case '&':
+                utstring_printf(str, "&amp;");
+                break;
+            case '<':
+                utstring_printf(str, "&lt;");
+                break;
+            case '"':
+                utstring_printf(str, "&quot;");
+                break;
+            case '>':
+                utstring_printf(str, "&gt;");
+                break;
+            case 9:  /* Explicit fallthrough */
+            case 10: /* Explicit fallthrough */
+            case 13: /* Explicit fallthrough */
+                utstring_printf(str, "&#%d;", *c);
+                break;
+            default:
+                utstring_printf(str, "%c", *c);
+                break;
+        }
+    }
+}
+
+/** Handles propertly encoding XML data. */
+static void data_tostr(UT_string *str, const UT_string *value) {
+    char *str_value = utstring_body(value);
+    /* Adapted from Expat: xmlwf/xmlwf.c */
+    for (const char *c = str_value; *c != '\0'; c++) {
+        switch (*c) {
+            case '&':
+                utstring_printf(str, "&amp;");
+                break;
+            case '<':
+                utstring_printf(str, "&lt;");
+                break;
+            case '>':
+                utstring_printf(str, "&gt;");
+                break;
+            case '"':
+                utstring_printf(str, "&quot;");
+                break;
+            case 9:  /* Explicit fallthrough */
+            case 10: /* Explicit fallthrough */
+            case 13: /* Explicit fallthrough */
+                utstring_printf(str, "&#%d;", &c);
+                break;
+            default:
+                utstring_printf(str, "%c", *c);
+                break;
+        }
     }
 }
 
