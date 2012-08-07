@@ -36,6 +36,7 @@ extern const char *XMPP_IQ_DISCO_ITEMS_NS;
 extern const char *XMPP_IQ_DISCO_INFO_NS;
 extern const char *XMPP_IQ_ROSTER_NS;
 extern const char *XMPP_IQ_PING_NS;
+extern const char *XMPP_IQ_VCARD_TEMP_NS;
 
 /* Forward declarations. */
 struct xmpp_stanza;
@@ -60,3 +61,7 @@ bool xmpp_im_iq_roster(struct xmpp_stanza *stanza, struct xmpp_server *server,
 /** IQ stanza callback for handling a ping. */
 bool xmpp_im_iq_ping(struct xmpp_stanza *stanza, struct xmpp_server *server,
                      void *data);
+
+/** IQ stanza callback for handling a vcard request. */
+bool xmpp_im_iq_vcard_temp(struct xmpp_stanza *stanza,
+                           struct xmpp_server *server, void *data);

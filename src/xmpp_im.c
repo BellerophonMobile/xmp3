@@ -41,6 +41,7 @@ const char *XMPP_IQ_DISCO_ITEMS_NS = "http://jabber.org/protocol/disco#items";
 const char *XMPP_IQ_DISCO_INFO_NS = "http://jabber.org/protocol/disco#info";
 const char *XMPP_IQ_ROSTER_NS = "jabber:iq:roster";
 const char *XMPP_IQ_PING_NS = "urn:xmpp:ping";
+const char *XMPP_IQ_VCARD_TEMP_NS = "vcard-temp";
 
 static const char *IQ_SESSION = "session";
 static const char *IQ_QUERY = "query";
@@ -213,6 +214,35 @@ bool xmpp_im_iq_ping(struct xmpp_stanza *stanza, struct xmpp_server *server,
             XMPP_STANZA_ATTR_TO, from,
             XMPP_STANZA_ATTR_TYPE, XMPP_STANZA_TYPE_RESULT,
             NULL});
+
+    xmpp_server_route_stanza(server, response);
+    xmpp_stanza_del(response, true);
+    return true;
+}
+
+bool xmpp_im_iq_vcard_temp(struct xmpp_stanza *stanza,
+                           struct xmpp_server *server, void *data) {
+    const char *id = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_ID);
+    const char *from = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_FROM);
+    const char *type = xmpp_stanza_attr(stanza, XMPP_STANZA_ATTR_TYPE);
+
+    if (strcmp(type, XMPP_STANZA_TYPE_GET) != 0) {
+        /* Don't handle set, etc right now */
+        return false;
+    }
+
+    struct xmpp_stanza *response = xmpp_stanza_new("iq", (const char*[]){
+            XMPP_STANZA_ATTR_ID, id,
+            XMPP_STANZA_ATTR_FROM, "localhost",
+            XMPP_STANZA_ATTR_TO, from,
+            XMPP_STANZA_ATTR_TYPE, XMPP_STANZA_TYPE_RESULT,
+            NULL});
+
+    /* For now, send an empty vcard back. */
+    struct xmpp_stanza *vcard = xmpp_stanza_new("vCard", (const char*[]){
+            "xmlns", XMPP_IQ_VCARD_TEMP_NS,
+            NULL});
+    xmpp_stanza_append_child(response, vcard);
 
     xmpp_server_route_stanza(server, response);
     xmpp_stanza_del(response, true);
