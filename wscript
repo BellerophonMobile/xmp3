@@ -140,9 +140,8 @@ def configure(ctx):
     ctx.check_cc(lib='ev')
 
     if ctx.env.CC_NAME == 'gcc':
-        # -Werror - Removed for now due to cmockery
-        ctx.env.CFLAGS += ['-std=gnu99', '-Wall', '-Wextra',
-                           '-Wno-unused-parameter']
+        ctx.env.CFLAGS += ['-std=gnu99', '-Wall', '-Wextra', '-Werror',
+                           '-Wno-unused-parameter', '-Wno-strict-aliasing']
 
         if ctx.env.target == 'darwin':
             ctx.env.CFLAGS += ['-Wno-deprecated-declarations']
