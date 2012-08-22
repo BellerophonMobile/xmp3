@@ -68,6 +68,9 @@ Requirements
 
 XMP3 requires the following third-party libraries:
 
+ * libev - For the main event loop
+    * http://libev.schmorp.de/
+    * Tested with version 4.11
  * Expat - For XML parsing
     * http://expat.sourceforge.net/
     * Tested with version 2.1.0
