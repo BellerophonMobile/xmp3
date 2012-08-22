@@ -1,0 +1,8 @@
+language: c
+compiler:
+    - gcc
+    - clang
+before_install:
+    - sudo apt-get update -qq
+    - sudo apt-get install -qq libexpat1-dev libssl-dev
+script: ./waf configure build test
