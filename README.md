@@ -4,6 +4,8 @@ XMP3 - XMPP Proxy
  * Author: Tom Wambold <tom5760@gmail.com>
  * Copyright (c) 2012 Tom Wambold
 
+[![Build Status](https://secure.travis-ci.org/tom5760/xmp3.png?branch=master)](http://travis-ci.org/tom5760/xmp3)
+
 Purpose
 -------
 
