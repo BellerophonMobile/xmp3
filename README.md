@@ -244,16 +244,20 @@ Third-Party Libraries
 ---------------------
 
 XMP3 relies on the following third-party libraries (most of them included in
-the "lib" directory):
+the "deps" directory):
 
+ * Libev - for the main event loop
+    * http://libev.schmorp.de/
  * Expat - for XML parsing
     * http://expat.sourceforge.net/
  * OpenSSL - for SSL/TLS support
     * http://www.openssl.org/
  * inih - to parse the configuration file
     * http://inih.googlecode.com/
- * test-dept - for unit tests
-    * http://test-dept.googlecode.com/
+ * cmockery - for unit tests
+    * We use a modified version of this fork:
+      http://github.com/patperry/cmockery
+    * Official project page: http://code.google.com/p/cmockery/
  * tj-tools - misc. utility functions (dynamic library loading, etc.)
     * http://tj-tools.googlecode.com/
  * uthash - hash tables, dynamic arrays, and dynamic string macros/functions
