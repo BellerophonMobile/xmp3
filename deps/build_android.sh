@@ -1,9 +1,11 @@
-#!/bin/bash -e
+#!/bin/bash
 # build_android.sh - Compiles dependencies for Android
 #
 # You may need to change some of the variables in this script for your
 # system/target, specifically, PLATFORM, ARCH, TOOLCHAIN_VERSION, and
 # AUTOMAKE_DIR.
+
+set -e
 
 if [ -z "$ANDROID_NDK" ]
 then
@@ -30,10 +32,6 @@ ARCH=arm
 TOOLCHAIN=arm-linux-androideabi
 # 4.6 is in NDK version 8b July 2012
 TOOLCHAIN_VERSION=4.6
-
-# Where to find config.guess and config.sub (needed to fix packages with old
-# automake files)
-AUTOMAKE_DIR="/usr/share/automake-1.12"
 
 # Flags to pass to Make
 MAKEFLAGS=""
@@ -147,7 +145,17 @@ download_package() {
 
 # For packages with outdated autotools scripts which don't have Android support
 update_autotools() {
-    cp "$AUTOMAKE_DIR/config.guess" "$AUTOMAKE_DIR/config.sub" $1
+    if [ ! -f "config.guess" ]
+    then
+        curl -L -o config.guess "http://git.savannah.gnu.org/cgit/automake.git/plain/lib/config.guess?h=maint"
+    fi
+
+    if [ ! -f "config.sub" ]
+    then
+        curl -L -o config.sub "http://git.savannah.gnu.org/cgit/automake.git/plain/lib/config.sub?h=maint"
+    fi
+
+    cp config.guess config.sub $1
 }
 
 export_environment() {
@@ -230,16 +238,15 @@ Options:
                (see $ANDROID_NDK/platforms)
     -t     Toolchain version (Default: $TOOLCHAIN_VERSION)
                (see $ANDROID_NDK/toolchains)
-    -a     Automake directory (used to update some build systems)
-               (Default: $AUTOMAKE_DIR)
     -m     Quoted flags to pass to make
+    -j     Shortcut to add "-j <n>" to MAKEFLAGS
     -h     This help output
 
 Targets: $TARGETS
 EOF
 }
 
-while getopts "r:p:t:m:h" flag
+while getopts "r:p:t:m:j:h" flag
 do
     case "$flag" in
         r)
@@ -253,6 +260,9 @@ do
             ;;
         m)
             MAKEFLAGS="$OPTARG"
+            ;;
+        j)
+            MAKEFLAGS="$MAKEFLAGS -j $OPTARG"
             ;;
         h)
             get_help
