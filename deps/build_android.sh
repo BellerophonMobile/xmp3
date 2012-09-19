@@ -145,6 +145,7 @@ download_package() {
 
 # For packages with outdated autotools scripts which don't have Android support
 update_autotools() {
+    pushd "$BUILD_DIR"
     if [ ! -f "config.guess" ]
     then
         curl -L -o config.guess "http://git.savannah.gnu.org/cgit/automake.git/plain/lib/config.guess?h=maint"
@@ -154,8 +155,9 @@ update_autotools() {
     then
         curl -L -o config.sub "http://git.savannah.gnu.org/cgit/automake.git/plain/lib/config.sub?h=maint"
     fi
+    popd
 
-    cp config.guess config.sub $1
+    cp "$BUILD_DIR/config.guess" "$BUILD_DIR/config.sub" $1
 }
 
 export_environment() {
