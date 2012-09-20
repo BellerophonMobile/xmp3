@@ -5,7 +5,7 @@ compiler:
 matrix:
     include:
         - compiler: gcc
-          env: ANDROID_NDK=/tmp/android-ndk
+          env: ANDROID_NDK=/tmp/android-ndk CC=arm-linux-androideabi-gcc
 before_install:
     - sudo apt-get update -qq
     - sudo apt-get install -qq libexpat1-dev libssl-dev libev-dev
