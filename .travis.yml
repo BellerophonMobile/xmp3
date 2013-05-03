@@ -11,6 +11,6 @@ before_install:
     - if [ -z "$ANDROID_TOOLCHAIN" ]; then sudo apt-get install -qq libexpat1-dev libssl-dev libev-dev uuid-dev; fi
     - if [ -n "$ANDROID_TOOLCHAIN" ]; then curl http://dl.google.com/android/ndk/android-ndk-r8e-linux-x86.tar.bz2 | tar xjf -; fi
     - if [ -n "$ANDROID_TOOLCHAIN" ]; then mv android-ndk-r8e android-ndk; fi
-    - if [ -n "$ANDROID_TOOLCHAIN" ]; then android-ndk/build/tools/make-standalone-toolchain.sh --platform=android-9 --toolchain=arm-linux-androideabi-4.6 --arch=arm --system=linux-x86 --install-dir=/tmp/toolchains/arm --ndk-dir=`pwd`/android-ndk; fi
+    - if [ -n "$ANDROID_TOOLCHAIN" ]; then cd android-ndk; build/tools/make-standalone-toolchain.sh --platform=android-9 --toolchain=arm-linux-androideabi-4.6 --arch=arm --system=linux-x86 --install-dir=/tmp/toolchains/arm; fi
 script:
     - if [ -n "$ANDROID_TOOLCHAIN" ]; then ./build_android.sh; else ./waf configure build test; fi
