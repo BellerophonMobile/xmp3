@@ -5,15 +5,12 @@ compiler:
 matrix:
     include:
         - compiler: gcc
-          env: ANDROID_NDK=/tmp/android-ndk
+          env: ANDROID_TOOLCHAIN=/tmp/toolchains/arm
 before_install:
     - sudo apt-get update -qq
     - sudo apt-get install -qq libexpat1-dev libssl-dev libev-dev
-    - wget http://dl.google.com/android/ndk/android-ndk-r8b-linux-x86.tar.bz2
-    - tar -xf android-ndk-r8b-linux-x86.tar.bz2
-    - mv android-ndk-r8b /tmp/android-ndk
-before_script: if [ -n "$ANDROID_NDK" ]; then cd deps; ./build_android.sh; cd ..; fi
+    - curl http://dl.google.com/android/ndk/android-ndk-r8e-linux-x86.tar.bz2 | tar xjf -
+    - mv android-ndk-r8e android-ndk
+    - android-ndk/build/tools/make-standalone-toolchain.sh --platform=android-9 --toolchain=arm-linux-androideabi-4.6 --arch=arm --system=linux-x86 --install-dir=/tmp/toolchains/arm --ndk-dir=`pwd`/android-ndk
 script:
-    - if [ -n "$ANDROID_NDK" ]; then unset CC; ./waf configure --cross-android; else ./waf configure; fi
-    - ./waf build
-    - if [ -z "$ANDROID_NDK" ]; then ./waf test; fi
+    - if [ -n "$ANDROID_TOOLCHAIN" ]; then ./build_android.sh; else ./waf configure build test; fi
