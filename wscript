@@ -45,91 +45,19 @@ def options(ctx):
     opts.add_option('--muc-module', action='store_true',
                     help='Build the MUC component as an external module.')
 
-    cross = ctx.add_option_group('Cross Compiling')
-    cross.add_option('--cross-android', action='store_const', dest='cross',
-                     const='android', default=None,
-                     help='Cross compile for Android')
-    cross.add_option('--cross-android-ndk', action='store',
-                     default=os.getenv('ANDROID_NDK'),
-                     help='Android NDK directory.')
-    cross.add_option('--cross-android-level', action='store', type=int,
-                     default=9, help='Android platform level to use.')
-    cross.add_option('--cross-android-arch', action='store', default='armv6',
-                     help='Android architecture to use (armv6, armv7).')
-
 def configure(ctx):
-    # System waf is running on: linux, darwin (Mac OSX), freebsd, windows, etc.
-    if ctx.options.cross:
-        ctx.env.target = ctx.options.cross
-    else:
-        ctx.env.target = platform.system().lower()
-
-    # Check if cross-compiling
-    if ctx.env.target == 'android':
-        if os.path.isdir('deps/android-prefix'):
-            ctx.env.INCLUDES += ['deps/android-prefix/include']
-            ctx.env.LIBPATH += [ctx.path.find_dir('deps/android-prefix/lib')
-                                   .abspath()]
-        else:
-            ctx.fatal('Android dependencies not built, run "build_android.sh"'
-                      ' in the "deps" directory.')
-
-        ctx.env.android_ndk = ctx.options.cross_android_ndk
-        ctx.env.android_level = ctx.options.cross_android_level
-        ctx.env.android_arch = ctx.options.cross_android_arch
-
-        if ctx.options.cross_android_arch in ('armv6', 'armv7'):
-            ctx.env.CFLAGS += ['-fpic', '-ffunction-sections',
-                    '-funwind-tables', '-fstack-protector', '-D__ARM_ARCH_5__',
-                    '-D__ARM_ARCH_5T__', '-D__ARM_ARCH_5E__',
-                    '-D__ARM_ARCH_5TE__']
-
-            ctx.env.CFLAGS += ['-mthumb', '-Os', '-fomit-frame-pointer',
-                               '-fno-strict-aliasing', '-finline-limit=64']
-
-            if ctx.options.cross_android_arch == 'armv7':
-                ctx.env.CFLAGS += ['-march=armv7-a', '-mfloat-abi=softfp',
-                        '-mfpu=vfp']
-                ctx.env.LINKFLAGS += ['-Wl,--fix-cortex-a8']
-
-            elif ctx.options.cross_android_arch == 'armv6':
-                ctx.env.CFLAGS += ['-march=armv5te', '-mtune=xscale',
-                        '-msoft-float']
-
-            arch = 'arm'
-
-            if ctx.options.debug:
-                ctx.env.CFLAGS += ['-marm', '-fno-omit-frame-pointer']
-
-        else:
-            arch = ctx.options.cross_android_arch
-
-        path = os.path.join(ctx.options.cross_android_ndk, 'toolchains',
-                            'arm-linux-androideabi-4.6', 'prebuilt',
-                            'linux-x86', 'bin')
-        ctx.find_program('arm-linux-androideabi-gcc', var='CC',
-                         path_list=[path])
-        ctx.find_program('arm-linux-androideabi-g++', var='CXX',
-                         path_list=[path])
-
-        ctx.env.android_sysroot = os.path.join(
-                ctx.options.cross_android_ndk, 'platforms',
-                'android-{0}'.format( ctx.options.cross_android_level),
-                'arch-{0}'.format(arch))
-
-        ctx.env.CFLAGS += ['--sysroot=' + ctx.env.android_sysroot]
-        ctx.env.LINKFLAGS += ['--sysroot=' + ctx.env.android_sysroot]
-
     ctx.load('compiler_c')
     ctx.load('waf_unit_test')
 
-    ctx.env.arch = platform.machine()
+    # Check if cross-compiling
+    is_android = 'android' in ctx.env.CC[0]
+
     ctx.env.muc_module = ctx.options.muc_module
     if ctx.env.muc_module:
         ctx.env.DEFINES += ['MUC_MODULE']
 
     # Mac OSX's uuid stuff is built into its libc
-    if ctx.env.target != 'darwin':
+    if is_android or platform.system() != 'Darwin':
         ctx.check_cc(lib='uuid')
 
     ctx.check_cc(lib='m')
@@ -143,7 +71,7 @@ def configure(ctx):
         ctx.env.CFLAGS += ['-std=gnu99', '-Wall', '-Wextra', '-Werror',
                            '-Wno-unused-parameter', '-Wno-strict-aliasing']
 
-        if ctx.env.target == 'darwin':
+        if platform.system() == 'Darwin':
             ctx.env.CFLAGS += ['-Wno-deprecated-declarations']
 
         ctx.env.LINKFLAGS_DYNAMIC += ['-export-dynamic']

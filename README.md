@@ -115,27 +115,39 @@ directory.
 
 ### Building on Android
 
-To build on Android, first build its dependencies.  Inside the "deps"
-directory, type:
+To build on Android, set up an Android NDK standalone toolchain.  See
+"docs/STANDALONE-TOOLCHAIN.html" in the NDK documentation.  For example:
 
-    ./build_android.sh [options]
+    # For an ARM toolchain
+    $ANDROID_NDK/build/tools/make-stanalone-toolchain.sh \
+        --platform=android-9 \
+        --toolchain=arm-linux-androideabi-4.6 \
+        --arch=arm \
+        --system=linux-x86_64 \
+        --install-dir=$HOME/toolchains/arm \
+        --ndk-dir=$ANDROID_NDK
 
-See the output of "./build_android.sh -h" to see possible flags.  For example,
-to run make with 4 parallel jobs, run:
+    # For an x86 toolchain (for emulators)
+    $ANDROID_NDK/build/tools/make-standalone-toolchain.sh \
+        --platform=android-9 \
+        --toolchain=x86-4.6 \
+        --arch=x86 \
+        --system=linux-x86_64 \
+        --install-dir=$HOME/toolchains/x86 \
+        --ndk-dir=$ANDROID_NDK
 
-    ./build_android,sh -m '-j5'
+Set the environment variable ANDROID_TOOLCHAIN to the path of the
+toolchain you want to use:
 
-Currently, you need to edit the script in order to compile for arm7
-architectures instead of arm6.
+    # For ARM
+    export ANDROID_TOOLCHAIN=$HOME/toolchains/arm
 
-Next, in the main directory, pass "--cross-android" to the configure command:
+    # For x86
+    export ANDROID_TOOLCHAIN=$HOME/toolchains/x86
 
-    ./waf configure --cross-android
+Then, just run the build_android.sh script:
 
-By default, the script will look at the "ANDROID_NDK" environment variable to
-find the paths to the compilers.  This can be overridden with the
-"--cross-android-ndk" option to waf.  See the help output for options to choose
-the Android API level, and the architecture.
+    ./build_android.sh -j5  # Can run builds in parallel
 
 Running
 -------
